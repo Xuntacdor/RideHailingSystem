@@ -1,0 +1,37 @@
+
+server:
+  port: 8080
+  tomcat:
+    relaxed-query-chars: "|,{,},[,]"
+
+spring:
+  application:
+    api-prefix: /api/v1
+  datasource:
+    url: ${DATABASE_URL:jdbc:sqlserver://localhost:1433;databaseName=zzzz;encrypt=false;trustServerCertificate=true;}
+    username: ${DATABASE_USERNAME:sa}
+    password: ${DATABASE_PASSWORD:123}
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.SQLServerDialect
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  cache:
+    type: redis
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+app:
+  signal-key: "c2fdf3cb275a6c40b6795cdab2e92ee6aec56cb4ea65be2fbe1d8b8eaccdbe86"
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:}
+    client-secret: ${GOOGLE_CLIENT_SECRET:}
+  upload:
+    avatar-dir: C:/Users/trimx1/zzz/demo/Img/avatar 
+  public:
+    avatar-base-url: /img/avatar     
