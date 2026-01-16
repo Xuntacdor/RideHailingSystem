@@ -33,98 +33,98 @@ import lombok.extern.slf4j.Slf4j;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class UserController {
-    UserService userService;
+        UserService userService;
 
-    @GetMapping("/{id}")
-    public ApiResponse<UserResponse> getUserById(@PathVariable String id) {
-        log.info("Getting user by ID: {}", id);
-        return ApiResponse.<UserResponse>builder()
-                .code(200)
-                .results(userService.getUserById(id))
-                .build();
-    }
+        @GetMapping("/{id}")
+        public ApiResponse<UserResponse> getUserById(@PathVariable String id) {
+                log.info("Getting user by ID: {}", id);
+                return ApiResponse.<UserResponse>builder()
+                                .code(200)
+                                .results(userService.getUserById(id))
+                                .build();
+        }
 
-    @GetMapping("/email/{email}")
-    public ApiResponse<UserResponse> getUserByEmail(@PathVariable String email) {
-        log.info("Getting user by email: {}", email);
-        return ApiResponse.<UserResponse>builder()
-                .code(200)
-                .results(userService.getUserByEmail(email))
-                .build();
-    }
+        @GetMapping("/email/{email}")
+        public ApiResponse<UserResponse> getUserByEmail(@PathVariable String email) {
+                log.info("Getting user by email: {}", email);
+                return ApiResponse.<UserResponse>builder()
+                                .code(200)
+                                .results(userService.getUserByEmail(email))
+                                .build();
+        }
 
-    @GetMapping
-    public ApiResponse<List<UserResponse>> getAllUsers() {
-        log.info("Getting all users");
-        return ApiResponse.<List<UserResponse>>builder()
-                .code(200)
-                .results(userService.getAllUsers())
-                .build();
-    }
+        @GetMapping
+        public ApiResponse<List<UserResponse>> getAllUsers() {
+                log.info("Getting all users");
+                return ApiResponse.<List<UserResponse>>builder()
+                                .code(200)
+                                .results(userService.getAllUsers())
+                                .build();
+        }
 
-    @PutMapping("/{id}")
-    public ApiResponse<UserResponse> updateUserProfile(
-            @PathVariable String id,
-            @RequestBody @Validated UserRequest request) {
-        log.info("Updating user profile for ID: {}", id);
-        return ApiResponse.<UserResponse>builder()
-                .code(200)
-                .results(userService.updateUserProfile(id, request))
-                .build();
-    }
+        @PutMapping("/{id}")
+        public ApiResponse<UserResponse> updateUserProfile(
+                        @PathVariable String id,
+                        @RequestBody @Validated UserRequest request) {
+                log.info("Updating user profile for ID: {}", id);
+                return ApiResponse.<UserResponse>builder()
+                                .code(200)
+                                .results(userService.updateUserProfile(id, request))
+                                .build();
+        }
 
-    @PutMapping("/{id}/password")
-    public ApiResponse<UserResponse> changePassword(
-            @PathVariable String id,
-            @RequestParam String oldPassword,
-            @RequestParam String newPassword) {
-        log.info("Changing password for user: {}", id);
-        return ApiResponse.<UserResponse>builder()
-                .code(200)
-                .results(userService.changePassword(id, oldPassword, newPassword))
-                .build();
-    }
+        @PutMapping("/{id}/password")
+        public ApiResponse<UserResponse> changePassword(
+                        @PathVariable String id,
+                        @RequestParam String oldPassword,
+                        @RequestParam String newPassword) {
+                log.info("Changing password for user: {}", id);
+                return ApiResponse.<UserResponse>builder()
+                                .code(200)
+                                .results(userService.changePassword(id, oldPassword, newPassword))
+                                .build();
+        }
 
-    @PostMapping("/{id}/avatar")
-    public ApiResponse<UserResponse> uploadAvatar(
-            @PathVariable String id,
-            @RequestPart("file") MultipartFile file) {
-        log.info("Uploading avatar for user: {}", id);
-        return ApiResponse.<UserResponse>builder()
-                .code(200)
-                .results(userService.uploadAvatar(id, file))
-                .build();
-    }
+        @PostMapping("/{id}/avatar")
+        public ApiResponse<UserResponse> uploadAvatar(
+                        @PathVariable String id,
+                        @RequestPart("file") MultipartFile file) {
+                log.info("Uploading avatar for user: {}", id);
+                return ApiResponse.<UserResponse>builder()
+                                .code(200)
+                                .results(userService.uploadAvatar(id, file))
+                                .build();
+        }
 
-    @PutMapping("/{id}/status")
-    public ApiResponse<UserResponse> updateAccountStatus(
-            @PathVariable String id,
-            @RequestParam AccountStatus status) {
-        log.info("Updating account status for user: {} to {}", id, status);
-        return ApiResponse.<UserResponse>builder()
-                .code(200)
-                .results(userService.updateAccountStatus(id, status))
-                .build();
-    }
+        @PutMapping("/{id}/status")
+        public ApiResponse<UserResponse> updateAccountStatus(
+                        @PathVariable String id,
+                        @RequestParam AccountStatus status) {
+                log.info("Updating account status for user: {} to {}", id, status);
+                return ApiResponse.<UserResponse>builder()
+                                .code(200)
+                                .results(userService.updateAccountStatus(id, status))
+                                .build();
+        }
 
-    @PutMapping("/{id}/role")
-    public ApiResponse<UserResponse> updateUserRole(
-            @PathVariable String id,
-            @RequestParam Role role) {
-        log.info("Updating role for user: {} to {}", id, role);
-        return ApiResponse.<UserResponse>builder()
-                .code(200)
-                .results(userService.updateUserRole(id, role))
-                .build();
-    }
+        @PutMapping("/{id}/role")
+        public ApiResponse<UserResponse> updateUserRole(
+                        @PathVariable String id,
+                        @RequestParam Role role) {
+                log.info("Updating role for user: {} to {}", id, role);
+                return ApiResponse.<UserResponse>builder()
+                                .code(200)
+                                .results(userService.updateUserRole(id, role))
+                                .build();
+        }
 
-    @DeleteMapping("/{id}")
-    public ApiResponse<String> deleteUser(@PathVariable String id) {
-        log.info("Deleting user: {}", id);
-        userService.deleteUser(id);
-        return ApiResponse.<String>builder()
-                .code(200)
-                .results("User deleted successfully")
-                .build();
-    }
+        @DeleteMapping("/{id}")
+        public ApiResponse<String> deleteUser(@PathVariable String id) {
+                log.info("Deleting user: {}", id);
+                userService.deleteUser(id);
+                return ApiResponse.<String>builder()
+                                .code(200)
+                                .results("User deleted successfully")
+                                .build();
+        }
 }
