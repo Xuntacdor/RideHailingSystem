@@ -1,6 +1,4 @@
-import axios from "axios";
+import axios from "../../../libs/axios"; // hoặc đúng đường dẫn tới axiosClient
 
-const API_URL = "http://localhost:8080/api/auth";
-
-export const login = (data) => axios.post(`${API_URL}/login`, data);
-export const register = (data) => axios.post(`${API_URL}/register`, data);
+export const login = (data) => axios.post("/auth/login", data);
+export const register = (data) => axios.post("/auth/register", data);
