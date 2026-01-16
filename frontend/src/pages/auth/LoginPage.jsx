@@ -7,15 +7,9 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#92c9fa]">
-<<<<<<< HEAD
       <div className="w-full max-w-4xl h-[650px] bg-white rounded-2xl shadow-lg flex flex-col md:flex-row overflow-hidden mx-2 my-8">
         {/* Left: image/gradient */}
         <div className="hidden md:flex md:w-1/2 h-full items-center justify-center bg-gradient-to-br from-blue-200 to-blue-300">
-=======
-      <div className="w-full max-w-4xl h-162.5 bg-white rounded-2xl shadow-lg flex flex-col md:flex-row overflow-hidden mx-2 my-8">
-        {/* Left: image/gradient */}
-        <div className="hidden md:flex md:w-1/2 h-full items-center justify-center bg-linear-to-br from-blue-200 to-blue-300">
->>>>>>> e63fc080231d86b95c97ddaff7d3161c1ce546f9
           <img
             src="https://undraw.co/api/illustrations/4a5e5a7e-8a48-4a0f-9f81-3a3e8f93d2c8"
             alt="Car"
@@ -28,7 +22,9 @@ export default function LoginPage() {
           <div className="relative flex gap-8 mb-6">
             <button
               className={`font-semibold pb-1 text-lg cursor-pointer transition-all duration-300 ${
-                tab === "login" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-400 hover:text-blue-500"
+                tab === "login"
+                  ? "text-blue-600 border-b-2 border-blue-600"
+                  : "text-gray-400 hover:text-blue-500"
               }`}
               onClick={() => setTab("login")}
             >
@@ -36,7 +32,9 @@ export default function LoginPage() {
             </button>
             <button
               className={`font-semibold pb-1 text-lg cursor-pointer transition-all duration-300 ${
-                tab === "signup" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-400 hover:text-blue-500"
+                tab === "signup"
+                  ? "text-blue-600 border-b-2 border-blue-600"
+                  : "text-gray-400 hover:text-blue-500"
               }`}
               onClick={() => setTab("signup")}
             >
@@ -45,13 +43,11 @@ export default function LoginPage() {
           </div>
           {/* Form */}
           <div className="flex-1 overflow-y-auto relative">
-<<<<<<< HEAD
-            {tab === "login"
-              ? <LoginForm onSwitchToSignUp={() => setTab("signup")} />
-              : <RegisterForm onSwitchToLogin={() => setTab("login")} />}
-=======
-            {tab === "login" ? <LoginForm /> : <RegisterForm />}
->>>>>>> e63fc080231d86b95c97ddaff7d3161c1ce546f9
+            {tab === "login" ? (
+              <LoginForm onSwitchToSignUp={() => setTab("signup")} />
+            ) : (
+              <RegisterForm onSwitchToLogin={() => setTab("login")} />
+            )}
           </div>
         </div>
       </div>
