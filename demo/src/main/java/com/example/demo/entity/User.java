@@ -3,6 +3,7 @@ package com.example.demo.entity;
 
 import java.util.List;
 
+import com.example.demo.enums.AccountStatus;
 import com.example.demo.enums.Role;
 
 import jakarta.persistence.Entity;
@@ -38,14 +39,14 @@ public class User {
     String phoneNumber;
     String password;
     String imageUrl;
-    
+
     @Enumerated(EnumType.STRING)
     Role role;
-    
+
     String cccd;
     String email;
     String accountType;
-
+    AccountStatus status;
 
     @OneToMany(mappedBy = "user")
     List<Notification> notifications;

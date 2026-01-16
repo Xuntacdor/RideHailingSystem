@@ -1,10 +1,8 @@
 package com.example.demo.entity;
 
-import com.example.demo.enums.VehicleStatus;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -27,26 +25,23 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "VehicleRegister")
+@Table(name = "CouponUsage")
 @Getter
 @Setter
-public class VehicleRegister {
+public class CouponUsage {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "driver_id", referencedColumnName = "id")
-    Driver driver;
+    @JoinColumn(name = "coupon_id", referencedColumnName = "id")
+    Coupon coupon;
 
-    String vehicleType;
-    String vehicleNumber;
-    String vehicleBrand;
-    String vehicleColor;
-    String licenseNumber;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    User user;
 
-    @Enumerated(EnumType.STRING)
-    VehicleStatus status;
+    LocalDateTime usedAt;
 
-    String imageUrl;
+    String rideId;
 }

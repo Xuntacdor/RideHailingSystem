@@ -1,7 +1,7 @@
 package com.example.demo.config;
 
 import java.util.Arrays;
- 
+
 import javax.crypto.spec.SecretKeySpec;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,33 +79,33 @@ public class SecurityConfig {
 
         http
 
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-            .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable())
 
-            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
 
-            .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests(auth -> auth
 
-                .requestMatchers(SWAGGER_PUBLIC_ENDPOINT).permitAll()
+                        .requestMatchers(SWAGGER_PUBLIC_ENDPOINT).permitAll()
 
-                .requestMatchers(PUBLIC).permitAll()
+                        .requestMatchers(PUBLIC).permitAll()
 
-                .requestMatchers("/oauth2/**").permitAll()
+                        .requestMatchers("/oauth2/**").permitAll()
 
-                .anyRequest().authenticated()
+                        .anyRequest().authenticated()
 
-            )
+                )
 
-            // .oauth2Login(oauth2 -> oauth2
+                .oauth2Login(oauth2 -> oauth2
 
-            //     .successHandler(oAuth2SuccessHandler)
+                        .successHandler(oAuth2SuccessHandler)
 
-            //     .failureHandler(oAuth2FailureHandler)
+                        .failureHandler(oAuth2FailureHandler)
 
-            // )
+                )
 
-            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
 
         return http.build();
 
@@ -117,50 +117,43 @@ public class SecurityConfig {
 
         CorsConfiguration configuration = new CorsConfiguration();
 
-
         configuration.setAllowedOrigins(Arrays.asList(
 
-            "http://localhost:3000",      // React 
+                "http://localhost:3000", // React
 
-            "http://localhost:5173",      // Vite 
+                "http://localhost:5173", // Vite
 
-            "http://localhost:4200"       // Angular 
-
+                "http://localhost:4200" // Angular
 
         ));
-
 
         configuration.setAllowedMethods(Arrays.asList(
 
-            "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
+                "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
 
         ));
-
 
         configuration.setAllowedHeaders(Arrays.asList(
 
-            "Authorization", 
+                "Authorization",
 
-            "Content-Type", 
+                "Content-Type",
 
-            "Accept",
+                "Accept",
 
-            "X-Requested-With"
+                "X-Requested-With"
 
         ));
 
-
         configuration.setAllowCredentials(true);
-
 
         // configuration.setMaxAge(3600L);
 
-
         configuration.setExposedHeaders(Arrays.asList(
 
-            "Authorization",
+                "Authorization",
 
-            "Content-Disposition"
+                "Content-Disposition"
 
         ));
 
@@ -207,5 +200,3 @@ public class SecurityConfig {
     }
 
 }
-
- 

@@ -1,6 +1,8 @@
 package com.example.demo.entity;
 
-import com.example.demo.enums.VehicleStatus;
+import java.time.LocalDateTime;
+
+import com.example.demo.enums.TicketStatus;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -27,26 +29,29 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "VehicleRegister")
+@Table(name = "SupportTickets")
 @Getter
 @Setter
-public class VehicleRegister {
+public class SupportTicket {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "driver_id", referencedColumnName = "id")
-    Driver driver;
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    User user;
 
-    String vehicleType;
-    String vehicleNumber;
-    String vehicleBrand;
-    String vehicleColor;
-    String licenseNumber;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_agent_id", referencedColumnName = "id")
+    User assignedAgent;
+
+    String title;
+    String description;
 
     @Enumerated(EnumType.STRING)
-    VehicleStatus status;
+    TicketStatus status;
 
-    String imageUrl;
+    LocalDateTime createdAt;
+    LocalDateTime updatedAt;
+    LocalDateTime resolvedAt;
 }
