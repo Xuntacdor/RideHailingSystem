@@ -4,9 +4,15 @@ import { useNavigate } from "react-router-dom";
 import Input from "../../../components/common/Input";
 import Button from "../../../components/common/Button";
 import Popup from "../../../components/common/Popup";
+<<<<<<< HEAD
 import { login } from "../api/authApi";
 
 export default function LoginForm({ onSwitchToSignUp }) {
+=======
+import axios from "axios";
+
+export default function LoginForm() {
+>>>>>>> e63fc080231d86b95c97ddaff7d3161c1ce546f9
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,12 +22,21 @@ export default function LoginForm({ onSwitchToSignUp }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+<<<<<<< HEAD
       const res = await login({ email, password });
       // Giả sử backend trả về { results: { token: "...", userId: "..." } }
       localStorage.setItem("token", res.data.results.token);
       localStorage.setItem("userId", res.data.results.userId);
       setPopup({ open: true, message: "Đăng nhập thành công!", type: "success" });
       setTimeout(() => navigate("/profile"), 1000);
+=======
+      const res = await axios.post("http://localhost:8080/api/auth/login", { email, password });
+      // Lưu token nếu cần
+      localStorage.setItem("token", res.data.results.token);
+      setPopup({ open: true, message: "Đăng nhập thành công!", type: "success" });
+      // Chuyển sang trang profile sau khi đăng nhập thành công
+      setTimeout(() => navigate("/profile"), 1000); // 1s sau khi show popup
+>>>>>>> e63fc080231d86b95c97ddaff7d3161c1ce546f9
     } catch {
       setPopup({ open: true, message: "Sai tài khoản hoặc mật khẩu!", type: "error" });
     }
@@ -75,7 +90,11 @@ export default function LoginForm({ onSwitchToSignUp }) {
       <div className="w-full flex items-center justify-center mt-4">
         <span className="text-gray-400 text-sm">
           Don't have an account?{" "}
+<<<<<<< HEAD
           <a href="#" onClick={e => { e.preventDefault(); onSwitchToSignUp(); }} className="text-blue-500 font-semibold hover:underline">
+=======
+          <a href="#" onClick={e => { e.preventDefault(); /* code chuyển tab tại LoginPage */ }} className="text-blue-500 font-semibold hover:underline">
+>>>>>>> e63fc080231d86b95c97ddaff7d3161c1ce546f9
             Sign up
           </a>
         </span>

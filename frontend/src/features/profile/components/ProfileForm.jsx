@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Eye, EyeOff, Upload, Car } from "lucide-react";
 import Input from "../../../components/common/Input";
 import Button from "../../../components/common/Button";
-import {uploadAvatar} from "../api/userApi";
+import { uploadAvatar } from "../api/userApi";
 
 export default function ProfileForm({ user }) {
   // user nhận từ props: { fullName, email, role, carModel, avatarUrl, ... }
@@ -21,24 +21,26 @@ export default function ProfileForm({ user }) {
   };
 
   // Hàm chọn file avatar
-const handleAvatarChange = async (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    // Hiển thị ảnh ngay để user thấy
-    setAvatar(URL.createObjectURL(file));
-    try {
-      // Gọi API upload lên server
-      const response = await uploadAvatar(user.id, file);
-      // Lấy link avatar mới từ response và cập nhật lại cho FE
-      const newAvatarUrl = response.data.results.imageUrl;
-      setAvatar(newAvatarUrl);
-      alert("Cập nhật ảnh đại diện thành công!");
-    // eslint-disable-next-line no-unused-vars
-    } catch (error) {
-      alert("Lỗi upload ảnh đại diện!");
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Hiển thị ảnh ngay để user thấy
+      setAvatar(URL.createObjectURL(file));
+      try {
+        // Gọi API upload lên server
+        const response = await uploadAvatar(user.id, file);
+        // Lấy link avatar mới từ response và cập nhật lại cho FE
+        const newAvatarUrl = response.data.results.imageUrl;
+        setAvatar(newAvatarUrl);
+        alert("Cập nhật ảnh đại diện thành công!");
+        // eslint-disable-next-line no-unused-vars
+      } catch (error) {
+        alert("Lỗi upload ảnh đại diện!");
+      }
     }
-  }
-};
+  };
+
   return (
     <form
       className="w-full max-w-md bg-white rounded-2xl shadow-md p-8 flex flex-col gap-6"

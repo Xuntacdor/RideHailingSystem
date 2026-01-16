@@ -8,40 +8,40 @@ export default function ProfilePage() {
   const [error, setError] = useState("");
 
   function getUserIdFromJwt(token) {
-  if (!token) return null;
-  try {
-    const payload = token.split('.')[1];
-    const decoded = JSON.parse(atob(payload));
-    return decoded.userId || null;
-  } catch {
-    return null;
-  }
-}
-  // useEffect được gọi không có điều kiện ở top level
-useEffect(() => {
-  const fetchUserInfo = async () => {
-  const token = localStorage.getItem("token");
-  let userId = getUserIdFromJwt(token);
-    if (!userId) {
-      setError("Không tìm thấy userId, vui lòng đăng nhập lại!");
-      setUser(null);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
+    if (!token) return null;
     try {
-      const res = await getUserInfo(userId);
-      setUser(res.data.results);
-      setError("");
+      const payload = token.split(".")[1];
+      const decoded = JSON.parse(atob(payload));
+      return decoded.userId || null;
     } catch {
-      setError("Lỗi khi lấy thông tin cá nhân!");
-      setUser(null);
-    } finally {
-      setLoading(false);
+      return null;
     }
-  };
-  fetchUserInfo();
-}, []);
+  }
+  // useEffect được gọi không có điều kiện ở top level
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      const token = localStorage.getItem("token");
+      let userId = getUserIdFromJwt(token);
+      if (!userId) {
+        setError("Không tìm thấy userId, vui lòng đăng nhập lại!");
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      try {
+        const res = await getUserInfo(userId);
+        setUser(res.data.results);
+        setError("");
+      } catch {
+        setError("Lỗi khi lấy thông tin cá nhân!");
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUserInfo();
+  }, []);
 
   if (loading) {
     return (
