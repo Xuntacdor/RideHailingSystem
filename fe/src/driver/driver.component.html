@@ -1,0 +1,46 @@
+<div class="driver-container">
+
+  <!-- MAP (placeholder) -->
+  <div class="map">
+    <div class="location-icon">📍</div>
+  </div>
+
+  <!-- TOP INFO BAR -->
+  <div class="top-bar">
+    <div class="wallet">
+      <span>VND</span>
+      <strong>900.000</strong>
+    </div>
+    <div class="rating">
+      ⭐ 5.0
+    </div>
+  </div>
+
+  <!-- CENTER MESSAGE -->
+  <div class="status-message" *ngIf="!isOnline">
+    Nhấn để bật/tắt chế độ<br>
+    <b>sẵn sàng & tự động nhận cuốc</b>
+  </div>
+
+  <!-- POWER BUTTON -->
+  <button
+    class="power-btn"
+    [class.online]="isOnline"
+    (click)="toggleOnline()">
+    {{ isOnline ? 'Đang kết nối' : 'Bật kết nối' }}
+  </button>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    {{ isOnline ? 'Bạn đang sẵn sàng nhận cuốc.' : 'Bạn đang không sẵn sàng nhận cuốc.' }}
+  </div>
+
+  <!-- BOTTOM MENU -->
+  <div class="bottom-menu">
+    <div class="menu-item">🚗<br>Loại dịch vụ</div>
+    <div class="menu-item">📍<br>Điểm đến</div>
+    <div class="menu-item">🛡️<br>An toàn</div>
+    <div class="menu-item">⚡<br>Now</div>
+  </div>
+
+</div>

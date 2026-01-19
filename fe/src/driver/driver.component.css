@@ -1,0 +1,112 @@
+* {
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+.driver-container {
+  height: 100vh;
+  width: 100%;
+  position: relative;
+  background: #f2f2f2;
+}
+
+/* MAP */
+.map {
+  height: 100%;
+  background: #d9d9d9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.location-icon {
+  font-size: 32px;
+}
+
+/* TOP BAR */
+.top-bar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.wallet {
+  background: white;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.rating {
+  background: white;
+  padding: 8px 12px;
+  border-radius: 12px;
+}
+
+/* STATUS MESSAGE */
+.status-message {
+  position: absolute;
+  bottom: 160px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  padding: 12px 16px;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* POWER BUTTON */
+.power-btn {
+  position: absolute;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
+  height: 56px;
+  border-radius: 28px;
+  border: none;
+  font-size: 18px;
+  font-weight: bold;
+  background: black;
+  color: white;
+}
+
+.power-btn.online {
+  background: #00b14f;
+}
+
+/* STATUS BAR */
+.status-bar {
+  position: absolute;
+  bottom: 64px;
+  left: 12px;
+  right: 12px;
+  background: white;
+  padding: 10px;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* BOTTOM MENU */
+.bottom-menu {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: white;
+  display: flex;
+  border-top: 1px solid #ddd;
+}
+
+.menu-item {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  padding-top: 8px;
+}
