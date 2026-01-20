@@ -11,10 +11,11 @@
       <span>VND</span>
       <strong>900.000</strong>
     </div>
-    <div class="rating">
-      ⭐ 5.0
-    </div>
+    <!-- DRIVER AVATAR -->
+  <div class="driver-avatar" (click)="goToProfile()">
+    <img [src]="driverAvatar" alt="Driver Avatar">
   </div>
+</div>
 
   <!-- CENTER MESSAGE -->
   <div class="status-message" *ngIf="!isOnline">
