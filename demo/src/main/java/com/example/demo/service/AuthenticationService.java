@@ -51,18 +51,17 @@ public class AuthenticationService {
     private static final SecureRandom random = new SecureRandom();
 
     public AuthenticationResponse loginUser(AuthenticationRequest authenticationRequest) {
-        // log.info("Starting login process for user: {}", authenticationRequest.getEmail(), authenticationRequest.getPassword());
-         User user = null;
-        if(authenticationRequest.getEmail()!=null)
-        {
-         user = userRepository.findByEmailWithRoles(authenticationRequest.getEmail())
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        // log.info("Starting login process for user: {}",
+        // authenticationRequest.getEmail(), authenticationRequest.getPassword());
+        User user = null;
+        if (authenticationRequest.getEmail() != null) {
+            user = userRepository.findByEmailWithRoles(authenticationRequest.getEmail())
+                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        } else if (authenticationRequest.getUsername() != null) {
+            user = userRepository.findByUserName(authenticationRequest.getUsername())
+                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         }
-        else if (authenticationRequest.getUsername()!=null)
-        {
-         user = userRepository.findByUserName(authenticationRequest.getUsername()).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        }
-        
+
         boolean results = passwordEncoder.matches(authenticationRequest.getPassword(), user.getPassword());
         if (!results) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
@@ -79,10 +78,11 @@ public class AuthenticationService {
                 .subject(user.getId())
                 .issueTime(new Date())
                 .expirationTime(new Date(
-                        Instant.now().plus(30, ChronoUnit.DAYS).toEpochMilli()
-                ))
+                        Instant.now().plus(30, ChronoUnit.DAYS).toEpochMilli()))
                 .claim("scope", buildScope(user))
                 .claim("userId", user.getId())
+                .claim("name", user.getName())
+                .claim("imageUrl", user.getImageUrl())
                 .build();
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());
 

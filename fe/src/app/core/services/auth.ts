@@ -9,7 +9,9 @@ import {
   AuthenticationResponse,
   UserResponse,
   ApiResponse,
+  jwtPayload,
 } from '../models/api-response.model';
+import { jwtDecode } from 'jwt-decode';
 
 @Injectable({
   providedIn: 'root',
@@ -81,4 +83,19 @@ export class AuthService extends ApiService {
   isAuthenticated(): boolean {
     return this.isLoggedIn();
   }
+
+  getUserInfo(): jwtPayload | null {
+    const token = this.getToken();
+    if (token) {
+      const decoded = jwtDecode<jwtPayload>(token);
+      return {
+        userId: decoded.userId,
+        name: decoded.name,
+        imageUrl: decoded.imageUrl,
+        scope: decoded.scope
+      };
+    }
+    return null;
+  }
+
 }

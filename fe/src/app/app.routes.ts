@@ -8,6 +8,7 @@ import { Register } from './pages/auth/register/register';
 import { Profile } from './pages/profile/profile';
 import { authGuard } from './core/guards/auth-guard';
 import { publicGuard } from './core/guards/public-guard';
+import { userBooking } from './pages/userBooking/userBooking';
 import { AddressSaved } from './pages/profile/address-saved/address-saved';
 import { PaymentMethods } from './pages/profile/payment-methods/payment-methods';
 import { ProfileEdit } from './pages/profile/profile-edit/profile-edit';
@@ -20,6 +21,8 @@ export const routes: Routes = [
   { path: 'driver', component: DriverComponent },
   { path: 'driver-profile', component: DriverProfileComponent },
 
+  { path: 'profile', component: Profile, canActivate: [authGuard] },
+  { path: 'userBooking', component: userBooking },
   {
     path: 'profile',
     component: Profile,

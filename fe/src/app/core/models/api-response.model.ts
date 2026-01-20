@@ -7,6 +7,13 @@ export interface ApiResponse<T> {
   results: T;
 }
 
+export interface jwtPayload {
+  userId: string;
+  name: string;
+  imageUrl: string;
+  scope: string;
+}
+
 /**
  * Authentication models
  */
