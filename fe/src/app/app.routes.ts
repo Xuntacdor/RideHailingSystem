@@ -8,6 +8,7 @@ import { Register } from './pages/auth/register/register';
 import { Profile } from './pages/profile/profile';
 import { authGuard } from './core/guards/auth-guard';
 import { publicGuard } from './core/guards/public-guard';
+import { userBooking } from './pages/userBooking/userBooking';
 
 export const routes: Routes = [
   { path: 'login', component: Login, canActivate: [publicGuard] },
@@ -18,6 +19,7 @@ export const routes: Routes = [
   { path: 'driver-profile', component: DriverProfileComponent },
 
   { path: 'profile', component: Profile, canActivate: [authGuard] },
+  { path: 'userBooking', component: userBooking },
 
   { path: '', redirectTo: 'welcome', pathMatch: 'full' },
   { path: '**', redirectTo: 'welcome' },

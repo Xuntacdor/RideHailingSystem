@@ -1,0 +1,63 @@
+<div class="ride-home">
+    <!-- Map Container -->
+    <div id="map" class="map-container"></div>
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="user-info">
+            <div class="avatar">
+                <img src="https://ui-avatars.com/api/?name={{userName}}&background=22c55e&color=fff" alt="User Avatar">
+            </div>
+            <div class="location-info">
+                <div class="location-label">
+                    <span class="location-icon">📍</span>
+                    Your location
+                </div>
+                <div class="location-text">{{ currentAddress }}</div>
+            </div>
+        </div>
+        <button class="grid-button">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <rect x="4" y="4" width="7" height="7" rx="1" fill="currentColor"/>
+                <rect x="4" y="13" width="7" height="7" rx="1" fill="currentColor"/>
+                <rect x="13" y="4" width="7" height="7" rx="1" fill="currentColor"/>
+                <rect x="13" y="13" width="7" height="7" rx="1" fill="currentColor"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Bottom Sheet -->
+    <div class="bottom-sheet">
+        <!-- Greeting -->
+        <div class="greeting">
+            Hello there, {{ userName }}! 👋
+        </div>
+
+        <!-- Vehicle Selection -->
+        <div class="vehicle-selection">
+            <div 
+                *ngFor="let option of vehicleOptions"
+                class="vehicle-option"
+                [class.selected]="selectedVehicleType === option.type"
+                (click)="selectVehicleType(option.type)"
+            >
+                <div class="vehicle-icon-large">{{ option.icon }}</div>
+                <div class="vehicle-info">
+                    <div class="vehicle-name">{{ option.name }}</div>
+                    <div class="vehicle-description">{{ option.description }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-container" (click)="onSearchClick()">
+            <span class="search-icon">🔍</span>
+            <input 
+                type="text" 
+                placeholder="Where are you going?" 
+                class="search-input"
+                readonly
+            >
+        </div>
+    </div>
+</div>
