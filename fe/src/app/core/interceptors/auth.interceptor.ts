@@ -64,13 +64,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 export const loggingInterceptor: HttpInterceptorFn = (req, next) => {
   const startTime = Date.now();
 
-  console.log(`🚀 HTTP Request: ${req.method} ${req.url}`);
+  console.log(` HTTP Request: ${req.method} ${req.url}`);
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       const duration = Date.now() - startTime;
       console.error(
-        `❌ HTTP Error: ${req.method} ${req.url} - ${error.status} ${error.statusText} (${duration}ms)`
+        ` HTTP Error: ${req.method} ${req.url} - ${error.status} ${error.statusText} (${duration}ms)`
       );
       return throwError(() => error);
     })

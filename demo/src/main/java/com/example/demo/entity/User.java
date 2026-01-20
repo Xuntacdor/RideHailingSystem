@@ -20,6 +20,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 
 @Data
@@ -49,26 +50,34 @@ public class User {
     AccountStatus status;
 
     @OneToMany(mappedBy = "user")
+    @ToString.Exclude
     List<Notification> notifications;
 
     @OneToMany(mappedBy = "user")
+    @ToString.Exclude
     List<History> histories;
 
     @OneToMany(mappedBy = "user")
+    @ToString.Exclude
     List<Rate> ratesGiven;
 
     @OneToMany(mappedBy = "ratedUser")
+    @ToString.Exclude
     List<Rate> ratesReceived;
 
     @OneToMany(mappedBy = "driver")
+    @ToString.Exclude
     List<Ride> ridesAsDriver;
 
     @OneToMany(mappedBy = "customer")
+    @ToString.Exclude
     List<Ride> ridesAsCustomer;
 
     @OneToMany(mappedBy = "reviewer")
+    @ToString.Exclude
     List<Review> reviewsGiven;
 
     @OneToMany(mappedBy = "reviewee")
+    @ToString.Exclude
     List<Review> reviewsReceived;
 }

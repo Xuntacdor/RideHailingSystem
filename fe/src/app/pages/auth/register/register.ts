@@ -34,7 +34,7 @@ export class Register implements OnInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
 
-  selectedRole: 'CUSTOMER' | 'DRIVER' | null = null;
+  selectedRole: 'USER' | 'DRIVER' | null = null;
   registerForm!: FormGroup;
   isSubmitting = signal(false);
   errorMessage = signal('');
@@ -45,7 +45,7 @@ export class Register implements OnInit {
   }
 
   // Hàm được gọi khi người dùng chọn vai trò
-  selectRole(role: 'CUSTOMER' | 'DRIVER'): void {
+  selectRole(role: 'USER' | 'DRIVER'): void {
     this.selectedRole = role;
     this.initForm();
   }
@@ -72,58 +72,54 @@ export class Register implements OnInit {
   // Xử lý khi submit form
   onSubmit(): void {
     if (this.registerForm.invalid) {
-      this.registerForm.markAllAsTouched(); // Hiển thị lỗi nếu form chưa hợp lệ
+      this.registerForm.markAllAsTouched();
       return;
     }
 
     this.isSubmitting.set(true);
-    this.errorMessage.set('');
-    this.successMessage.set('');
 
-    const formData = { ...this.registerForm.value };
-    delete formData.confirmPassword; // Xóa trường confirmPassword trước khi gửi đi
+    // Lấy dữ liệu thô từ form
+    const formData = this.registerForm.value;
 
-    // Prepare registration request
+    // --- MAP DỮ LIỆU CHO KHỚP BACKEND ---
     const registerRequest: RegisterRequest = {
+      // 1. Gộp Họ + Tên thành 'name'
+      name: `${formData.firstName} ${formData.lastName}`.trim(),
+
+      // 2. Lấy Email làm UserName (Lưu ý: Backend yêu cầu min 6 ký tự)
+      // Nếu email ngắn quá (ví dụ a@b.c) sẽ bị lỗi. Nhưng thường email > 6.
+      userName: formData.email,
+
       email: formData.email,
       password: formData.password,
-      firstName: formData.firstName,
-      lastName: formData.lastName,
       phoneNumber: formData.phoneNumber,
+
+      // 3. Gửi Role (Bắt buộc)
+      role: this.selectedRole!, // Dấu ! khẳng định không null
+
+      // 4. Gửi CCCD nếu là Driver
+      cccd: this.selectedRole === 'DRIVER' ? formData.cccd : undefined,
+
+      // 5. Mặc định
+      accountType: 'NORMAL'
     };
 
-    console.log('Registration data:', registerRequest);
+    console.log('Dữ liệu gửi đi:', registerRequest); // F12 xem log này
 
-    // Call AuthService to register user
     this.authService.registerUser(registerRequest).subscribe({
-      next: (response) => {
-        console.log('Registration successful:', response);
+      next: (res) => {
         this.isSubmitting.set(false);
-        this.successMessage.set('Registration successful! Redirecting to login...');
-
-        // Navigate to login page after 2 seconds
-        setTimeout(() => {
-          this.router.navigate(['/login']);
-        }, 2000);
+        this.successMessage.set('Đăng ký thành công! Đang chuyển hướng...');
+        setTimeout(() => this.router.navigate(['/login']), 1500);
       },
-      error: (error) => {
-        console.error('Registration failed:', error);
+      error: (err) => {
         this.isSubmitting.set(false);
-
-        // Set user-friendly error message
-        if (error.status === 409) {
-          this.errorMessage.set('Email already exists. Please use a different email.');
-        } else if (error.status === 0) {
-          this.errorMessage.set('Unable to connect to server. Please try again.');
-        } else if (error.error?.message) {
-          this.errorMessage.set(error.error.message);
-        } else {
-          this.errorMessage.set('Registration failed. Please try again.');
-        }
-      },
+        console.error(err);
+        // Hiển thị lỗi từ backend trả về (ví dụ: USERNAME_INVALID)
+        this.errorMessage.set(err.error?.message || 'Đăng ký thất bại');
+      }
     });
   }
-
   // Quay lại bước chọn vai trò
   resetRoleSelection(): void {
     this.selectedRole = null;
