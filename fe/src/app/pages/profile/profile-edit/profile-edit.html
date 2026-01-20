@@ -1,0 +1,36 @@
+<div class="p-4 bg-white rounded-lg shadow-sm">
+    <h2 class="text-xl font-bold mb-4 text-gray-800">Chỉnh sửa hồ sơ</h2>
+
+    <form [formGroup]="editForm" (ngSubmit)="onSubmit()" class="space-y-4">
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium text-gray-700">Họ và tên</label>
+            <input type="text" formControlName="name"
+                class="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                placeholder="Nhập họ tên của bạn" />
+            <div *ngIf="editForm.get('name')?.invalid && editForm.get('name')?.touched" class="text-red-500 text-xs">
+                Vui lòng nhập họ tên.
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium text-gray-700">Số điện thoại</label>
+            <input type="tel" formControlName="phoneNumber"
+                class="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                placeholder="Nhập số điện thoại" />
+        </div>
+
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium text-gray-700">Email</label>
+            <input type="email" formControlName="email"
+                class="w-full border border-gray-300 p-2 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
+                readonly />
+        </div>
+
+        <div class="pt-2">
+            <button type="submit" [disabled]="editForm.invalid"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold p-3 rounded-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+                Lưu thay đổi
+            </button>
+        </div>
+    </form>
+</div>

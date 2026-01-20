@@ -16,11 +16,15 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
+  name: string;
+  userName: string;
   email: string;
   password: string;
-  firstName: string;
-  lastName: string;
   phoneNumber: string;
+  role: string;
+  cccd?: string;
+  imageUrl?: string;
+  accountType?: string;
 }
 
 export interface AuthenticationResponse {
@@ -37,22 +41,27 @@ export interface AuthenticationResponse {
 export interface UserResponse {
   id: string;
   email: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   phoneNumber: string;
-  avatar?: string;
+  imageUrl?: string;
   role: string;
-  accountStatus: string;
-  createdAt: string;
-  updatedAt: string;
+  userName: string;
+  cccd?: string;
+  accountType?: string;
+
+
 }
 
 export interface UserRequest {
+  name: string;
+  userName: string;
+  phoneNumber: string;
+  password: string;
+  role: string;
   email?: string;
-  password?: string;
-  firstName?: string;
-  lastName?: string;
-  phoneNumber?: string;
+  cccd?: string;
+  imageUrl?: string;
+  accountType?: string;
 }
 
 /**
@@ -66,7 +75,7 @@ export interface DriverResponse {
   status: string;
   rating: number;
   totalRides: number;
-  avatar?: string;
+  imageUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
