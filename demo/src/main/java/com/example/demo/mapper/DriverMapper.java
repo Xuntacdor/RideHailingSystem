@@ -10,10 +10,16 @@ import com.example.demo.dto.response.DriverResponse;
 import com.example.demo.entity.Driver;
 import com.example.demo.entity.User;
 
-@Component
-public class DriverMapper {
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 
-    public static Driver toEntity(DriverRequest request, User user) {
+@Component
+@RequiredArgsConstructor
+public class DriverMapper {
+    @Autowired
+    private final UserMapper userMapper;
+
+    public Driver toEntity(DriverRequest request, User user) {
         if (request == null)
             return null;
         return Driver.builder()
@@ -26,12 +32,12 @@ public class DriverMapper {
                 .build();
     }
 
-    public static DriverResponse toResponse(Driver driver) {
+    public DriverResponse toResponse(Driver driver) {
         if (driver == null)
             return null;
         return DriverResponse.builder()
                 .id(driver.getId())
-                .userId(driver.getUser() != null ? driver.getUser().getId() : null)
+                .user(driver.getUser() != null ? userMapper.toResponse(driver.getUser()) : null)
                 .licenseNumber(driver.getLicenseNumber())
                 .driverStatus(driver.getDriverStatus())
                 .address(driver.getAddress())

@@ -65,10 +65,6 @@ public class User {
     @ToString.Exclude
     List<Rate> ratesReceived;
 
-    @OneToMany(mappedBy = "driver")
-    @ToString.Exclude
-    List<Ride> ridesAsDriver;
-
     @OneToMany(mappedBy = "customer")
     @ToString.Exclude
     List<Ride> ridesAsCustomer;

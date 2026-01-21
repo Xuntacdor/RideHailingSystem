@@ -17,7 +17,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class DriverResponse {
     String id;
-    String userId;
+    UserResponse user;
     String licenseNumber;
     String driverStatus;
     String address;

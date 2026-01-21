@@ -11,10 +11,16 @@ import org.springframework.data.repository.query.Param;
 import com.example.demo.entity.Driver;
 
 public interface DriverRepository extends JpaRepository<Driver, String> {
-    @Query("SELECT d FROM Driver d WHERE d.user.id = :userId")
-    Optional<Driver> findByUserId(@Param("userId") String userId);
+        @Query("SELECT d FROM Driver d WHERE d.user.id = :userId")
+        Optional<Driver> findByUserId(@Param("userId") String userId);
 
-    Optional<Driver> findByLicenseNumber(String licenseNumber);
+        Optional<Driver> findByLicenseNumber(String licenseNumber);
 
-    List<Driver> findByDriverStatus(String driverStatus);
+        List<Driver> findByDriverStatus(String driverStatus);
+
+        @Query("SELECT d FROM Driver d WHERE d.driverStatus = 'AVAILABLE' ORDER BY " +
+                        "((d.latitude - :lat) * (d.latitude - :lat) + (d.longitude - :lng) * (d.longitude - :lng)) ASC")
+        List<Driver> findNearestDrivers(@Param("lat") Double lat, @Param("lng") Double lng,
+                        org.springframework.data.domain.Pageable pageable);
+
 }

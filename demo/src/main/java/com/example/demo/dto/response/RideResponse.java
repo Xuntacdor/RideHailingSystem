@@ -18,7 +18,7 @@ import lombok.experimental.FieldDefaults;
 public class RideResponse {
     String id;
 
-    UserResponse driver;
+    DriverResponse driver;
     UserResponse customer;
 
     Long startTime;

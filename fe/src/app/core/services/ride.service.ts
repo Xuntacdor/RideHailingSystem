@@ -5,6 +5,7 @@ import {
   ApiResponse,
   RideResponse,
   RideRequest,
+  CreateRideResponse,
   UpdateRideStatusRequest,
 } from '../models/api-response.model';
 
@@ -12,8 +13,8 @@ import {
   providedIn: 'root',
 })
 export class RideService extends ApiService {
-  createRide(request: RideRequest): Observable<RideResponse> {
-    return this.post<RideResponse>('/rides', request);
+  createRide(request: RideRequest): Observable<CreateRideResponse> {
+    return this.post<CreateRideResponse>('/rides', request);
   }
 
   getRideById(id: string): Observable<RideResponse> {
