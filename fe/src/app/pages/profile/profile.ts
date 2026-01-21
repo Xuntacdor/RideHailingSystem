@@ -26,8 +26,8 @@ export class Profile implements OnInit {
       title: 'Tài khoản của tôi',
       items: [
         { name: 'Chỉnh sửa hồ sơ', icon: 'user', link: '/profile/edit' },
-        { name: 'Địa chỉ đã lưu', icon: 'location', link: '/addresses' },
-        { name: 'Phương thức thanh toán', icon: 'wallet', link: '/payment-methods' },
+        { name: 'Địa chỉ đã lưu', icon: 'location', link: '/profile/addresses' },
+        { name: 'Phương thức thanh toán', icon: 'wallet', link: '/profile/payment-methods' },
       ],
     },
     {
