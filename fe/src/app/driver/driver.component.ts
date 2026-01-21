@@ -13,7 +13,7 @@ export class DriverComponent {
 
   isOnline = false;
 
-  driverAvatar = 'assets/avatar.jpg'; // ảnh có thể thay đổi
+  driverAvatar = 'assets/avatar.png'; // ảnh có thể thay đổi
 
   constructor(private router: Router) {}
 
