@@ -1,4 +1,3 @@
-
 server:
   port: 8080
   tomcat:
@@ -34,6 +33,6 @@ app:
     client-id: ${GOOGLE_CLIENT_ID:}
     client-secret: ${GOOGLE_CLIENT_SECRET:}
   upload:
-    avatar-dir: C:/Users/trimx1/zzz/demo/Img/avatar 
+    avatar-dir: C:/Users/trimx1/zzz/demo/Img/avatar
   public:
-    avatar-base-url: /img/avatar     
+    avatar-base-url: /img/avatar
