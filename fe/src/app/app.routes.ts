@@ -1,8 +1,7 @@
 import { Routes } from '@angular/router';
-import { DriverComponent } from './driver/driver.component';
-import { DriverProfileComponent } from './driver/driver-profile.component';
-import { DriverWalletComponent } from './driver/driver-wallet.component';
-
+import { DriverComponent } from './pages/driver/driver.component';
+import { DriverProfileComponent } from './pages/driver/driver-profile.component';
+import { DriverWalletComponent } from './pages/driver/driver-wallet.component';
 import { Login } from './pages/auth/login/login';
 import { Welcome } from './pages/welcome/welcome';
 import { Register } from './pages/auth/register/register';
@@ -24,9 +23,6 @@ export const routes: Routes = [
   { path: 'login', component: Login, canActivate: [publicGuard] },
   { path: 'welcome', component: Welcome },
   { path: 'register', component: Register, canActivate: [publicGuard] },
-
-  { path: 'driver', component: DriverComponent },
-  { path: 'driver-profile', component: DriverProfileComponent },
 
   { path: 'profile', component: Profile, canActivate: [authGuard] },
   { path: 'userBooking', component: userBooking },

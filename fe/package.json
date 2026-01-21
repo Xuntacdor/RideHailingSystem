@@ -31,7 +31,7 @@
     "@angular/router": "^21.1.0",
     "jwt-decode": "^4.0.0",
     "rxjs": "~7.8.0",
-    "trackasia-gl": "^2.0.1",
+    "trackasia-gl": "^1.0.2",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
