@@ -7,6 +7,13 @@ export interface ApiResponse<T> {
   results: T;
 }
 
+export interface jwtPayload {
+  userId: string;
+  name: string;
+  imageUrl: string;
+  scope: string;
+}
+
 /**
  * Authentication models
  */
@@ -69,10 +76,11 @@ export interface UserRequest {
  */
 export interface DriverResponse {
   id: string;
-  userId: string;
+  user: UserResponse;
   licenseNumber: string;
-  licenseExpiry: string;
-  status: string;
+  driverStatus: string;
+  address: string;
+  avatarUrl: string;
   rating: number;
   totalRides: number;
   imageUrl?: string;
@@ -91,24 +99,40 @@ export interface DriverRequest {
  */
 export interface RideResponse {
   id: string;
-  customerId: string;
-  driverId?: string;
-  pickupLocation: string;
-  dropoffLocation: string;
+  customer?: UserResponse;
+  driver?: DriverResponse;
+  pickupLocation?: string; // Backend uses startLocation
+  dropoffLocation?: string; // Backend uses endLocation
+  startLocation: string;
+  endLocation: string;
   status: string;
   fare: number;
   distance: number;
-  duration: number;
-  createdAt: string;
-  updatedAt: string;
+  startTime?: number;
+  endTime?: number;
+  vehicleType: string;
 }
 
 export interface RideRequest {
   customerId: string;
-  pickupLocation: string;
-  dropoffLocation: string;
-  fare?: number;
-  distance?: number;
+  driverId?: string;
+  startTime?: number;
+  endTime?: number;
+  startLocation: string;
+  endLocation: string;
+  customerLatitude: number;
+  customerLongitude: number;
+  distance: number;
+  fare: number;
+  status?: string;
+  vehicleType: string;
+}
+
+export interface CreateRideResponse {
+  rideRequestId: string;
+  status: string;
+  message: string;
+  nearestDriversCount: number;
 }
 
 export interface UpdateRideStatusRequest {

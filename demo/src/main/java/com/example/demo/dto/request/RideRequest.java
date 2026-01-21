@@ -17,16 +17,13 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RideRequest {
-    @NotNull(message = "DRIVER_ID_NOT_NULL")
     String driverId;
 
     @NotNull(message = "CUSTOMER_ID_NOT_NULL")
     String customerId;
 
-    @NotNull(message = "START_TIME_NOT_NULL")
     Long startTime;
 
-    @NotNull(message = "END_TIME_NOT_NULL")
     Long endTime;
 
     @NotNull(message = "START_LOCATION_NOT_NULL")
@@ -35,13 +32,18 @@ public class RideRequest {
     @NotNull(message = "END_LOCATION_NOT_NULL")
     String endLocation;
 
+    @NotNull(message = "CUSTOMER_LATITUDE_NOT_NULL")
+    Double customerLatitude;
+
+    @NotNull(message = "CUSTOMER_LONGITUDE_NOT_NULL")
+    Double customerLongitude;
+
     @NotNull(message = "DISTANCE_NOT_NULL")
     Long distance;
 
     @NotNull(message = "FARE_NOT_NULL")
     Long fare;
 
-    @NotNull(message = "STATUS_NOT_NULL")
     Status status;
 
     @NotNull(message = "VEHICLE_TYPE_NOT_NULL")

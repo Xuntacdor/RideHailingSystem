@@ -11,7 +11,7 @@ spring:
   datasource:
     url: ${DATABASE_URL:jdbc:sqlserver://localhost:1433;databaseName=zzzz;encrypt=false;trustServerCertificate=true;}
     username: ${DATABASE_USERNAME:sa}
-    password: ${DATABASE_PASSWORD:12345}
+    password: ${DATABASE_PASSWORD:123}
   jpa:
     properties:
       hibernate:

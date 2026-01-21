@@ -30,83 +30,95 @@ import lombok.extern.slf4j.Slf4j;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class DriverController {
-    DriverService driverService;
+        DriverService driverService;
 
-    @PostMapping
-    public ApiResponse<DriverResponse> createDriver(@RequestBody @Validated DriverRequest request) {
-        log.info("Creating driver for user: {}", request.getUserId());
-        return ApiResponse.<DriverResponse>builder()
-                .code(200)
-                .results(driverService.createDriver(request))
-                .build();
-    }
+        @PostMapping
+        public ApiResponse<DriverResponse> createDriver(@RequestBody @Validated DriverRequest request) {
+                log.info("Creating driver for user: {}", request.getUserId());
+                return ApiResponse.<DriverResponse>builder()
+                                .code(200)
+                                .results(driverService.createDriver(request))
+                                .build();
+        }
 
-    @GetMapping("/{id}")
-    public ApiResponse<DriverResponse> getDriverById(@PathVariable String id) {
-        log.info("Getting driver by ID: {}", id);
-        return ApiResponse.<DriverResponse>builder()
-                .code(200)
-                .results(driverService.getDriverById(id))
-                .build();
-    }
+        @GetMapping("/{id}")
+        public ApiResponse<DriverResponse> getDriverById(@PathVariable String id) {
+                log.info("Getting driver by ID: {}", id);
+                return ApiResponse.<DriverResponse>builder()
+                                .code(200)
+                                .results(driverService.getDriverById(id))
+                                .build();
+        }
 
-    @GetMapping("/user/{userId}")
-    public ApiResponse<DriverResponse> getDriverByUserId(@PathVariable String userId) {
-        log.info("Getting driver by user ID: {}", userId);
-        return ApiResponse.<DriverResponse>builder()
-                .code(200)
-                .results(driverService.getDriverByUserId(userId))
-                .build();
-    }
+        @GetMapping("/user/{userId}")
+        public ApiResponse<DriverResponse> getDriverByUserId(@PathVariable String userId) {
+                log.info("Getting driver by user ID: {}", userId);
+                return ApiResponse.<DriverResponse>builder()
+                                .code(200)
+                                .results(driverService.getDriverByUserId(userId))
+                                .build();
+        }
 
-    @PutMapping("/{id}")
-    public ApiResponse<DriverResponse> updateDriver(
-            @PathVariable String id,
-            @RequestBody @Validated DriverRequest request) {
-        log.info("Updating driver with ID: {}", id);
-        return ApiResponse.<DriverResponse>builder()
-                .code(200)
-                .results(driverService.updateDriver(id, request))
-                .build();
-    }
+        @PutMapping("/{id}")
+        public ApiResponse<DriverResponse> updateDriver(
+                        @PathVariable String id,
+                        @RequestBody @Validated DriverRequest request) {
+                log.info("Updating driver with ID: {}", id);
+                return ApiResponse.<DriverResponse>builder()
+                                .code(200)
+                                .results(driverService.updateDriver(id, request))
+                                .build();
+        }
 
-    @PutMapping("/{id}/status")
-    public ApiResponse<DriverResponse> updateDriverStatus(
-            @PathVariable String id,
-            @RequestParam String status) {
-        log.info("Updating driver status for ID: {} to {}", id, status);
-        return ApiResponse.<DriverResponse>builder()
-                .code(200)
-                .results(driverService.updateDriverStatus(id, status))
-                .build();
-    }
+        @PutMapping("/{id}/status")
+        public ApiResponse<DriverResponse> updateDriverStatus(
+                        @PathVariable String id,
+                        @RequestParam String status) {
+                log.info("Updating driver status for ID: {} to {}", id, status);
+                return ApiResponse.<DriverResponse>builder()
+                                .code(200)
+                                .results(driverService.updateDriverStatus(id, status))
+                                .build();
+        }
 
-    @PostMapping("/{id}/avatar")
-    public ApiResponse<DriverResponse> uploadDriverAvatar(
-            @PathVariable String id,
-            @RequestPart("file") MultipartFile file) {
-        log.info("Uploading avatar for driver ID: {}", id);
-        return ApiResponse.<DriverResponse>builder()
-                .code(200)
-                .results(driverService.uploadDriverAvatar(id, file))
-                .build();
-    }
+        @PostMapping("/{id}/avatar")
+        public ApiResponse<DriverResponse> uploadDriverAvatar(
+                        @PathVariable String id,
+                        @RequestPart("file") MultipartFile file) {
+                log.info("Uploading avatar for driver ID: {}", id);
+                return ApiResponse.<DriverResponse>builder()
+                                .code(200)
+                                .results(driverService.uploadDriverAvatar(id, file))
+                                .build();
+        }
 
-    @GetMapping
-    public ApiResponse<List<DriverResponse>> getAllDrivers() {
-        log.info("Getting all drivers");
-        return ApiResponse.<List<DriverResponse>>builder()
-                .code(200)
-                .results(driverService.getAllDrivers())
-                .build();
-    }
+        @GetMapping
+        public ApiResponse<List<DriverResponse>> getAllDrivers() {
+                log.info("Getting all drivers");
+                return ApiResponse.<List<DriverResponse>>builder()
+                                .code(200)
+                                .results(driverService.getAllDrivers())
+                                .build();
+        }
 
-    @GetMapping("/status/{status}")
-    public ApiResponse<List<DriverResponse>> getDriversByStatus(@PathVariable String status) {
-        log.info("Getting drivers with status: {}", status);
-        return ApiResponse.<List<DriverResponse>>builder()
-                .code(200)
-                .results(driverService.getDriversByStatus(status))
-                .build();
-    }
+        @GetMapping("/status/{status}")
+        public ApiResponse<List<DriverResponse>> getDriversByStatus(@PathVariable String status) {
+                log.info("Getting drivers with status: {}", status);
+                return ApiResponse.<List<DriverResponse>>builder()
+                                .code(200)
+                                .results(driverService.getDriversByStatus(status))
+                                .build();
+        }
+
+        @GetMapping("/nearest")
+        public ApiResponse<List<DriverResponse>> getNearestDrivers(
+                        @RequestParam Double lat,
+                        @RequestParam Double lng,
+                        @RequestParam(defaultValue = "10") int limit) {
+                log.info("Getting {} nearest drivers for lat: {}, lng: {}", limit, lat, lng);
+                return ApiResponse.<List<DriverResponse>>builder()
+                                .code(200)
+                                .results(driverService.getNearestDrivers(lat, lng, limit))
+                                .build();
+        }
 }

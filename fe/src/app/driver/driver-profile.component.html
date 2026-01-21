@@ -1,0 +1,33 @@
+<div class="profile-container">
+
+  <!-- HEADER -->
+  <div class="profile-header">
+    <img class="avatar" [src]="driverAvatar">
+    <h3>{{ driverName }}</h3>
+    <p>{{ driverPhone }}</p>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat-item">
+      <p>Total Earning</p>
+      <h4>₹{{ totalEarning }}</h4>
+    </div>
+    <div class="stat-item">
+      <p>Total Trips</p>
+      <h4>{{ totalTrips }}</h4>
+    </div>
+    <div class="stat-item">
+      <p>Total Login Hrs</p>
+      <h4>{{ totalLoginHours }} Hrs</h4>
+    </div>
+  </div>
+
+  <!-- MENU -->
+  <div class="menu">
+    <div class="menu-item" (click)="goToWallet()">💰 Ví của tôi</div>
+    <div class="menu-item">📋 Lịch sử chuyến đi</div>
+    <div class="menu-item logout" (click)="logout()">🚪 Đăng xuất</div>
+  </div>
+
+</div>

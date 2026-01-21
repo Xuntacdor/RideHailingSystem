@@ -20,10 +20,7 @@
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
             "assets": [
-              {
-                "glob": "**/*",
-                "input": "public"
-              }
+              "src/assets"
             ],
             "styles": [
               "src/styles.css"
@@ -63,7 +60,12 @@
               "buildTarget": "fe:build:development"
             }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "development",
+          "options": {
+            "allowedHosts": [
+              "tied-lavone-nonubiquitously.ngrok-free.dev"
+            ]
+          }
         },
         "test": {
           "builder": "@angular/build:unit-test"
