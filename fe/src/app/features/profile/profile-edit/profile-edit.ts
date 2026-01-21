@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth';
 import { UserRequest } from '../../../core/models/api-response.model';
+import { ToastService } from '../../../core/services/toast';
 
 @Component({
   selector: 'app-profile-edit',
@@ -17,6 +18,7 @@ export class ProfileEdit implements OnInit {
   private userService = inject(UserService);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private toastService = inject(ToastService);
 
   editForm: FormGroup;
   userId: string = '';
@@ -68,7 +70,7 @@ export class ProfileEdit implements OnInit {
 
     const currentUser = this.authService.currentUser();
     if (!currentUser) {
-      alert('Phiên đăng nhập hết hạn.');
+      this.toastService.show('Phiên đăng nhập hết hạn.');
       this.router.navigate(['/login']);
       return;
     }
@@ -101,7 +103,7 @@ export class ProfileEdit implements OnInit {
     this.userService.updateUserProfile(this.userId, updateData).subscribe({
       next: (res) => {
         this.isSubmitting.set(false);
-        alert('Cập nhật thành công!');
+        this.toastService.show('Cập nhật thành công!');
 
         // Cập nhật lại Signal để UI toàn app thay đổi
         if (res.results) {
@@ -114,7 +116,7 @@ export class ProfileEdit implements OnInit {
         this.isSubmitting.set(false);
         console.error('Update Failed:', err);
         const msg = err.error?.message || 'Lỗi cập nhật hồ sơ.';
-        alert(msg);
+        this.toastService.show(msg);
       }
     });
   }

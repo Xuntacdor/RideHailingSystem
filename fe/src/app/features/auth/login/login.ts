@@ -4,11 +4,11 @@ import { Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth';
 import { LoginRequest } from '../../../core/models';
-
+import { LucideAngularModule, ChevronLeft } from 'lucide-angular';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, RouterLink, ReactiveFormsModule],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule, LucideAngularModule],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
@@ -16,6 +16,7 @@ export class Login {
   private authService = inject(AuthService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  readonly ChevronLeft = ChevronLeft;
 
   loginForm: FormGroup;
   isSubmitting = signal(false);
@@ -28,10 +29,11 @@ export class Login {
       password: ['', [Validators.required, Validators.minLength(6)]],
     });
   }
+  back() {
+    this.router.navigate(['/welcome']);
+  }
 
-  /**
-   * Handle form submission
-   */
+
   onSubmit(): void {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
@@ -51,14 +53,12 @@ export class Login {
         console.log('Login successful:', response);
         this.isSubmitting.set(false);
 
-        // Navigate to home/dashboard after successful login
         this.router.navigate(['/profile']);
       },
       error: (error) => {
         console.error('Login failed:', error);
         this.isSubmitting.set(false);
 
-        // Set user-friendly error message
         if (error.status === 401) {
           this.errorMessage.set('Invalid email or password');
         } else if (error.status === 0) {
@@ -70,17 +70,11 @@ export class Login {
     });
   }
 
-  /**
-   * Check if a form field has an error
-   */
   hasError(fieldName: string, errorType: string): boolean {
     const field = this.loginForm.get(fieldName);
     return !!(field && field.hasError(errorType) && field.touched);
   }
 
-  /**
-   * Get error message for a field
-   */
   getErrorMessage(fieldName: string): string {
     const field = this.loginForm.get(fieldName);
     if (!field || !field.touched) return '';

@@ -5,6 +5,7 @@ import { AuthService } from '../../core/services/auth';
 import { UserService } from '../../core/services/user.service';
 import { UserResponse } from '../../core/models/api-response.model';
 import { jwtDecode } from 'jwt-decode';
+import { ToastService } from '../../core/services/toast';
 
 @Component({
   selector: 'app-profile',
@@ -17,6 +18,7 @@ export class Profile implements OnInit {
   private router = inject(Router);
   public authService = inject(AuthService); // Đổi thành public để HTML dùng được
   private userService = inject(UserService);
+  private toastService = inject(ToastService);
 
   currentUser = signal<UserResponse | null>(null);
 
@@ -46,42 +48,67 @@ export class Profile implements OnInit {
     },
   ];
   // ------------------------------------
+  // Thêm method này
+  onFileSelected(event: any): void {
+    const file: File = event.target.files[0];
+    const user = this.currentUser();
 
+    if (file && user) {
+      // Validate sơ bộ client-side (tùy chọn)
+      if (file.size > 5 * 1024 * 1024) { // 5MB
+        this.toastService.show('File quá lớn!');
+        return;
+      }
+
+
+      this.userService.uploadAvatar(user.id, file).subscribe({
+        next: (response) => {
+          if (response.results) {
+
+
+            const updatedUser = { ...response.results };
+            updatedUser.imageUrl = updatedUser.imageUrl + '?t=' + new Date().getTime();
+
+            this.currentUser.set(updatedUser);
+            this.authService.currentUser.set(updatedUser);
+            this.toastService.show('Cập nhật ảnh đại diện thành công!');
+          }
+        },
+        error: (err) => {
+          console.error('Upload lỗi:', err);
+          this.toastService.show('Có lỗi xảy ra khi upload ảnh.');
+        }
+      });
+    }
+  }
   ngOnInit(): void {
     this.fetchUserData();
   }
 
   fetchUserData(): void {
-    // 1. Nếu đã có thông tin trong Signal (vừa login xong), dùng luôn
     const currentUser = this.authService.currentUser();
     if (currentUser) {
       this.currentUser.set(currentUser);
-      // Nếu muốn chắc chắn dữ liệu mới nhất, có thể gọi API update lại ở đây (dùng ID)
       return;
     }
 
-    // 2. Nếu Signal rỗng (do F5), phục hồi từ Token
     const token = this.authService.getToken();
     if (token) {
       try {
         const decoded: any = jwtDecode(token);
 
-        // 'sub' trong token của bạn là User ID (UUID)
         const userId = decoded.sub;
 
         if (userId) {
-          // SỬA LỖI Ở ĐÂY: Gọi API getUserById thay vì getUserByEmail
           this.userService.getUserById(userId).subscribe({
             next: (response) => {
               if (response.results) {
                 this.currentUser.set(response.results);
-                // Cập nhật lại vào AuthService để dùng chung cho toàn app
                 this.authService.currentUser.set(response.results);
               }
             },
             error: (err) => {
               console.error('Lỗi fetch user:', err);
-              // Token không hợp lệ hoặc user không tồn tại -> Logout
               this.logout();
             },
           });
@@ -91,7 +118,6 @@ export class Profile implements OnInit {
         this.logout();
       }
     } else {
-      // Không có token -> Về trang login
       this.router.navigate(['/login']);
     }
   }
