@@ -25,9 +25,6 @@ export const routes: Routes = [
   { path: 'welcome', component: Welcome },
   { path: 'register', component: Register, canActivate: [publicGuard] },
 
-  { path: 'driver', component: DriverComponent },
-  { path: 'driver-profile', component: DriverProfileComponent },
-
   { path: 'profile', component: Profile, canActivate: [authGuard] },
   { path: 'userBooking', component: userBooking },
   {

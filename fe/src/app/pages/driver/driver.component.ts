@@ -1,19 +1,23 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { MapComponent } from '../../components/userBooking/map/map.component';
 
 @Component({
   selector: 'app-driver',
   standalone: true,
-  imports: [CommonModule],   // ⭐ QUAN TRỌNG
+  imports: [CommonModule, MapComponent], // ⭐ thêm MapComponent
   templateUrl: './driver.component.html',
   styleUrls: ['./driver.component.css']
 })
 export class DriverComponent {
 
   isOnline = false;
-
-  driverAvatar = 'assets/avatar.png'; // ảnh có thể thay đổi
+  driverAvatar = 'assets/avatar.png';
+  // 👇 data cho map
+  origin = null;
+  destination = null;
+  drivers = [];
 
   constructor(private router: Router) {}
 
@@ -23,5 +27,13 @@ export class DriverComponent {
 
   goToProfile() {
     this.router.navigate(['/driver-profile']);
+  }
+
+  onMapReady() {
+    console.log('Map ready');
+  }
+
+  onUserLocationDetected(location: { lng: number; lat: number }) {
+    console.log('Driver location:', location);
   }
 }

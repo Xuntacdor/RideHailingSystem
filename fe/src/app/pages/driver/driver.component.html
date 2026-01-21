@@ -1,7 +1,13 @@
 <div class="driver-container">
   <!-- MAP (placeholder) -->
   <div class="map">
-    <div class="location-icon">📍</div>
+    <app-map
+      [origin]="origin"
+      [destination]="destination"
+      [drivers]="drivers"
+      (mapReady)="onMapReady()"
+      (userLocationDetected)="onUserLocationDetected($event)">
+    </app-map>
   </div>
 
   <!-- TOP INFO BAR -->
@@ -18,7 +24,7 @@
 
   <!-- CENTER MESSAGE -->
   <div class="status-message" *ngIf="!isOnline">
-    Nhấn để bật/tắt chế độ<br />
+    Nhấn để bật/tắt chế độ<br/>
     <b>sẵn sàng & tự động nhận cuốc</b>
   </div>
 
