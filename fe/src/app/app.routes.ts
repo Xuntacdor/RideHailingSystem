@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
-import { DriverComponent } from '../driver/driver.component';
-import { DriverProfileComponent } from '../driver/driver-profile.component';
+import { DriverComponent } from './driver/driver.component';
+import { DriverProfileComponent } from './driver/driver-profile.component';
+import { DriverWalletComponent } from './driver/driver-wallet.component';
 
 import { Login } from './pages/auth/login/login';
 import { Welcome } from './pages/welcome/welcome';
@@ -14,6 +15,12 @@ import { PaymentMethods } from './pages/profile/payment-methods/payment-methods'
 import { ProfileEdit } from './pages/profile/profile-edit/profile-edit';
 
 export const routes: Routes = [
+  { path: '', redirectTo: 'driver', pathMatch: 'full' },
+
+  { path: 'driver', component: DriverComponent },
+  { path: 'driver-profile', component: DriverProfileComponent },
+  { path: 'driver-wallet', component: DriverWalletComponent },
+
   { path: 'login', component: Login, canActivate: [publicGuard] },
   { path: 'welcome', component: Welcome },
   { path: 'register', component: Register, canActivate: [publicGuard] },
@@ -50,3 +57,4 @@ export const routes: Routes = [
   { path: '', redirectTo: 'welcome', pathMatch: 'full' },
   { path: '**', redirectTo: 'welcome' },
 ];
+

@@ -1,0 +1,25 @@
+<div class="wallet-container">
+
+  <!-- HEADER -->
+  <div class="wallet-header">
+    <h3>💰 Ví của tôi</h3>
+    <p>Số dư hiện tại</p>
+    <h2>₹{{ balance }}</h2>
+  </div>
+
+  <!-- TRANSACTION HISTORY -->
+  <div class="wallet-history">
+    <h4>Lịch sử giao dịch</h4>
+    
+    <div class="tx-item" *ngFor="let tx of transactions">
+      <div>
+        <strong>{{ tx.trip }}</strong>
+        <p>{{ tx.date }}</p>
+      </div>
+      <span [class.plus]="tx.amount > 0">
+        {{ tx.amount > 0 ? '+' : '' }}₹{{ tx.amount }}
+      </span>
+    </div>
+  </div>
+
+</div>
