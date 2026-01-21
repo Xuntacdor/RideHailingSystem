@@ -1,6 +1,5 @@
-package com.example.demo.dto.response;
+package com.example.demo.dto;
 
-import com.example.demo.enums.Status;
 import com.example.demo.enums.VehicleType;
 
 import lombok.AccessLevel;
@@ -15,21 +14,16 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class RideResponse {
-    String id;
-
-    DriverResponse driver;
-    UserResponse customer;
-
-    Long startTime;
-    Long endTime;
+public class RideNotification {
+    String rideRequestId;
+    String customerId;
+    String customerName;
     String startLocation;
     String endLocation;
+    Double customerLatitude;
+    Double customerLongitude;
     Long distance;
     Long fare;
-    Status status;
     VehicleType vehicleType;
-
-    // List<ReviewResponse> reviews;
-    // List<PaymentResponse> payments;
+    Long timestamp;
 }

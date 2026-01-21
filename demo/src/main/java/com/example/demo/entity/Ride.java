@@ -1,4 +1,5 @@
 package com.example.demo.entity;
+
 import java.util.List;
 
 import com.example.demo.enums.Status;
@@ -31,7 +32,7 @@ public class Ride {
 
     @ManyToOne
     @JoinColumn(name = "driver_id")
-    User driver;
+    Driver driver;
 
     @ManyToOne
     @JoinColumn(name = "customer_id")
@@ -51,5 +52,5 @@ public class Ride {
 
     @OneToMany(mappedBy = "ride")
     List<Payment> payments;
-    
+
 }

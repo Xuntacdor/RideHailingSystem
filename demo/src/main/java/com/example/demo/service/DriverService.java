@@ -30,6 +30,8 @@ public class DriverService {
     DriverRepository driverRepository;
     UserRepository userRepository;
     ImageStorageService imageStorageService;
+    DriverMapper driverMapper;
+    NotificationService notificationService;
 
     public DriverResponse createDriver(DriverRequest request) {
         User user = userRepository.findById(request.getUserId())
@@ -43,23 +45,23 @@ public class DriverService {
             throw new AppException(ErrorCode.USER_EXISTED);
         }
 
-        Driver driver = DriverMapper.toEntity(request, user);
+        Driver driver = driverMapper.toEntity(request, user);
         driverRepository.save(driver);
 
         log.info("Driver created successfully with ID: {}", driver.getId());
-        return DriverMapper.toResponse(driver);
+        return driverMapper.toResponse(driver);
     }
 
     public DriverResponse getDriverById(String id) {
         Driver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        return DriverMapper.toResponse(driver);
+        return driverMapper.toResponse(driver);
     }
 
     public DriverResponse getDriverByUserId(String userId) {
         Driver driver = driverRepository.findByUserId(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        return DriverMapper.toResponse(driver);
+        return driverMapper.toResponse(driver);
     }
 
     public DriverResponse updateDriver(String id, DriverRequest request) {
@@ -77,7 +79,7 @@ public class DriverService {
         driverRepository.save(driver);
 
         log.info("Driver updated successfully with ID: {}", driver.getId());
-        return DriverMapper.toResponse(driver);
+        return driverMapper.toResponse(driver);
     }
 
     public DriverResponse updateDriverStatus(String id, String status) {
@@ -88,7 +90,7 @@ public class DriverService {
         driverRepository.save(driver);
 
         log.info("Driver status updated to {} for ID: {}", status, driver.getId());
-        return DriverMapper.toResponse(driver);
+        return driverMapper.toResponse(driver);
     }
 
     public DriverResponse uploadDriverAvatar(String id, MultipartFile file) {
@@ -100,18 +102,41 @@ public class DriverService {
         driverRepository.save(driver);
 
         log.info("Driver avatar uploaded successfully for ID: {}", driver.getId());
-        return DriverMapper.toResponse(driver);
+        return driverMapper.toResponse(driver);
     }
 
     public List<DriverResponse> getAllDrivers() {
         return driverRepository.findAll().stream()
-                .map(DriverMapper::toResponse)
+                .map(driverMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
     public List<DriverResponse> getDriversByStatus(String status) {
         return driverRepository.findByDriverStatus(status).stream()
-                .map(DriverMapper::toResponse)
+                .map(driverMapper::toResponse)
                 .collect(Collectors.toList());
     }
+
+    public List<DriverResponse> getNearestDrivers(Double lat, Double lng, int limit) {
+        List<Driver> drivers = driverRepository.findNearestDrivers(lat, lng,
+                org.springframework.data.domain.PageRequest.of(0, limit));
+        return drivers.stream()
+                .map(driverMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    public void updateDriverPosition(String id, Double lat, Double lng) {
+        Driver driver = driverRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        driver.setLatitude(lat);
+        driver.setLongitude(lng);
+        driverRepository.save(driver);
+    }
+
+    public void getDriverPosition(String id) {
+        Driver driver = driverRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        notificationService.notifyDriverPositionUpdate(id, driver.getLatitude(), driver.getLongitude());
+    }
+
 }
