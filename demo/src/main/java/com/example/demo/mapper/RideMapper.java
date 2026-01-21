@@ -18,12 +18,16 @@ public class RideMapper {
     @Autowired
     private final UserRepository userRepository;
     @Autowired
+    private final com.example.demo.repository.DriverRepository driverRepository;
+    @Autowired
+    private final DriverMapper driverMapper;
+    @Autowired
     private final UserMapper userMapper;
     // private final ReviewMapper reviewMapper;
     // private final PaymentMapper paymentMapper;
 
     public Ride toEntity(RideRequest dto) {
-        User driver = userRepository.findById(dto.getDriverId()).orElse(null);
+        com.example.demo.entity.Driver driver = driverRepository.findById(dto.getDriverId()).orElse(null);
         User customer = userRepository.findById(dto.getCustomerId()).orElse(null);
 
         return Ride.builder()
@@ -41,22 +45,10 @@ public class RideMapper {
     }
 
     public RideResponse toResponse(Ride entity) {
-        UserResponse driver = entity.getDriver() != null ? userMapper.toResponse(entity.getDriver()) : null;
+        com.example.demo.dto.response.DriverResponse driver = entity.getDriver() != null
+                ? driverMapper.toResponse(entity.getDriver())
+                : null;
         UserResponse customer = entity.getCustomer() != null ? userMapper.toResponse(entity.getCustomer()) : null;
-
-        // List<com.example.demo.dto.response.ReviewResponse> reviews = null;
-        // if (entity.getReviews() != null) {
-        //     reviews = entity.getReviews().stream()
-        //             .map(reviewMapper::toResponse)
-        //             .collect(Collectors.toList());
-        // }
-
-        // List<com.example.demo.dto.response.PaymentResponse> payments = null;
-        // if (entity.getPayments() != null) {
-        //     payments = entity.getPayments().stream()
-        //             .map(paymentMapper::toResponse)
-        //             .collect(Collectors.toList());
-        // }
 
         return RideResponse.builder()
                 .id(entity.getId())
@@ -70,8 +62,6 @@ public class RideMapper {
                 .fare(entity.getFare())
                 .status(entity.getStatus())
                 .vehicleType(entity.getVehicleType())
-                // .reviews(reviews)
-                // .payments(payments)
                 .build();
     }
 }

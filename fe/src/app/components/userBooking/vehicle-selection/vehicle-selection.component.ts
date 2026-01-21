@@ -62,34 +62,18 @@ import { formatCurrency } from '@angular/common';
   `]
 })
 export class VehicleSelectionComponent {
-  @Input() selectedVehicle: VehicleType = VehicleType.BIKE;
+  @Input() selectedVehicle: VehicleType = VehicleType.MOTORBIKE;
   @Input() routeInfo: RouteInfo | null = null;
   @Output() vehicleSelected = new EventEmitter<VehicleType>();
   @Output() bookRideClicked = new EventEmitter<VehicleType>();
 
   vehicles: (Vehicle & { image: string })[] = [
     {
-      type: VehicleType.BIKE,
+      type: VehicleType.MOTORBIKE,
       name: 'Bike',
       description: 'Fast and affordable for 1 person',
       icon: '🛵',
       priceMultiplier: 1.0,
-      image: '/images/motorbike.png'
-    },
-    {
-      type: VehicleType.BIKE_PREMIUM,
-      name: 'Bike Premium',
-      description: 'Comfortable scooter with premium features',
-      icon: '🛵',
-      priceMultiplier: 1.2,
-      image: '/images/motorbike.png'
-    },
-    {
-      type: VehicleType.BIKE_DELIVERY,
-      name: 'Bike Delivery',
-      description: 'Express delivery service',
-      icon: '🛵',
-      priceMultiplier: 1.5,
       image: '/images/motorbike.png'
     },
     {
@@ -98,14 +82,6 @@ export class VehicleSelectionComponent {
       description: 'Comfortable ride for 4 people',
       icon: '🚗',
       priceMultiplier: 2.5,
-      image: '/images/car.png'
-    },
-    {
-      type: VehicleType.CAR_PREMIUM,
-      name: 'Car Premium',
-      description: 'Luxury ride with premium comfort',
-      icon: '🚗',
-      priceMultiplier: 3.5,
       image: '/images/car.png'
     }
   ];

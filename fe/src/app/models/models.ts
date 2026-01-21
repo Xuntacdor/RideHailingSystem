@@ -25,11 +25,8 @@ export interface Coordinate {
 }
 
 export enum VehicleType {
-    BIKE = 'bike',
-    BIKE_PREMIUM = 'bike_premium',
-    BIKE_DELIVERY = 'bike_delivery',
+    MOTORBIKE = 'motorbike',
     CAR = 'car',
-    CAR_PREMIUM = 'car_premium'
 }
 
 export interface Vehicle {
@@ -57,30 +54,15 @@ export interface VehiclePrice {
 }
 
 export const VEHICLE_PRICES: Record<string, VehiclePrice> = {
-    bike: {
+    motorbike: {
         baseFare: 10000,
         pricePerKm: 4000,
         pricePerMinute: 200
-    },
-    bike_premium: {
-        baseFare: 12000,
-        pricePerKm: 4500,
-        pricePerMinute: 250
-    },
-    bike_delivery: {
-        baseFare: 15000,
-        pricePerKm: 5000,
-        pricePerMinute: 300
     },
     car: {
         baseFare: 25000,
         pricePerKm: 9000,
         pricePerMinute: 400
-    },
-    car_premium: {
-        baseFare: 35000,
-        pricePerKm: 12000,
-        pricePerMinute: 500
     }
 };
 

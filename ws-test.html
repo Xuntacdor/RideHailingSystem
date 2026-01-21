@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Driver WebSocket Tester</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .box {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        #logs {
+            background: #f9f9f9;
+            height: 200px;
+            overflow-y: scroll;
+            padding: 10px;
+            border: 1px solid #ddd;
+            font-family: monospace;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+
+        .received {
+            color: #28a745;
+        }
+
+        .sent {
+            color: #007bff;
+        }
+
+        .error {
+            color: #dc3545;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 8px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        button.danger {
+            background: #dc3545;
+        }
+
+        button.danger:hover {
+            background: #c82333;
+        }
+
+        button.success {
+            background: #28a745;
+        }
+
+        button.success:hover {
+            background: #218838;
+        }
+
+        input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 8px;
+        }
+
+        .ride-request {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+
+        .ride-request h4 {
+            margin-top: 0;
+            color: #856404;
+        }
+
+        .ride-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .ride-info-item {
+            font-size: 14px;
+        }
+
+        .ride-info-item strong {
+            color: #495057;
+        }
+
+        #rideRequests {
+            min-height: 100px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+
+<body>
+    <h1>🚗 Driver WebSocket Tester</h1>
+
+    <div class="box">
+        <h3>1. Connection</h3>
+        <button onclick="connect()">Connect</button>
+        <button onclick="disconnect()" class="danger">Disconnect</button>
+        <span id="status" style="margin-left: 10px; color: red; font-weight: bold">● Disconnected</span>
+    </div>
+
+    <div class="box">
+        <h3>2. Subscribe to Ride Requests</h3>
+        Driver ID: <input type="text" id="driverId" value="da4312b2-b20a-4041-8e23-ffd205f69c33" style="width: 400px">
+        <button onclick="subscribe()" class="success">Subscribe</button>
+    </div>
+
+    <div class="box">
+        <h3>3. Incoming Ride Requests</h3>
+        <div id="rideRequests">
+            <div class="empty-state">
+                <p>📭 No ride requests yet. Connect and subscribe to start receiving requests.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="box">
+        <h3>4. Logs</h3>
+        <div id="logs"></div>
+        <button onclick="clearLogs()" style="margin-top: 10px">Clear Logs</button>
+    </div>
+
+    <script>
+        var stompClient = null;
+        var currentDriverId = null;
+
+        function log(message, type = '') {
+            var logs = document.getElementById("logs");
+            var p = document.createElement("p");
+            p.textContent = new Date().toLocaleTimeString() + " - " + message;
+            if (type) p.className = type;
+            logs.appendChild(p);
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+        }
+
+        function connect() {
+            var socket = new SockJS('http://localhost:8080/ws');
+            stompClient = Stomp.over(socket);
+
+            stompClient.connect({}, function (frame) {
+                document.getElementById("status").style.color = "#28a745";
+                document.getElementById("status").textContent = "● Connected";
+                log("Connected successfully", 'received');
+            }, function (error) {
+                log("Connection Error: " + error, 'error');
+                document.getElementById("status").style.color = "#dc3545";
+                document.getElementById("status").textContent = "● Connection Failed";
+            });
+        }
+
+        function disconnect() {
+            if (stompClient !== null) {
+                stompClient.disconnect();
+            }
+            document.getElementById("status").style.color = "#dc3545";
+            document.getElementById("status").textContent = "● Disconnected";
+            log("Disconnected", 'error');
+        }
+
+        function subscribe() {
+            if (!stompClient || !stompClient.connected) {
+                alert("Please connect first!");
+                return;
+            }
+
+            currentDriverId = document.getElementById("driverId").value;
+            var topic = '/topic/driver/' + currentDriverId;
+
+            log("Subscribing to " + topic + "...", 'sent');
+
+            stompClient.subscribe(topic, function (message) {
+                log("RECEIVED RIDE REQUEST", 'received');
+                var rideData = JSON.parse(message.body);
+                displayRideRequest(rideData);
+            });
+
+            log("Subscribed successfully! Waiting for ride requests...", 'received');
+        }
+
+        function displayRideRequest(rideData) {
+            var container = document.getElementById("rideRequests");
+
+            // Remove empty state on first request
+            if (container.querySelector('.empty-state')) {
+                container.innerHTML = '';
+            }
+
+            var rideDiv = document.createElement("div");
+            rideDiv.className = "ride-request";
+            rideDiv.id = "ride-" + rideData.rideRequestId;
+
+            rideDiv.innerHTML = `
+                <h4>🚨 New Ride Request</h4>
+                <div class="ride-info">
+                    <div class="ride-info-item"><strong>From:</strong> ${rideData.startLocation || 'N/A'}</div>
+                    <div class="ride-info-item"><strong>To:</strong> ${rideData.endLocation || 'N/A'}</div>
+                    <div class="ride-info-item"><strong>Distance:</strong> ${(rideData.distance / 1000).toFixed(2)} km</div>
+                    <div class="ride-info-item"><strong>Fare:</strong> ${rideData.fare.toLocaleString()} VND</div>
+                    <div class="ride-info-item"><strong>Vehicle:</strong> ${rideData.vehicleType}</div>
+                    <div class="ride-info-item"><strong>Customer:</strong> ${rideData.customerId}</div>
+                </div>
+                <div style="margin-top: 15px;">
+                    <button class="success" onclick="acceptRide('${rideData.rideRequestId}')">✓ Accept Ride</button>
+                    <button class="danger" onclick="rejectRide('${rideData.rideRequestId}')">✗ Reject Ride</button>
+                </div>
+            `;
+
+            container.insertBefore(rideDiv, container.firstChild);
+        }
+
+        function acceptRide(rideRequestId) {
+            if (!currentDriverId) {
+                alert("Driver ID not set!");
+                return;
+            }
+
+            log("Accepting ride: " + rideRequestId, 'sent');
+
+            fetch('http://localhost:8080/api/rides/respond', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoienp6Iiwic3ViIjoiNDY4ZWFhMGEtMTdjYS00YjgwLThjZmItMDM3MzUwNTBjY2I1IiwiZXhwIjoxNzcxNTU4MzAyLCJpYXQiOjE3Njg5NjYzMDIsInVzZXJJZCI6IjQ2OGVhYTBhLTE3Y2EtNGI4MC04Y2ZiLTAzNzM1MDUwY2NiNSIsInNjb3BlIjoiUk9MRV9VU0VSIn0.bWYYnMbuVNP667zFDxpbJzg8hJHyE_pqzibuUQQpvT8'
+                },
+                body: JSON.stringify({
+                    rideRequestId: rideRequestId,
+                    driverId: currentDriverId,
+                    accepted: true
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    log("Ride accepted successfully! " + data.message, 'received');
+                    removeRideRequest(rideRequestId);
+                    alert("✓ Ride accepted successfully!");
+                })
+                .catch(error => {
+                    log("Error accepting ride: " + error, 'error');
+                    alert("Error accepting ride: " + error);
+                });
+        }
+
+        function rejectRide(rideRequestId) {
+            if (!currentDriverId) {
+                alert("Driver ID not set!");
+                return;
+            }
+
+            log("Rejecting ride: " + rideRequestId, 'sent');
+
+            fetch('http://localhost:8080/api/rides/respond', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoienp6Iiwic3ViIjoiNDY4ZWFhMGEtMTdjYS00YjgwLThjZmItMDM3MzUwNTBjY2I1IiwiZXhwIjoxNzcxNTU4MzAyLCJpYXQiOjE3Njg5NjYzMDIsInVzZXJJZCI6IjQ2OGVhYTBhLTE3Y2EtNGI4MC04Y2ZiLTAzNzM1MDUwY2NiNSIsInNjb3BlIjoiUk9MRV9VU0VSIn0.bWYYnMbuVNP667zFDxpbJzg8hJHyE_pqzibuUQQpvT8'
+                },
+                body: JSON.stringify({
+                    rideRequestId: rideRequestId,
+                    driverId: currentDriverId,
+                    accepted: false
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    log("Ride rejected. " + data.message, 'sent');
+                    removeRideRequest(rideRequestId);
+                    alert("Ride rejected. Notifying next driver...");
+                })
+                .catch(error => {
+                    log("Error rejecting ride: " + error, 'error');
+                    alert("Error rejecting ride: " + error);
+                });
+        }
+
+        function removeRideRequest(rideRequestId) {
+            var rideDiv = document.getElementById("ride-" + rideRequestId);
+            if (rideDiv) {
+                rideDiv.remove();
+            }
+
+            // Show empty state if no more requests
+            var container = document.getElementById("rideRequests");
+            if (container.children.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>📭 No pending ride requests.</p></div>';
+            }
+        }
+    </script>
+</body>
+
+</html>

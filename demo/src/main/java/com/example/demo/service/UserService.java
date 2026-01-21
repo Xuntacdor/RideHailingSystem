@@ -35,9 +35,10 @@ public class UserService {
     PasswordEncoder passwordEncoder;
     MailService mailService;
     ImageStorageService imageStorageService;
+    UserMapper userMapper;
 
     public UserResponse userRegister(UserRequest userRqDto) {
-        User user = UserMapper.toEntity(userRqDto);
+        User user = userMapper.toEntity(userRqDto);
         if (userRepository.findByEmail(userRqDto.getEmail()).isPresent()) {
             throw new AppException(ErrorCode.USER_EXISTED);
         }
@@ -47,16 +48,16 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(userRqDto.getPassword()));
 
         userRepository.save(user);
-        return UserMapper.toResponse(user);
+        return userMapper.toResponse(user);
     }
 
     public UserResponse getUserInfo(UserRequest userRqDto) {
-        return userRepository.findByUserName(userRqDto.getUserName()).map(UserMapper::toResponse)
+        return userRepository.findByUserName(userRqDto.getUserName()).map(userMapper::toResponse)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
     }
 
     public UserResponse getUserById(String id) {
-        return userRepository.findById(id).map(UserMapper::toResponse)
+        return userRepository.findById(id).map(userMapper::toResponse)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
     }
 
@@ -75,7 +76,7 @@ public class UserService {
 
         user.setImageUrl(path);
         userRepository.save(user);
-        return UserMapper.toResponse(user);
+        return userMapper.toResponse(user);
     }
 
     public UserResponse updateUserProfile(String userId, UserRequest request) {
@@ -94,7 +95,7 @@ public class UserService {
 
         userRepository.save(user);
         log.info("User profile updated for ID: {}", userId);
-        return UserMapper.toResponse(user);
+        return userMapper.toResponse(user);
     }
 
     public UserResponse changePassword(String userId, String oldPassword, String newPassword) {
@@ -109,18 +110,18 @@ public class UserService {
         userRepository.save(user);
 
         log.info("Password changed for user: {}", userId);
-        return UserMapper.toResponse(user);
+        return userMapper.toResponse(user);
     }
 
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll().stream()
-                .map(UserMapper::toResponse)
+                .map(userMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
     public UserResponse getUserByEmail(String email) {
         return userRepository.findByEmail(email)
-                .map(UserMapper::toResponse)
+                .map(userMapper::toResponse)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
     }
 
@@ -132,7 +133,7 @@ public class UserService {
         userRepository.save(user);
 
         log.info("Account status updated to {} for user: {}", status, userId);
-        return UserMapper.toResponse(user);
+        return userMapper.toResponse(user);
     }
 
     public UserResponse updateUserRole(String userId, Role role) {
@@ -143,7 +144,7 @@ public class UserService {
         userRepository.save(user);
 
         log.info("Role updated to {} for user: {}", role, userId);
-        return UserMapper.toResponse(user);
+        return userMapper.toResponse(user);
     }
 
     public void deleteUser(String userId) {

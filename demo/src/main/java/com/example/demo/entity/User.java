@@ -60,9 +60,6 @@ public class User {
     @OneToMany(mappedBy = "ratedUser")
     List<Rate> ratesReceived;
 
-    @OneToMany(mappedBy = "driver")
-    List<Ride> ridesAsDriver;
-
     @OneToMany(mappedBy = "customer")
     List<Ride> ridesAsCustomer;
 

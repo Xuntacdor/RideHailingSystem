@@ -63,7 +63,12 @@
               "buildTarget": "fe:build:development"
             }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "development",
+          "options": {
+            "allowedHosts": [
+              "tied-lavone-nonubiquitously.ngrok-free.dev"
+            ]
+          }
         },
         "test": {
           "builder": "@angular/build:unit-test"

@@ -59,7 +59,13 @@ public class SecurityConfig {
 
                         "/login/**",
 
-                        "/oauth2/**"
+                        "/oauth2/**",
+
+                        // "/api/rides/**",
+
+                        "/ws/**",
+
+                        "/ws-raw/**"
 
         };
 
@@ -117,15 +123,17 @@ public class SecurityConfig {
 
                 CorsConfiguration configuration = new CorsConfiguration();
 
-                configuration.setAllowedOrigins(Arrays.asList(
+                // configuration.setAllowedOrigins(Arrays.asList(
 
-                                "http://localhost:3000", // React
+                // "http://localhost:3000", // React
 
-                                "http://localhost:5173", // Vite
+                // "http://localhost:5173", // Vite
 
-                                "http://localhost:4200" // Angular
+                // "http://localhost:4200" // Angular
 
-                ));
+                // ));
+
+                configuration.setAllowedOriginPatterns(Arrays.asList("*"));
 
                 configuration.setAllowedMethods(Arrays.asList(
 

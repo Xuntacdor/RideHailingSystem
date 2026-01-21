@@ -45,9 +45,14 @@ public class Driver {
     String address;
     String avatarUrl;
     Double rating;
+    Double latitude;
+    Double longitude;
 
     @Builder.Default
     @OneToMany(mappedBy = "driver", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     List<VehicleRegister> vehicleRegister = new ArrayList<>();
+
+    @OneToMany(mappedBy = "driver")
+    List<Ride> ridesAsDriver;
 
 }

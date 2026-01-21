@@ -1,7 +1,8 @@
-
-package com.example.demo.dto.response;
+package com.example.demo.dto;
 
 import java.util.List;
+
+import com.example.demo.dto.request.RideRequest;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -15,13 +16,10 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class DriverResponse {
-    String id;
-    UserResponse user;
-    String licenseNumber;
-    String driverStatus;
-    String address;
-    String avatarUrl;
-    Double rating;
-    List<String> vehicleIds;
+public class PendingRide {
+    String rideRequestId;
+    RideRequest request;
+    List<String> driverIds;
+    int currentDriverIndex;
+    Long timestamp;
 }
