@@ -32,8 +32,8 @@ public class RideController {
     public ResponseEntity<java.util.Map<String, Object>> createRide(@RequestBody RideRequest request) {
         log.info("========== CREATE RIDE REQUEST RECEIVED ==========");
         log.info("Customer ID: {}", request.getCustomerId());
-        log.info("Start Location: {}", request.getStartLocation());
-        log.info("End Location: {}", request.getEndLocation());
+        log.info("Start Coordinates: [{}, {}]", request.getStartLatitude(), request.getStartLongitude());
+        log.info("End Coordinates: [{}, {}]", request.getEndLatitude(), request.getEndLongitude());
         log.info("Customer Coordinates: [{}, {}]", request.getCustomerLatitude(), request.getCustomerLongitude());
         log.info("Distance: {} meters", request.getDistance());
         log.info("Fare: {} VND", request.getFare());

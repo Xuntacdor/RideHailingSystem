@@ -13,14 +13,8 @@
 /* MAP */
 .map {
   height: 100%;
-  background: #d9d9d9;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.location-icon {
-  font-size: 32px;
+  width: 100%;
+  display: block;
 }
 
 /* TOP BAR */
@@ -75,8 +69,31 @@
   color: white;
 }
 
+
 .power-btn.online {
   background: #00b14f;
+}
+
+/* TEST MODAL BUTTON */
+.test-modal-btn {
+  position: absolute;
+  bottom: 180px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 150px;
+  height: 40px;
+  border-radius: 20px;
+  border: 2px solid #667eea;
+  font-size: 14px;
+  font-weight: bold;
+  background: white;
+  color: #667eea;
+  cursor: pointer;
+}
+
+.test-modal-btn:hover {
+  background: #667eea;
+  color: white;
 }
 
 /* STATUS BAR */
@@ -93,7 +110,7 @@
 }
 
 /* BOTTOM MENU */
-.bottom-menu {
+/* .bottom-menu {
   position: absolute;
   bottom: 0;
   left: 0;
@@ -102,7 +119,7 @@
   background: white;
   display: flex;
   border-top: 1px solid #ddd;
-}
+} */
 
 .menu-item {
   flex: 1;
@@ -117,7 +134,7 @@
   border-radius: 50%;
   overflow: hidden;
   background: white;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   cursor: pointer;
 }
 
@@ -126,4 +143,3 @@
   height: 100%;
   object-fit: cover;
 }
-

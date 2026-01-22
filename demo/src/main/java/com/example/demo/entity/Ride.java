@@ -40,8 +40,10 @@ public class Ride {
 
     Long startTime;
     Long endTime;
-    String startLocation;
-    String endLocation;
+    Double startLatitude;
+    Double startLongitude;
+    Double endLatitude;
+    Double endLongitude;
     Long distance;
     Long fare;
     Status status;

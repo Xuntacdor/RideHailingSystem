@@ -114,11 +114,13 @@ public class DriverController {
         public ApiResponse<List<DriverResponse>> getNearestDrivers(
                         @RequestParam Double lat,
                         @RequestParam Double lng,
-                        @RequestParam(defaultValue = "10") int limit) {
-                log.info("Getting {} nearest drivers for lat: {}, lng: {}", limit, lat, lng);
+                        @RequestParam(defaultValue = "10") int limit,
+                        @RequestParam com.example.demo.enums.VehicleType vehicleType) {
+                log.info("Getting {} nearest drivers for lat: {}, lng: {}, vehicleType: {}", limit, lat, lng,
+                                vehicleType);
                 return ApiResponse.<List<DriverResponse>>builder()
                                 .code(200)
-                                .results(driverService.getNearestDrivers(lat, lng, limit))
+                                .results(driverService.getNearestDrivers(lat, lng, limit, vehicleType))
                                 .build();
         }
 }

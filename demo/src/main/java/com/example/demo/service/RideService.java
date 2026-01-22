@@ -40,40 +40,33 @@ public class RideService {
     private final UserRepository userRepository;
     private final DriverRepository driverRepository;
 
-    // In-memory storage for pending rides
     private final Map<String, PendingRide> pendingRides = new ConcurrentHashMap<>();
 
     public Map<String, Object> createRide(RideRequest request) {
         log.info(">>> RideService.createRide() started");
 
-        // Generate ride request ID
         String rideRequestId = UUID.randomUUID().toString();
         log.info("Generated ride request ID: {}", rideRequestId);
 
-        // Get nearest available drivers
         log.info("Searching for nearest drivers at coordinates: [{}, {}]",
                 request.getCustomerLatitude(), request.getCustomerLongitude());
 
         List<DriverResponse> nearestDrivers = driverService.getNearestDrivers(
                 request.getCustomerLatitude(),
                 request.getCustomerLongitude(),
-                10);
-
-        log.info("Found {} nearest drivers", nearestDrivers.size());
+                10,
+                request.getVehicleType());
 
         if (nearestDrivers.isEmpty()) {
             log.warn("No available drivers found for request {}", rideRequestId);
             throw new ResourceNotFoundException("No available drivers found");
         }
-
-        // Extract driver IDs
         List<String> driverIds = nearestDrivers.stream()
                 .map(DriverResponse::getId)
                 .collect(Collectors.toList());
 
         log.info("Driver IDs: {}", driverIds);
 
-        // Store pending ride
         PendingRide pendingRide = PendingRide.builder()
                 .rideRequestId(rideRequestId)
                 .request(request)
@@ -85,11 +78,9 @@ public class RideService {
         pendingRides.put(rideRequestId, pendingRide);
         log.info("Stored pending ride: {}", rideRequestId);
 
-        // Send notification to first driver
         log.info("Sending notification to first driver: {}", driverIds.get(0));
         sendNotificationToCurrentDriver(pendingRide);
 
-        // Return pending status
         Map<String, Object> response = new HashMap<>();
         response.put("rideRequestId", rideRequestId);
         response.put("status", "PENDING");
@@ -134,8 +125,10 @@ public class RideService {
                     .customer(customer)
                     .startTime(pendingRide.getRequest().getStartTime())
                     .endTime(pendingRide.getRequest().getEndTime())
-                    .startLocation(pendingRide.getRequest().getStartLocation())
-                    .endLocation(pendingRide.getRequest().getEndLocation())
+                    .startLatitude(pendingRide.getRequest().getStartLatitude())
+                    .startLongitude(pendingRide.getRequest().getStartLongitude())
+                    .endLatitude(pendingRide.getRequest().getEndLatitude())
+                    .endLongitude(pendingRide.getRequest().getEndLongitude())
                     .distance(pendingRide.getRequest().getDistance())
                     .fare(pendingRide.getRequest().getFare())
                     .status(Status.CONFIRMED)
@@ -186,8 +179,10 @@ public class RideService {
         RideNotification notification = RideNotification.builder()
                 .rideRequestId(pendingRide.getRideRequestId())
                 .customerId(pendingRide.getRequest().getCustomerId())
-                .startLocation(pendingRide.getRequest().getStartLocation())
-                .endLocation(pendingRide.getRequest().getEndLocation())
+                .startLatitude(pendingRide.getRequest().getStartLatitude())
+                .startLongitude(pendingRide.getRequest().getStartLongitude())
+                .endLatitude(pendingRide.getRequest().getEndLatitude())
+                .endLongitude(pendingRide.getRequest().getEndLongitude())
                 .customerLatitude(pendingRide.getRequest().getCustomerLatitude())
                 .customerLongitude(pendingRide.getRequest().getCustomerLongitude())
                 .distance(pendingRide.getRequest().getDistance())
@@ -243,6 +238,15 @@ public class RideService {
                 .orElseThrow(() -> new ResourceNotFoundException("Ride not found with id: " + rideId));
         ride.setStatus(status);
         ride = rideRepository.save(ride);
+
+        // Notify customer about status change via WebSocket
+        if (ride.getCustomer() != null) {
+            notificationService.notifyRideStatusUpdate(
+                    ride.getCustomer().getId(),
+                    rideId,
+                    status);
+        }
+
         return rideMapper.toResponse(ride);
     }
 }

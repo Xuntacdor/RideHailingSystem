@@ -47,13 +47,23 @@ public class NotificationService {
     }
 
     public void notifyDriverPositionUpdate(String driverId, Double lat, Double lng) {
-        log.info("Notifying driver {} with position update", driverId);
+        log.info("Notifying driver {} with position update {} {}", driverId, lat, lng);
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "DRIVER_POSITION_UPDATE");
         payload.put("driverId", driverId);
         payload.put("lat", lat);
         payload.put("lng", lng);
         messagingTemplate.convertAndSend("/topic/driver/" + driverId + "/updatePos", (Object) payload);
+    }
+
+    public void notifyRideStatusUpdate(String customerId, String rideId, com.example.demo.enums.Status status) {
+        log.info("Notifying customer {} about ride {} status change to {}", customerId, rideId, status);
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("type", "RIDE_STATUS_UPDATE");
+        payload.put("rideId", rideId);
+        payload.put("status", status.toString());
+        payload.put("timestamp", System.currentTimeMillis());
+        messagingTemplate.convertAndSend("/topic/customer/" + customerId, (Object) payload);
     }
 
 }

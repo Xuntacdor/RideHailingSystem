@@ -21,7 +21,7 @@ import { SearchResult } from '../../../models/models';
           [placeholder]="placeholder"
       class="w-full pl-5 pr-24 h-14 bg-gray-50 border border-gray-100 rounded-2xl 
             text-gray-900 placeholder-gray-400 font-medium
-            focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 focus:outline-none
+            focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none
             shadow-sm hover:shadow-md focus:shadow-lg
             transition-all duration-300 text-lg"
 
@@ -41,7 +41,7 @@ import { SearchResult } from '../../../models/models';
           <button
             type="button"
             (click)="submitSearch()"
-            class="p-2 bg-green-500 hover:bg-green-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all"
+            class="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all"
             title="Search Route">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -61,7 +61,7 @@ import { SearchResult } from '../../../models/models';
               <button
                 (mousedown)="selectSuggestion(location)"
                 class="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-4 group">
-                <div class="p-2 bg-gray-100 rounded-full text-gray-500 group-hover:bg-green-50 group-hover:text-green-600 transition-colors">
+                <div class="p-2 bg-gray-100 rounded-full text-gray-500 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
                   @if (location.type === 'home') {
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
@@ -77,7 +77,7 @@ import { SearchResult } from '../../../models/models';
                   }
                 </div>
                 <div class="flex-1 min-w-0">
-                  <div class="text-sm font-semibold text-gray-900 group-hover:text-green-700 truncate">{{ location.name }}</div>
+                  <div class="text-sm font-semibold text-gray-900 group-hover:text-blue-700 truncate">{{ location.name }}</div>
                   <div class="text-xs text-gray-500 truncate">{{ location.address }}</div>
                 </div>
               </button>
@@ -90,14 +90,14 @@ import { SearchResult } from '../../../models/models';
               <button
                 (mousedown)="selectSuggestion(suggestion)"
                 class="w-full px-4 py-3.5 text-left hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-all flex items-start gap-3 group">
-                <div class="mt-1 p-1.5 bg-gray-100 rounded-full text-gray-400 group-hover:bg-green-50 group-hover:text-green-600 transition-colors">
+                <div class="mt-1 p-1.5 bg-gray-100 rounded-full text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                   </svg>
                 </div>
                 <div class="flex-1">
-                  <div class="text-base font-medium text-gray-900 group-hover:text-green-700">{{ suggestion.display }}</div>
+                  <div class="text-base font-medium text-gray-900 group-hover:text-blue-700">{{ suggestion.display }}</div>
                 </div>
               </button>
             }

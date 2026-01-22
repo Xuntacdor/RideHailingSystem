@@ -1,11 +1,14 @@
 <div class="driver-container">
-  <!-- MAP (placeholder) -->
-  <div class="map">
-    <div class="location-icon">📍</div>
-  </div>
+  <!-- Show active ride component when ride is active -->
+  <app-driver-active-ride *ngIf="showActiveRide" [activeRide]="activeRide" (rideCompleted)="onRideCompleted()"
+    (rideCancelled)="onRideCancelled()">
+  </app-driver-active-ride>
+
+  <!-- Show default map when no active ride -->
+  <app-map *ngIf="!showActiveRide" class="map"></app-map>
 
   <!-- TOP INFO BAR -->
-  <div class="top-bar">
+  <div class="top-bar" *ngIf="!showActiveRide">
     <div class="wallet">
       <span>VND</span>
       <strong>900.000</strong>
@@ -17,26 +20,23 @@
   </div>
 
   <!-- CENTER MESSAGE -->
-  <div class="status-message" *ngIf="!isOnline">
+  <div class="status-message" *ngIf="!isOnline && !showActiveRide">
     Nhấn để bật/tắt chế độ<br />
     <b>sẵn sàng & tự động nhận cuốc</b>
   </div>
 
   <!-- POWER BUTTON -->
-  <button class="power-btn" [class.online]="isOnline" (click)="toggleOnline()">
+  <button *ngIf="!showActiveRide" class="power-btn" [class.online]="isOnline" (click)="toggleOnline()">
     {{ isOnline ? 'Đang kết nối' : 'Bật kết nối' }}
   </button>
 
   <!-- STATUS BAR -->
-  <div class="status-bar">
+  <div class="status-bar" *ngIf="!showActiveRide">
     {{ isOnline ? 'Bạn đang sẵn sàng nhận cuốc.' : 'Bạn đang không sẵn sàng nhận cuốc.' }}
   </div>
-
-  <!-- BOTTOM MENU -->
-  <div class="bottom-menu">
-    <div class="menu-item">🚗<br />Loại dịch vụ</div>
-    <div class="menu-item">📍<br />Điểm đến</div>
-    <div class="menu-item">🛡️<br />An toàn</div>
-    <div class="menu-item">⚡<br />Now</div>
-  </div>
 </div>
+
+<!-- Driver Ride Request Modal -->
+<app-driver-notification-modal [isVisible]="showRideRequestModal" [rideRequest]="currentRideRequest"
+  (accept$)="onAcceptRide($event)" (reject$)="onRejectRide($event)" (timeout$)="onRideRequestTimeout($event)">
+</app-driver-notification-modal>

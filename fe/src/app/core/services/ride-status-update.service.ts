@@ -2,11 +2,19 @@ import { Injectable } from '@angular/core';
 import { RxStomp } from '@stomp/rx-stomp';
 import SockJS from 'sockjs-client';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
+export interface RideStatusUpdate {
+    type: string;
+    rideId: string;
+    status: string;
+    timestamp: number;
+}
 
 @Injectable({
     providedIn: 'root'
 })
-export class DriverPosUpdateService {
+export class RideStatusUpdateService {
     private stompClient: RxStomp;
 
     constructor() {
@@ -23,15 +31,15 @@ export class DriverPosUpdateService {
         this.stompClient.activate();
     }
 
-    subscribeToDriverPositionUpdates(driverId: string): Observable<any> {
-        return this.stompClient.watch(`/topic/driver/${driverId}/updatePos`);
+    subscribeToRideStatusUpdates(customerId: string): Observable<RideStatusUpdate> {
+        return this.stompClient
+            .watch(`/topic/customer/${customerId}`)
+            .pipe(
+                map((message) => JSON.parse(message.body))
+            );
     }
 
-    sendDriverLocation(driverId: string, lat: number, lng: number): void {
-        this.stompClient.publish({
-            destination: '/app/driver/updatePos',
-            body: JSON.stringify({ driverId, lat, lng })
-        });
+    disconnect(): void {
+        this.stompClient.deactivate();
     }
-
 }
