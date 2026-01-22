@@ -10,6 +10,7 @@ import { RouteInfoComponent } from '../../components/userBooking/route-info/rout
 import { Coordinate, SearchResult, RouteInfo, VehicleType, Driver } from '../../models/models';
 import { jwtPayload, RideRequest } from '../../core/models/api-response.model';
 import { AuthService } from '../../core/services/auth';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-root',
@@ -52,10 +53,12 @@ export class userBooking implements OnDestroy {
   bookingInProgress = false;
 
 
+
   constructor(
     private trackAsiaService: TrackAsiaService,
     private authService: AuthService,
-    private rideService: RideService
+    private rideService: RideService,
+    private router: Router
   ) {
     // Get JWT payload on component initialization
     this.jwtPayload = this.authService.getUserInfo();
@@ -294,6 +297,10 @@ export class userBooking implements OnDestroy {
 
   ngOnDestroy(): void {
     clearTimeout(this.searchDebounceTimer);
+  }
+  openProfileMenu() {
+    console.log('Chuyển hướng sang trang Profile...');
+    this.router.navigate(['/profile']);
   }
 }
 

@@ -8,7 +8,29 @@ import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { routes } from './app.routes';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { LucideAngularModule, ChevronLeft } from 'lucide-angular';
+import {
+  LucideAngularModule,
+  ChevronLeft,
+  CarTaxiFront,
+  LayoutDashboard,
+  CalendarCheck,
+  CalendarClock,
+  Car,
+  Users,
+  FileText,
+  Settings,
+  LogOut,
+  Search,
+  Bell,
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
+  XCircle,
+  Gauge,
+  Map,
+  ChevronRight,
+  Star,
+} from 'lucide-angular';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -16,6 +38,29 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(),
     provideRouter(routes),
     provideAnimations(),
-    importProvidersFrom(LucideAngularModule.pick({ ChevronLeft })),
+    importProvidersFrom(
+      LucideAngularModule.pick({
+        ChevronLeft,
+        CarTaxiFront,
+        LayoutDashboard,
+        CalendarCheck,
+        CalendarClock,
+        Car,
+        Users,
+        FileText,
+        Settings,
+        LogOut,
+        Search,
+        Bell,
+        DollarSign,
+        TrendingUp,
+        TrendingDown,
+        XCircle,
+        Gauge,
+        Map,
+        ChevronRight,
+        Star,
+      })
+    ),
   ],
 };

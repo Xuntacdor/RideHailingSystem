@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth';
 import { UserRequest } from '../../../core/models/api-response.model';
@@ -10,7 +10,7 @@ import { ToastService } from '../../../core/services/toast';
 @Component({
   selector: 'app-profile-edit',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: './profile-edit.html',
 })
 export class ProfileEdit implements OnInit {
@@ -19,6 +19,7 @@ export class ProfileEdit implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   private toastService = inject(ToastService);
+  currentUser = this.authService.currentUser();
 
   editForm: FormGroup;
   userId: string = '';

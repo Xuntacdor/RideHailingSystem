@@ -8,8 +8,7 @@
   <div class="absolute top-0 left-0 right-0 z-10">
     <div class="pb-safe h-6"></div>
 
-    <app-user-header [userName]="userName">
-    </app-user-header>
+    <app-user-header [userName]="userName" (avatarClick)="openProfileMenu()"></app-user-header>
   </div>
 
   @if (!isTokenValid) {

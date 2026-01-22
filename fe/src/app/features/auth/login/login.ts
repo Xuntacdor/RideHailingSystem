@@ -3,8 +3,9 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth';
-import { LoginRequest } from '../../../core/models';
+import { LoginRequest, Role } from '../../../core/models';
 import { LucideAngularModule, ChevronLeft } from 'lucide-angular';
+import { UserService } from '../../../core/services/user.service';
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -14,6 +15,7 @@ import { LucideAngularModule, ChevronLeft } from 'lucide-angular';
 })
 export class Login {
   private authService = inject(AuthService);
+  private userService = inject(UserService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
   readonly ChevronLeft = ChevronLeft;
@@ -50,10 +52,35 @@ export class Login {
 
     this.authService.loginUser(credentials).subscribe({
       next: (response) => {
-        console.log('Login successful:', response);
-        this.isSubmitting.set(false);
+        const userId = this.authService.getUserId();
+        if (!userId) {
+          this.isSubmitting.set(false);
+          this.errorMessage.set('Token invalid:Cannot get user id');
+          return;
+        }
+        this.userService.getUserById(userId).subscribe({
+          next: (userResponse) => {
+            console.log('User infor load', userResponse);
+            const role = userResponse.results.role;
+            this.isSubmitting.set(false);
+            if (role === 'DRIVER') {
+              this.router.navigate(['/driver']);
+            } else if (role === 'CUSTOMER' || role === 'USER') {
+              this.router.navigate(['/userBooking']);
+            } else if (role === 'ADMIN' || role === 'admin') {
+              this.router.navigate(['/admin']);
+            }
+            else {
+              this.router.navigate(['/welcome']);
+            }
 
-        this.router.navigate(['/profile']);
+          },
+          error: (error) => {
+            console.error('User info load failed:', error);
+            this.isSubmitting.set(false);
+            this.errorMessage.set('Failed to load user information. Please try again.');
+          }
+        })
       },
       error: (error) => {
         console.error('Login failed:', error);

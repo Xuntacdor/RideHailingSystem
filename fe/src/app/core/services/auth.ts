@@ -28,6 +28,7 @@ export class AuthService extends ApiService {
     return !!localStorage.getItem('auth_token');
   }
 
+
   /**
    * Login user
    * POST /api/auth/login
@@ -82,6 +83,25 @@ export class AuthService extends ApiService {
    */
   isAuthenticated(): boolean {
     return this.isLoggedIn();
+  }
+
+  getUserId(): string | null {
+    const token = this.getToken();
+    if (!token) return null;
+    try {
+      const decoded: any = jwtDecode(token);
+      return decoded.userId || decoded.sub || decoded.id;
+    } catch (error) {
+      return null;
+    }
+  }
+  getUserRole(): string | null {
+    const token = this.getToken();
+    if (token) {
+      const decoded = jwtDecode<jwtPayload>(token);
+      return decoded.scope;
+    }
+    return null;
   }
 
   getUserInfo(): jwtPayload | null {
