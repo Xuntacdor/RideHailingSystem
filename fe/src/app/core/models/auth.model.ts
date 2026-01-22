@@ -1,26 +1,31 @@
 import { UserResponse } from './user.model';
+export interface jwtPayload {
+  sub: string;
+  iat?: number;
+  exp?: number;
+}
 
 export interface LoginRequest {
-    email: string;
-    password: string;
+  email: string;
+  password: string;
 }
 
 export interface RegisterRequest {
-    name: string;
-    userName: string;
-    email: string;
-    password: string;
-    phoneNumber: string;
-    role: string;
-    cccd?: string;
-    imageUrl?: string;
-    accountType?: string;
+  name: string;
+  userName: string;
+  email: string;
+  password: string;
+  phoneNumber: string;
+  role: string;
+  cccd?: string;
+  imageUrl?: string;
+  accountType?: string;
 }
 
 export interface AuthenticationResponse {
-    token: string;
-    user: UserResponse;
-    userId: string;
-    email: string;
-    role: string;
+  token: string;
+  user: UserResponse;
+  userId: string;
+  email: string;
+  role: string;
 }

@@ -12,17 +12,19 @@ import { userBooking } from './pages/userBooking/userBooking';
 import { AddressSaved } from './features/profile/address-saved/address-saved';
 import { PaymentMethods } from './features/profile/payment-methods/payment-methods';
 import { ProfileEdit } from './features/profile/profile-edit/profile-edit';
-
+import { AdminDashboardComponent } from './features/admin/admin-dashboard/admin-dashboard.component';
 export const routes: Routes = [
-  { path: '', redirectTo: 'driver', pathMatch: 'full' },
+  // { path: '', redirectTo: 'driver', pathMatch: 'full' },
 
   { path: 'driver', component: DriverComponent },
   { path: 'driver-profile', component: DriverProfileComponent },
   { path: 'driver-wallet', component: DriverWalletComponent },
 
-  { path: 'login', component: Login, canActivate: [publicGuard] },
+  { path: 'admin', component: AdminDashboardComponent },
+
+  { path: 'login', component: Login },
   { path: 'welcome', component: Welcome },
-  { path: 'register', component: Register, canActivate: [publicGuard] },
+  { path: 'register', component: Register },
 
   { path: 'profile', component: Profile, canActivate: [authGuard] },
   { path: 'userBooking', component: userBooking },

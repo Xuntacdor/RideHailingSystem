@@ -1,15 +1,25 @@
-import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import { HttpInterceptorFn, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { catchError, throwError } from 'rxjs';
+import { catchError, throwError, tap, of } from 'rxjs';
 
+// --- 1. AUTH INTERCEPTOR ---
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
 
-  const token = localStorage.getItem('auth_token');
+  // Sửa lại key cho đúng với lúc login (ví dụ: 'token' hoặc 'accessToken')
+  const token = localStorage.getItem('token');
+
+  // Danh sách các URL không cần đính kèm Token (Public API)
+  const publicEndpoints = ['/auth/login', '/auth/register'];
+
+  // Check xem URL hiện tại có nằm trong danh sách public không
+  const isPublic = publicEndpoints.some((url) => req.url.includes(url));
 
   let authReq = req;
-  if (token) {
+
+  // Chỉ gắn token nếu có token VÀ không phải là public api
+  if (token && !isPublic) {
     authReq = req.clone({
       setHeaders: {
         Authorization: `Bearer ${token}`,
@@ -17,86 +27,88 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     });
   }
 
-  // Handle the request and catch errors
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      // Handle different error status codes
-      switch (error.status) {
-        case 401:
-          // Unauthorized - clear token and redirect to login
-          console.error('Unauthorized access - redirecting to login');
-          localStorage.removeItem('auth_token');
-          router.navigate(['/login']);
-          break;
-
-        case 403:
-          // Forbidden - user doesn't have permission
-          console.error('Access forbidden - insufficient permissions');
-          // Optionally redirect to an error page
-          // router.navigate(['/forbidden']);
-          break;
-
-        case 404:
-          // Not found
-          console.error('Resource not found:', error.url);
-          break;
-
-        case 500:
-          // Server error
-          console.error('Server error:', error.message);
-          break;
-
-        case 0:
-          // Network error or CORS issue
-          console.error('Network error - unable to reach server');
-          break;
-
-        default:
-          console.error('HTTP Error:', error);
+      // Xử lý các mã lỗi
+      if (error.status === 401) {
+        console.error('Hết phiên đăng nhập hoặc Token không hợp lệ.');
+        localStorage.removeItem('token'); // Xóa token cũ
+        router.navigate(['/login']);
+      } else if (error.status === 403) {
+        console.error('Không có quyền truy cập (Forbidden).');
+        // router.navigate(['/403']); // Tùy chọn
       }
 
-      // Re-throw the error so components can handle it
       return throwError(() => error);
     })
   );
 };
 
+// --- 2. LOGGING INTERCEPTOR (Đã thêm log success) ---
 export const loggingInterceptor: HttpInterceptorFn = (req, next) => {
   const startTime = Date.now();
-
-  console.log(` HTTP Request: ${req.method} ${req.url}`);
+  console.log(`Request sending: ${req.method} ${req.url}`);
 
   return next(req).pipe(
-    catchError((error: HttpErrorResponse) => {
-      const duration = Date.now() - startTime;
-      console.error(
-        ` HTTP Error: ${req.method} ${req.url} - ${error.status} ${error.statusText} (${duration}ms)`
-      );
-      return throwError(() => error);
+    tap({
+      // Log khi thành công
+      next: (event) => {
+        if (event instanceof HttpResponse) {
+          const duration = Date.now() - startTime;
+          console.log(`Request success: ${req.url} - Status ${event.status} (${duration}ms)`);
+        }
+      },
+      // Log khi thất bại (để catchError bên dưới xử lý logic, ở đây chỉ log)
+      error: (error: HttpErrorResponse) => {
+        const duration = Date.now() - startTime;
+        console.error(`Request failed: ${req.url} - Status ${error.status} (${duration}ms)`);
+      },
     })
   );
 };
 
-const cache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+// --- 3. CACHE INTERCEPTOR (Đã sửa logic trả về Cache & Lưu Cache) ---
+// Lưu ý: Cân nhắc kỹ trước khi dùng. Chỉ dùng cho data tĩnh.
+
+const cache = new Map<string, { response: HttpResponse<any>; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 phút
 
 export const cacheInterceptor: HttpInterceptorFn = (req, next) => {
-  // Only cache GET requests
+  // Chỉ cache GET
   if (req.method !== 'GET') {
     return next(req);
   }
 
-  // Check if we have cached data
-  const cachedData = cache.get(req.url);
-  if (cachedData) {
-    const age = Date.now() - cachedData.timestamp;
+  // QUAN TRỌNG: Chỉ cache các URL cụ thể để tránh lỗi bảo mật user data
+  // Ví dụ: chỉ cache danh sách tỉnh thành, danh mục xe
+  const allowedCacheUrls = ['/api/provinces', '/api/vehicle-types'];
+  const isAllowed = allowedCacheUrls.some((url) => req.url.includes(url));
+
+  if (!isAllowed) {
+    return next(req);
+  }
+
+  // 1. Kiểm tra cache có sẵn không
+  const cachedEntry = cache.get(req.url);
+  if (cachedEntry) {
+    const age = Date.now() - cachedEntry.timestamp;
     if (age < CACHE_DURATION) {
-      console.log(` Serving from cache: ${req.url}`);
-      // Return cached response (you'd need to create a proper HttpResponse here)
-      // This is simplified for demonstration
+      console.log(`Serving from cache: ${req.url}`);
+      // Trả về Observable chứa data từ cache
+      return of(cachedEntry.response.clone());
+    } else {
+      // Cache hết hạn thì xóa
+      cache.delete(req.url);
     }
   }
 
-  // If not cached or expired, make the request
-  return next(req);
+  // 2. Nếu chưa có cache, gọi API và lưu lại kết quả
+  return next(req).pipe(
+    tap((event) => {
+      if (event instanceof HttpResponse) {
+        console.log(`Saving to cache: ${req.url}`);
+        cache.set(req.url, { response: event.clone(), timestamp: Date.now() });
+      }
+    })
+  );
 };

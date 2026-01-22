@@ -8,9 +8,13 @@ import { CommonModule } from '@angular/common';
   template: `
     <div class="flex items-center justify-between px-5 py-4 bg-white z-0 ">
       <div class="flex items-center gap-3">
-        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xl font-bold shadow-lg">
+        <button 
+          type="button"
+          (click)="onAvatarClick()"
+          class="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xl font-bold shadow-lg 
+                 hover:shadow-xl hover:scale-105 transition-all duration-200 active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
           {{ getInitials() }}
-        </div>
+        </button>
         <div>
           <div class="text-sm text-gray-600 flex items-center gap-1">
             <span>👋</span>
@@ -32,7 +36,7 @@ import { CommonModule } from '@angular/common';
 export class UserHeaderComponent {
   @Input() userName: string = '';
   @Output() gridToggle = new EventEmitter<void>();
-
+  @Output() avatarClick = new EventEmitter<void>();
   get greeting(): string {
     const hour = new Date().getHours();
     if (hour < 12) return 'Hello there';
@@ -51,5 +55,9 @@ export class UserHeaderComponent {
 
   onGridToggle(): void {
     this.gridToggle.emit();
+  }
+  onAvatarClick(): void {
+    console.log('Avatar clicked!');
+    this.avatarClick.emit();
   }
 }
