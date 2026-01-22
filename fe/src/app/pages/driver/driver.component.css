@@ -1,13 +1,20 @@
+/* GLOBAL */
 * {
   box-sizing: border-box;
-  font-family: Arial, sans-serif;
+  font-family: 'Inter', Arial, sans-serif;
 }
 
+body {
+  margin: 0;
+}
+
+/* CONTAINER */
 .driver-container {
   height: 100vh;
   width: 100%;
   position: relative;
   background: #f2f2f2;
+  padding-bottom: 80px; /* safe area cho bottom menu */
 }
 
 /* MAP */
@@ -26,43 +33,42 @@
 /* TOP BAR */
 .top-bar {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  right: 12px;
+  top: 16px;
+  left: 16px;
+  right: 16px;
   display: flex;
   justify-content: space-between;
+  z-index: 10;
 }
 
-.wallet {
-  background: white;
-  padding: 8px 12px;
-  border-radius: 12px;
-  font-size: 14px;
-}
-
+.wallet,
 .rating {
   background: white;
   padding: 8px 12px;
   border-radius: 12px;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 /* STATUS MESSAGE */
 .status-message {
   position: absolute;
-  bottom: 160px;
+  bottom: 220px;
   left: 50%;
   transform: translateX(-50%);
   background: white;
-  padding: 12px 16px;
-  border-radius: 12px;
+  padding: 14px 18px;
+  border-radius: 14px;
   text-align: center;
   font-size: 14px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  z-index: 6;
 }
 
 /* POWER BUTTON */
 .power-btn {
   position: absolute;
-  bottom: 100px;
+  bottom: 140px;
   left: 50%;
   transform: translateX(-50%);
   width: 220px;
@@ -70,26 +76,44 @@
   border-radius: 28px;
   border: none;
   font-size: 18px;
-  font-weight: bold;
+  font-weight: 600;
   background: black;
   color: white;
+  cursor: pointer;
+
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+  transition: all 0.2s ease;
+  z-index: 5;
 }
 
 .power-btn.online {
-  background: #00b14f;
+  background: #3EAEF4;
+  box-shadow: 0 8px 20px rgba(62,174,244,0.45);
+}
+
+.power-btn:hover {
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+}
+
+.power-btn:active {
+  transform: translateX(-50%) translateY(2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
 }
 
 /* STATUS BAR */
 .status-bar {
   position: absolute;
-  bottom: 64px;
-  left: 12px;
-  right: 12px;
+  bottom: 84px;
+  left: 16px;
+  right: 16px;
   background: white;
-  padding: 10px;
+  padding: 12px;
   border-radius: 12px;
   text-align: center;
   font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 4;
 }
 
 /* BOTTOM MENU */
@@ -102,6 +126,7 @@
   background: white;
   display: flex;
   border-top: 1px solid #ddd;
+  z-index: 20;
 }
 
 .menu-item {
@@ -109,8 +134,10 @@
   text-align: center;
   font-size: 12px;
   padding-top: 8px;
+  color: #444;
 }
 
+/* AVATAR */
 .driver-avatar {
   width: 40px;
   height: 40px;
@@ -126,4 +153,3 @@
   height: 100%;
   object-fit: cover;
 }
-
