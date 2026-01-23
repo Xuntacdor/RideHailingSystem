@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule,Location } from '@angular/common';
 
 @Component({
   standalone: true,
@@ -9,6 +9,9 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./driver-wallet.component.css']
 })
 export class DriverWalletComponent {
+
+  constructor(private location: Location) {}
+
   balance = 1250;
 
   transactions = [
@@ -23,4 +26,8 @@ export class DriverWalletComponent {
       amount: 180
     }
   ];
+
+  goBack() {
+    this.location.back();
+  }
 }

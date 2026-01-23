@@ -1,0 +1,46 @@
+<div class="profile-container">
+
+  <!-- HEADER -->
+  <div class="profile-header">
+    <img class="avatar" [src]="driverAvatar">
+    <h3>{{ driverName }}</h3>
+    <p>{{ driverPhone }}</p>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat-item">
+      <p>Total Earning</p>
+      <h4>{{ totalEarning }} VND</h4>
+    </div>
+    <div class="stat-item">
+      <p>Total Trips</p>
+      <h4>{{ totalTrips }}</h4>
+    </div>
+    <div class="stat-item">
+      <p>Total Login Hrs</p>
+      <h4>{{ totalLoginHours }} Hrs</h4>
+    </div>
+  </div>
+
+  <!-- MENU -->
+  <div class="menu">
+    <div class="menu-item" (click)="goToWallet()">
+      <img src="/assets/icons/wallet.png" width="30" height="30" class="menu-icon" />
+      <span>Ví của tôi</span>
+    </div>
+    <div class="menu-item" (click)="goToVehicle()">
+      <img src="/assets/icons/vehicle.png" width="24" height="24" class="menu-icon" />
+      <span>Phương tiện của tôi</span>
+    </div>
+    <div class="menu-item">
+      <img src="/assets/icons/trip history.png" width="22" height="22" class="menu-icon" />
+      <span>Lịch sử chuyến đi</span>
+    </div>
+    <div class="logout" (click)="logout()">
+      <img src="/assets/icons/logout.png" width="22" height="22" class="menu-icon" />
+      <span>Đăng xuất</span>
+    </div>
+  </div>
+
+</div>

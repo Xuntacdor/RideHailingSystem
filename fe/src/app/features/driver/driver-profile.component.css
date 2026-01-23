@@ -4,7 +4,7 @@
 }
 
 .profile-header {
-  background: #0b5ed7;
+  background: #3EAEF4;
   color: white;
   text-align: center;
   padding: 32px 16px;
@@ -44,12 +44,24 @@
 }
 
 .menu-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   padding: 16px;
-  border-bottom: 1px solid #eee;
-  font-size: 14px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.menu-item:hover {
+  background: #f7f7f7;
 }
 
 .logout {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px;
+  font-size: 15px;
+  cursor: pointer;
   color: red;
-  font-weight: bold;
 }
