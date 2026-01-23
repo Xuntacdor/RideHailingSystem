@@ -45,4 +45,8 @@ export class RideService extends ApiService {
     const request: UpdateRideStatusRequest = { status };
     return this.patch<RideResponse>(`/rides/${rideId}/status`, request);
   }
+
+  cancelRide(rideId: string, userId: string, role: 'DRIVER' | 'CUSTOMER'): Observable<any> {
+    return this.delete<any>(`/rides/${rideId}/cancel?userId=${userId}&role=${role}`);
+  }
 }

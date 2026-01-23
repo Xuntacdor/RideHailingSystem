@@ -8,10 +8,14 @@ export interface ApiResponse<T> {
 }
 
 export interface jwtPayload {
-  userId: string;
+  sub: string;
   name: string;
-  imageUrl: string;
+  userId: string;
+  driverId?: string; // Optional: for drivers only
+  imageUrl?: string;
   scope: string;
+  exp: number;
+  iat: number;
 }
 
 /**
@@ -113,8 +117,10 @@ export interface RideRequest {
   driverId?: string;
   startTime?: number;
   endTime?: number;
-  startLocation: string;
-  endLocation: string;
+  startLatitude: number;
+  startLongitude: number;
+  endLatitude: number;
+  endLongitude: number;
   customerLatitude: number;
   customerLongitude: number;
   distance: number;
@@ -133,6 +139,23 @@ export interface CreateRideResponse {
 export interface UpdateRideStatusRequest {
   status: string;
 }
+
+export interface RideStatusUpdate {
+  type: string;
+  rideId: string;
+  status: string;
+  timestamp: number;
+}
+
+export enum RideStatus {
+  PENDING = 'PENDING',
+  CONFIRMED = 'CONFIRMED',
+  PICKINGUP = 'PICKINGUP',
+  ONGOING = 'ONGOING',
+  FINISHED = 'FINISHED',
+  REJECTED = 'REJECTED'
+}
+
 
 /**
  * Coupon models
@@ -266,4 +289,15 @@ export enum VehicleStatus {
   ACTIVE = 'ACTIVE',
   INACTIVE = 'INACTIVE',
   MAINTENANCE = 'MAINTENANCE',
+}
+
+/**
+ * Driver Position Update (WebSocket)
+ */
+export interface DriverPositionUpdate {
+  driverId: string;
+  lat: number;
+  lng: number;
+  timestamp: string;
+  bearing?: number;
 }

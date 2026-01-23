@@ -27,6 +27,10 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
     @Input() routeGeometry: any = null;
     @Input() isSettingOrigin = false;
     @Input() isSettingDestination = false;
+    @Input() activeDriver: Driver | null = null;
+    @Input() driverRoute: any = null;
+    @Input() userLocation: Coordinate | null = null;
+    @Input() showUserMarker = false;
 
     @Output() userLocationDetected = new EventEmitter<{ lng: number; lat: number }>();
     @Output() mapReady = new EventEmitter<void>();
@@ -35,12 +39,14 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
     map: Map | undefined;
     private originMarker: Marker | null = null;
     private destinationMarker: Marker | null = null;
+    private userMarker: Marker | null = null;
     private driverMarkers: { [driverId: string]: Marker } = {};
+    private activeDriverMarker: Marker | null = null;
     private geolocateControl: GeolocateControl | null = null;
     private animationDuration = 1000;
 
     constructor(private trackAsiaService: TrackAsiaService) { }
-    private userLocation: { lng: number; lat: number } | null = null;
+    // private userLocation: { lng: number; lat: number } | null = null; // Removed duplicate
 
     private animateMarkerTo(marker: Marker, targetLng: number, targetLat: number, duration: number = this.animationDuration): void {
         const startPos = marker.getLngLat();
@@ -49,7 +55,7 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
 
         const threshold = 0.000001; // ~0.1 meter
         if (Math.abs(targetLng - startLng) < threshold && Math.abs(targetLat - startLat) < threshold) {
-            return; // Skip animation nếu vị trí không đổi
+            return;
         }
 
         const startTime = performance.now();
@@ -129,8 +135,32 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
             }
         }
 
+        if (changes['activeDriver'] && this.map) {
+            if (this.activeDriver) {
+                this.updateActiveDriverMarker(this.activeDriver);
+            } else {
+                this.removeActiveDriverMarker();
+            }
+        }
+
+        if (changes['driverRoute'] && this.map) {
+            if (this.driverRoute) {
+                this.displayDriverRoute(this.driverRoute);
+            } else {
+                this.clearDriverRoute();
+            }
+        }
+
         if (changes['isSettingOrigin'] || changes['isSettingDestination']) {
             this.updateCursor();
+        }
+
+        if (changes['showUserMarker'] || changes['userLocation']) {
+            if (this.showUserMarker && this.userLocation) {
+                this.updateUserMarker(this.userLocation);
+            } else {
+                this.removeUserMarker();
+            }
         }
     }
 
@@ -140,6 +170,17 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
         if ('geolocation' in navigator) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
+                    // Update the local userLocation property, 
+                    // BUT be careful not to conflict with the @Input userLocation
+                    //Ideally, we should rely on the input for the driver view, and this local logic for the user view.
+                    // For now, I'll store it locally if the input is null?
+                    // Actually, the input is for when the *driver* views the map.
+                    // When the *user* views the map, they use this geolocation logic.
+                    // To avoid type errors, let's treat the local one separately or reuse the input property if we can assign to it (inputs are mutable).
+                    // However, TS complained about duplicate identifier.
+                    // I removed the duplicate 'private userLocation' property in this rewrite.
+                    // So 'this.userLocation' refers to the @Input.
+
                     this.userLocation = {
                         lng: position.coords.longitude,
                         lat: position.coords.latitude
@@ -229,9 +270,7 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
 
     placeOriginMarker(lng: number, lat: number, label: string): void {
         if (this.originMarker) {
-            // Nếu marker đã tồn tại, animate đến vị trí mới
             this.animateMarkerTo(this.originMarker, lng, lat);
-            // Update popup text
             this.originMarker.getPopup()?.setText(`📍 ${label}`);
         } else {
             // Tạo marker mới nếu chưa tồn tại
@@ -244,12 +283,9 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
 
     placeDestinationMarker(lng: number, lat: number, label: string): void {
         if (this.destinationMarker) {
-            // Nếu marker đã tồn tại, animate đến vị trí mới
             this.animateMarkerTo(this.destinationMarker, lng, lat);
-            // Update popup text
             this.destinationMarker.getPopup()?.setText(`🎯 ${label}`);
         } else {
-            // Tạo marker mới nếu chưa tồn tại
             this.destinationMarker = new Marker({ color: '#dc2626' })
                 .setLngLat([lng, lat])
                 .setPopup(new Popup({ offset: 25 }).setText(`🎯 ${label}`))
@@ -260,7 +296,6 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
     private updateDriverMarkers(): void {
         const currentDriverIds = new Set(this.drivers.map(d => d.id));
 
-        // Remove markers for drivers that no longer exist
         for (const driverId of Object.keys(this.driverMarkers)) {
             if (!currentDriverIds.has(driverId)) {
                 this.driverMarkers[driverId].remove();
@@ -268,15 +303,12 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
             }
         }
 
-        // Update or add driver markers
         this.drivers.forEach(driver => {
             const existingMarker = this.driverMarkers[driver.id];
 
             if (existingMarker) {
-                // Animate marker đến vị trí mới
                 this.animateMarkerTo(existingMarker, driver.lng, driver.lat);
             } else {
-                // Tạo marker mới cho driver
                 const el = document.createElement('div');
                 el.className = 'driver-marker';
                 el.innerHTML = driver.icon;
@@ -335,7 +367,7 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
         });
         this.map.fitBounds(bounds, {
             padding: { top: 0, bottom: 500, left: 50, right: 50 },
-            maxZoom: 12
+            maxZoom: 15
         });
     }
 
@@ -358,8 +390,38 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
         if (this.map?.getLayer('route')) {
             this.map.removeLayer('route');
         }
+
         if (this.map?.getSource('route')) {
             this.map.removeSource('route');
+        }
+    }
+
+    private updateUserMarker(coords: Coordinate): void {
+        if (!this.map) return;
+
+        // Remove existing marker if it exists
+        if (this.userMarker) {
+            this.userMarker.remove();
+        }
+
+        const el = document.createElement('div');
+        el.className = 'user-marker';
+        el.style.width = '30px';
+        el.style.height = '30px';
+        el.style.background = '#3b82f6'; // Blue for user
+        el.style.borderRadius = '50%';
+        el.style.border = '3px solid white';
+        el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+
+        this.userMarker = new Marker(el)
+            .setLngLat([coords.lng, coords.lat])
+            .addTo(this.map);
+    }
+
+    private removeUserMarker(): void {
+        if (this.userMarker) {
+            this.userMarker.remove();
+            this.userMarker = null;
         }
     }
 
@@ -374,11 +436,102 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
         this.destinationMarker = null;
     }
 
+    private updateActiveDriverMarker(driver: Driver): void {
+        if (this.activeDriverMarker) {
+            this.animateMarkerTo(this.activeDriverMarker, driver.lng, driver.lat);
+        } else {
+            const el = document.createElement('div');
+            el.className = 'active-driver-marker';
+            el.innerHTML = driver.icon;
+            el.style.fontSize = '32px';
+            el.style.cursor = 'pointer';
+            el.style.filter = 'drop-shadow(0 0 8px rgba(37, 99, 235, 0.8))';
+
+            this.activeDriverMarker = new Marker({ element: el })
+                .setLngLat([driver.lng, driver.lat])
+                .setPopup(new Popup({ offset: 25 }).setHTML(`
+                  <div style="text-align: center;">
+                    <div style="font-size: 24px;">${driver.icon}</div>
+                    <div style="font-weight: bold; color: #2563eb;">Your Driver</div>
+                    <div style="font-size: 12px;">⭐ ${driver.rating}</div>
+                  </div>
+                `))
+                .addTo(this.map!);
+
+            console.log('Active driver marker created');
+        }
+    }
+
+    private removeActiveDriverMarker(): void {
+        if (this.activeDriverMarker) {
+            this.activeDriverMarker.remove();
+            this.activeDriverMarker = null;
+        }
+    }
+
+    displayDriverRoute(geometry: any): void {
+        if (!this.map || !geometry) return;
+
+        const sourceId = 'driver-route';
+        const layerId = 'driver-route-layer';
+
+        if (this.map.getSource(sourceId)) {
+            (this.map.getSource(sourceId) as any).setData(geometry);
+        } else {
+            this.map.addSource(sourceId, {
+                type: 'geojson',
+                data: geometry
+            });
+
+            this.map.addLayer({
+                id: layerId,
+                type: 'line',
+                source: sourceId,
+                layout: {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                paint: {
+                    'line-color': '#2563eb',  // Blue for driver route
+                    'line-width': 5,
+                    'line-opacity': 0.8
+                }
+            });
+        }
+
+        const coordinates = geometry.coordinates;
+        const bounds = new LngLatBounds();
+        coordinates.forEach((coord: number[]) => {
+            bounds.extend(coord as [number, number]);
+        });
+        this.map.fitBounds(bounds, {
+            padding: { top: 50, bottom: 300, left: 50, right: 50 },
+            maxZoom: 15
+        });
+    }
+
+    clearDriverRoute(): void {
+        if (!this.map) return;
+
+        const sourceId = 'driver-route';
+        const layerId = 'driver-route-layer';
+
+        if (this.map.getLayer(layerId)) {
+            this.map.removeLayer(layerId);
+        }
+
+        if (this.map.getSource(sourceId)) {
+            this.map.removeSource(sourceId);
+        }
+    }
+
     ngOnDestroy(): void {
         this.originMarker?.remove();
         this.destinationMarker?.remove();
+        this.removeActiveDriverMarker();
         Object.values(this.driverMarkers).forEach(marker => marker.remove());
         this.removeRoute();
+        this.clearDriverRoute();
         this.map?.remove();
     }
 }

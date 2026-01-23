@@ -26,11 +26,17 @@ public class RideRequest {
 
     Long endTime;
 
-    @NotNull(message = "START_LOCATION_NOT_NULL")
-    String startLocation;
+    @NotNull(message = "START_LATITUDE_NOT_NULL")
+    Double startLatitude;
 
-    @NotNull(message = "END_LOCATION_NOT_NULL")
-    String endLocation;
+    @NotNull(message = "START_LONGITUDE_NOT_NULL")
+    Double startLongitude;
+
+    @NotNull(message = "END_LATITUDE_NOT_NULL")
+    Double endLatitude;
+
+    @NotNull(message = "END_LONGITUDE_NOT_NULL")
+    Double endLongitude;
 
     @NotNull(message = "CUSTOMER_LATITUDE_NOT_NULL")
     Double customerLatitude;

@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,8 +33,8 @@ public class RideController {
     public ResponseEntity<java.util.Map<String, Object>> createRide(@RequestBody RideRequest request) {
         log.info("========== CREATE RIDE REQUEST RECEIVED ==========");
         log.info("Customer ID: {}", request.getCustomerId());
-        log.info("Start Location: {}", request.getStartLocation());
-        log.info("End Location: {}", request.getEndLocation());
+        log.info("Start Coordinates: [{}, {}]", request.getStartLatitude(), request.getStartLongitude());
+        log.info("End Coordinates: [{}, {}]", request.getEndLatitude(), request.getEndLongitude());
         log.info("Customer Coordinates: [{}, {}]", request.getCustomerLatitude(), request.getCustomerLongitude());
         log.info("Distance: {} meters", request.getDistance());
         log.info("Fare: {} VND", request.getFare());
@@ -117,6 +118,29 @@ public class RideController {
             return ResponseEntity.status(500)
                     .header("Content-Type", "application/json")
                     .body(errorResponse);
+        }
+    }
+
+    @DeleteMapping("/{rideId}/cancel")
+    public ResponseEntity<java.util.Map<String, Object>> cancelRide(
+            @PathVariable String rideId,
+            @org.springframework.web.bind.annotation.RequestParam String userId,
+            @org.springframework.web.bind.annotation.RequestParam String role) {
+        log.info("========== CANCEL RIDE REQUEST ==========");
+        log.info("Ride ID: {}", rideId);
+        log.info("User ID: {}", userId);
+        log.info("Role: {}", role);
+
+        try {
+            java.util.Map<String, Object> response = rideService.cancelRide(rideId, userId, role);
+            log.info("Ride cancelled successfully");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error cancelling ride: {}", e.getMessage(), e);
+            java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Error: " + e.getMessage());
+            return ResponseEntity.status(500).body(errorResponse);
         }
     }
 }

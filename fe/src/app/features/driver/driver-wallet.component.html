@@ -1,0 +1,38 @@
+<div class="wallet-container">
+
+  <!-- HEADER -->
+
+  <div class="wallet-topbar">
+    <button class="back-btn" (click)="goBack()">←</button>
+    <span class="page-title">Ví</span>
+  </div>
+  
+  <div class="wallet-header">
+    <div class="wallet-title">
+      </div>
+
+        <p class="wallet-subtitle">Số dư ví</p>
+
+      <h2 class="wallet-balance">
+        {{ balance | number:'1.0-0' }}
+        <span class="currency">₫</span>
+      </h2>
+  </div>
+
+  <!-- TRANSACTION HISTORY -->
+  <div class="wallet-history">
+    <h4>Lịch sử giao dịch</h4>
+    
+   <div class="tx-item" *ngFor="let tx of transactions">
+      <div>
+        <strong>{{ tx.trip }}</strong>
+        <p>{{ tx.date }}</p>
+      </div>
+
+      <span class="tx-amount plus">
+        +{{ tx.amount | number:'1.0-0' }}₫
+      </span>
+    </div>
+  </div>
+
+</div>

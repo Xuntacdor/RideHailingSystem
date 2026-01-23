@@ -112,7 +112,11 @@ export class AuthService extends ApiService {
         userId: decoded.userId,
         name: decoded.name,
         imageUrl: decoded.imageUrl,
-        scope: decoded.scope
+        scope: decoded.scope,
+        driverId: decoded.driverId, // Include driverId if present
+        sub: decoded.sub,
+        exp: decoded.exp,
+        iat: decoded.iat
       };
     }
     return null;

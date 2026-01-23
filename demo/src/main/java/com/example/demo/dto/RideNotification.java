@@ -18,10 +18,10 @@ public class RideNotification {
     String rideRequestId;
     String customerId;
     String customerName;
-    String startLocation;
-    String endLocation;
-    Double customerLatitude;
-    Double customerLongitude;
+    Double startLatitude;
+    Double startLongitude;
+    Double endLatitude;
+    Double endLongitude;
     Long distance;
     Long fare;
     VehicleType vehicleType;

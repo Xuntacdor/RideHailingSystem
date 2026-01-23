@@ -1,15 +1,15 @@
 import { Routes } from '@angular/router';
-import { DriverComponent } from './pages/driver/driver.component';
-import { DriverProfileComponent } from './pages/driver/driver-profile.component';
-import { DriverWalletComponent } from './pages/driver/driver-wallet.component';
-
+import { DriverComponent } from './features/driver/driver.component';
+import { DriverProfileComponent } from './features/driver/driver-profile.component';
+import { DriverWalletComponent } from './features/driver/driver-wallet.component';
+import { DriverVehicleComponent } from './features/driver/driver-vehicle.component';
 import { Login } from './features/auth/login/login.component';
 import { Welcome } from './features/welcome/welcome.component';
 import { Register } from './features/auth/register/register.component';
 import { Profile } from './features/profile/profile.component';
 import { authGuard } from './core/guards/auth-guard';
-// import { publicGuard } from './core/guards/public-guard';
-import { userBooking } from './pages/userBooking/userBooking';
+import { publicGuard } from './core/guards/public-guard';
+import { userBooking } from './features/userBooking/userBooking';
 import { AddressSaved } from './features/profile/address-saved/address-saved.component';
 import { PaymentMethods } from './features/profile/payment-methods/payment-methods.component';
 import { ProfileEdit } from './features/profile/profile-edit/profile-edit.component';
@@ -18,8 +18,10 @@ export const routes: Routes = [
   // { path: '', redirectTo: 'driver', pathMatch: 'full' },
 
   { path: 'driver', component: DriverComponent },
+  // { path: 'driver/active-ride', component: DriverActiveRideComponent },
   { path: 'driver-profile', component: DriverProfileComponent },
   { path: 'driver-wallet', component: DriverWalletComponent },
+  { path: 'driver-vehicle', component: DriverVehicleComponent },
 
   { path: 'admin', component: AdminDashboardComponent },
 
@@ -27,6 +29,7 @@ export const routes: Routes = [
   { path: 'welcome', component: Welcome },
   { path: 'register', component: Register },
 
+  { path: 'profile', component: Profile, canActivate: [authGuard] },
   { path: 'userBooking', component: userBooking },
   {
     path: 'profile',

@@ -11,7 +11,7 @@ import { Router } from '@angular/router';
 })
 export class DriverProfileComponent {
 
-  driverAvatar = 'assets/avatar.png';
+  driverAvatar = 'assets/images/avatar.png';
   driverName = 'Zakariya Yoder';
   driverPhone = '+91 12345 67890';
 
@@ -19,13 +19,18 @@ export class DriverProfileComponent {
   totalTrips = 504;
   totalLoginHours = 289;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router) { }
 
   goToWallet() {
     this.router.navigate(['/driver-wallet']);
   }
 
+  goToVehicle() {
+    this.router.navigate(['/driver-vehicle']);
+  }
+
+
   logout() {
-    this.router.navigate(['/driver']);
+    this.router.navigate(['/']);
   }
 }
