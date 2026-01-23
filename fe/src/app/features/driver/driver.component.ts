@@ -13,7 +13,7 @@ import { MapComponent } from '../../components/userBooking/map/map.component';
 export class DriverComponent {
 
   isOnline = false;
-  driverAvatar = 'assets/avatar.png';
+  driverAvatar = 'assets/images/avatar.png';
   // 👇 data cho map
   origin = null;
   destination = null;

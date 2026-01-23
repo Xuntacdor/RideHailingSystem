@@ -1,14 +1,15 @@
 import { Routes } from '@angular/router';
-import { DriverComponent } from './pages/driver/driver.component';
-import { DriverProfileComponent } from './pages/driver/driver-profile.component';
-import { DriverWalletComponent } from './pages/driver/driver-wallet.component';
+import { DriverComponent } from './features/driver/driver.component';
+import { DriverProfileComponent } from './features/driver/driver-profile.component';
+import { DriverWalletComponent } from './features/driver/driver-wallet.component';
+import { DriverVehicleComponent } from './features/driver/driver-vehicle.component';
 import { Login } from './features/auth/login/login';
 import { Welcome } from './features/welcome/welcome';
 import { Register } from './features/auth/register/register';
 import { Profile } from './features/profile/profile';
 import { authGuard } from './core/guards/auth-guard';
 import { publicGuard } from './core/guards/public-guard';
-import { userBooking } from './pages/userBooking/userBooking';
+import { userBooking } from './features/userBooking/userBooking';
 import { AddressSaved } from './features/profile/address-saved/address-saved';
 import { PaymentMethods } from './features/profile/payment-methods/payment-methods';
 import { ProfileEdit } from './features/profile/profile-edit/profile-edit';
@@ -19,6 +20,7 @@ export const routes: Routes = [
   { path: 'driver', component: DriverComponent },
   { path: 'driver-profile', component: DriverProfileComponent },
   { path: 'driver-wallet', component: DriverWalletComponent },
+  { path: 'driver-vehicle', component: DriverVehicleComponent },
 
   { path: 'admin', component: AdminDashboardComponent },
 
