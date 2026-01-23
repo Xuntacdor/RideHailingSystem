@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { DriverRideRequestService, RideRequestNotification } from '../../driver/services/driver-ride-request.service';
 import { DriverNotificationModalComponent, DriverRideRequest } from '../../driver/components/driver-notification-modal/driver-notification-modal.component';
-import { AuthService } from '../../core/services/auth';
+import { AuthService } from '../../core/services/auth.service';
 import { MapComponent } from '../../components/userBooking/map/map.component';
 import { DriverPosUpdateService } from '../../driver/services/driverPosUpdate.service';
 import { DriverActiveRideComponent, ActiveRide, MapUpdate } from '../../driver/pages/driver-active-ride/driver-active-ride.component';
