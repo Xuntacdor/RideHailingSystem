@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
-import { DriverComponent } from './driver/driver.component';
-import { DriverProfileComponent } from './driver/driver-profile.component';
-import { DriverWalletComponent } from './driver/driver-wallet.component';
+import { DriverComponent } from './pages/driver/driver.component';
+import { DriverProfileComponent } from './pages/driver/driver-profile.component';
+import { DriverWalletComponent } from './pages/driver/driver-wallet.component';
 
 import { Login } from './features/auth/login/login.component';
 import { Welcome } from './features/welcome/welcome.component';
