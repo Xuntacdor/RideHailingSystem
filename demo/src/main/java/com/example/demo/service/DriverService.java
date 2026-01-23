@@ -117,12 +117,26 @@ public class DriverService {
                 .collect(Collectors.toList());
     }
 
-    public List<DriverResponse> getNearestDrivers(Double lat, Double lng, int limit) {
+    public List<DriverResponse> getNearestDrivers(Double lat, Double lng, int limit,
+            com.example.demo.enums.VehicleType vehicleType) {
+        // Fetch more drivers to account for filtering by vehicle type
         List<Driver> drivers = driverRepository.findNearestDrivers(lat, lng,
-                org.springframework.data.domain.PageRequest.of(0, limit));
+                org.springframework.data.domain.PageRequest.of(0, limit * 3));
+
         return drivers.stream()
+                .filter(driver -> hasVehicleType(driver, vehicleType))
+                .limit(limit)
                 .map(driverMapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    private boolean hasVehicleType(Driver driver, com.example.demo.enums.VehicleType vehicleType) {
+        if (driver.getVehicleRegister() == null || driver.getVehicleRegister().isEmpty()) {
+            return false;
+        }
+        return driver.getVehicleRegister().stream()
+                .anyMatch(vehicle -> vehicle.getVehicleType().equals(vehicleType.name()) &&
+                        vehicle.getStatus() == com.example.demo.enums.VehicleStatus.ACTIVE);
     }
 
     public void updateDriverPosition(String id, Double lat, Double lng) {

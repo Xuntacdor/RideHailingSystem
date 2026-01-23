@@ -16,9 +16,12 @@ import com.example.demo.dto.request.AuthenticationRequest;
 import com.example.demo.dto.request.IntroSpectRequest;
 import com.example.demo.dto.response.AuthenticationResponse;
 import com.example.demo.dto.response.IntroSpectResponse;
+import com.example.demo.entity.Driver;
 import com.example.demo.entity.User;
+import com.example.demo.enums.Role;
 import com.example.demo.exception.AppException;
 import com.example.demo.exception.ErrorCode;
+import com.example.demo.repository.DriverRepository;
 import com.example.demo.repository.UserRepository;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -43,6 +46,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AuthenticationService {
     UserRepository userRepository;
+    DriverRepository driverRepository;
     PasswordEncoder passwordEncoder;
     @NonFinal
     protected static final String SIGNAL_KEY = "c2fdf3cb275a6c40b6795cdab2e92ee6aec56cb4ea65be2fbe1d8b8eaccdbe86";
@@ -74,7 +78,9 @@ public class AuthenticationService {
     @Transactional(readOnly = true)
     private String generateToken(User user) {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS256);
-        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
+
+        // Build JWT claims
+        JWTClaimsSet.Builder claimsBuilder = new JWTClaimsSet.Builder()
                 .subject(user.getId())
                 .issueTime(new Date())
                 .expirationTime(new Date(
@@ -82,8 +88,17 @@ public class AuthenticationService {
                 .claim("scope", buildScope(user))
                 .claim("userId", user.getId())
                 .claim("name", user.getName())
-                .claim("imageUrl", user.getImageUrl())
-                .build();
+                .claim("imageUrl", user.getImageUrl());
+
+        // If user is a driver, add driverId to JWT
+        if (user.getRole() == Role.DRIVER) {
+            driverRepository.findByUserId(user.getId()).ifPresent(driver -> {
+                claimsBuilder.claim("driverId", driver.getId());
+                log.info("Adding driverId to JWT: {}", driver.getId());
+            });
+        }
+
+        JWTClaimsSet jwtClaimsSet = claimsBuilder.build();
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());
 
         JWSObject jwsObject = new JWSObject(header, payload);

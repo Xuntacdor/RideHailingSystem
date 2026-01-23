@@ -12,6 +12,7 @@ import {
   providedIn: 'root',
 })
 export class CouponService extends ApiService {
+
   createCoupon(request: CouponRequest): Observable<ApiResponse<CouponResponse>> {
     return this.post<ApiResponse<CouponResponse>>('/coupon', request);
   }

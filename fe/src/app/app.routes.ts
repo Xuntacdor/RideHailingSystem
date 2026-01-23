@@ -18,6 +18,7 @@ export const routes: Routes = [
   // { path: '', redirectTo: 'driver', pathMatch: 'full' },
 
   { path: 'driver', component: DriverComponent },
+  // { path: 'driver/active-ride', component: DriverActiveRideComponent },
   { path: 'driver-profile', component: DriverProfileComponent },
   { path: 'driver-wallet', component: DriverWalletComponent },
   { path: 'driver-vehicle', component: DriverVehicleComponent },

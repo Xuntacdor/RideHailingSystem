@@ -1,7 +1,7 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { VehicleType, Vehicle, RideFare, VEHICLE_PRICES, RouteInfo } from '../../../models/models';
-import { formatCurrency } from '@angular/common';
+import { BookingTypeResponse } from '../../../core/services/booking-type.service';
 
 @Component({
   selector: 'app-vehicle-selection',
@@ -17,8 +17,8 @@ import { formatCurrency } from '@angular/common';
           <button
             (click)="selectVehicle(vehicle.type)"
             [class.ring-2]="selectedVehicle === vehicle.type"
-            [class.ring-green-500]="selectedVehicle === vehicle.type"
-            [class.bg-green-50]="selectedVehicle === vehicle.type"
+            [class.ring-blue-500]="selectedVehicle === vehicle.type"
+            [class.bg-blue-50]="selectedVehicle === vehicle.type"
             class="relative flex items-center p-1 bg-white rounded-xl border border-gray-200 hover:border-blue-300 transition-all duration-300 group w-full">
             
             <!-- Image Section -->
@@ -36,8 +36,8 @@ import { formatCurrency } from '@angular/common';
               <div class="font-bold text-gray-900 text-lg ">{{ vehicle.name }}</div>
               <div class="text-xs text-gray-500">{{ vehicle.description }}</div>
               @if (routeInfo) {
-                <div class="text-sm font-bold text-green-600 mt-1">
-                  {{ formatPrice(getVehiclePrice(vehicle.type)) }}
+                <div class="text-sm font-bold text-blue-600 mt-1">
+                  {{ formatPrice(getVehiclePrice(vehicle.type, vehicle.bookingType)) }}
                 </div>
               }
             </div>
@@ -49,7 +49,7 @@ import { formatCurrency } from '@angular/common';
     <!-- Book Button -->
     <button 
       (click)="bookRide()"
-      class="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 text-lg">
+      class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 text-lg">
       <span>Book {{ getSelectedVehicleName() }}</span>
     </button>
   </div>
@@ -61,30 +61,56 @@ import { formatCurrency } from '@angular/common';
     }
   `]
 })
-export class VehicleSelectionComponent {
+export class VehicleSelectionComponent implements OnChanges {
   @Input() selectedVehicle: VehicleType = VehicleType.MOTORBIKE;
   @Input() routeInfo: RouteInfo | null = null;
+  @Input() bookingTypes: BookingTypeResponse[] = [];
   @Output() vehicleSelected = new EventEmitter<VehicleType>();
   @Output() bookRideClicked = new EventEmitter<VehicleType>();
 
-  vehicles: (Vehicle & { image: string })[] = [
-    {
-      type: VehicleType.MOTORBIKE,
-      name: 'Bike',
-      description: 'Fast and affordable for 1 person',
-      icon: '🛵',
-      priceMultiplier: 1.0,
-      image: '/images/motorbike.png'
-    },
-    {
-      type: VehicleType.CAR,
-      name: 'Car',
-      description: 'Comfortable ride for 4 people',
-      icon: '🚗',
-      priceMultiplier: 2.5,
-      image: '/images/car.png'
+  vehicles: (Vehicle & { image: string; bookingType?: BookingTypeResponse })[] = [];
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['bookingTypes'] && this.bookingTypes.length > 0) {
+      this.updateVehiclesFromBookingTypes();
+    } else if (this.vehicles.length === 0) {
+      this.loadDefaultVehicles();
     }
-  ];
+  }
+
+  private updateVehiclesFromBookingTypes(): void {
+    this.vehicles = this.bookingTypes.map(bt => ({
+      type: bt.vehicleType === 'CAR' ? VehicleType.CAR : VehicleType.MOTORBIKE,
+      name: bt.name,
+      description: bt.description || '',
+      icon: bt.vehicleType === 'CAR' ? '🚗' : '🛵',
+      priceMultiplier: 1.0, // Not used when we have bookingType
+      image: bt.iconUrl || (bt.vehicleType === 'CAR' ? '/images/car.png' : '/images/motorbike.png'),
+      bookingType: bt
+    }));
+  }
+
+  private loadDefaultVehicles(): void {
+    // Fallback to default vehicles if API data not available
+    this.vehicles = [
+      {
+        type: VehicleType.MOTORBIKE,
+        name: 'Bike',
+        description: 'Fast and affordable for 1 person',
+        icon: '🛵',
+        priceMultiplier: 1.0,
+        image: '/images/motorbike.png'
+      },
+      {
+        type: VehicleType.CAR,
+        name: 'Car',
+        description: 'Comfortable ride for 4 people',
+        icon: '🚗',
+        priceMultiplier: 2.5,
+        image: '/images/car.png'
+      }
+    ];
+  }
 
   selectVehicle(type: VehicleType): void {
     this.selectedVehicle = type;
@@ -94,16 +120,27 @@ export class VehicleSelectionComponent {
   bookRide(): void {
     this.bookRideClicked.emit(this.selectedVehicle);
     console.log(`Booking a ${this.selectedVehicle}...`);
-    // Assuming there's a parent component handling the actual booking logic
   }
 
   getSelectedVehicleName(): string {
     return this.vehicles.find(v => v.type === this.selectedVehicle)?.name || 'Ride';
   }
 
-  getVehiclePrice(vehicleType: VehicleType): number {
+  getVehiclePrice(vehicleType: VehicleType, bookingType?: BookingTypeResponse): number {
     if (!this.routeInfo) return 0;
 
+    if (bookingType) {
+      // Use API pricing from booking type
+      const baseFare = bookingType.baseFare;
+      const pricePerKm = bookingType.pricePerKm;
+      const pricePerMinute = bookingType.pricePerMinute;
+
+      const extraDistance = Math.max(0, this.routeInfo.distance - 2);
+      const total = baseFare + (extraDistance * pricePerKm) + (this.routeInfo.duration * pricePerMinute);
+      return Math.round(total / 1000) * 1000;
+    }
+
+    // Fallback to hardcoded pricing
     const fare = this.calculateFare(vehicleType, this.routeInfo.distance, this.routeInfo.duration);
     return fare.total;
   }

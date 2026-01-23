@@ -19,7 +19,7 @@ export class DriverProfileComponent {
   totalTrips = 504;
   totalLoginHours = 289;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router) { }
 
   goToWallet() {
     this.router.navigate(['/driver-wallet']);
@@ -31,6 +31,6 @@ export class DriverProfileComponent {
 
 
   logout() {
-    this.router.navigate(['/driver']);
+    this.router.navigate(['/']);
   }
 }
