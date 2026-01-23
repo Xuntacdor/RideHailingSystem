@@ -3,15 +3,15 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { UserService } from '../../../core/services/user.service';
-import { AuthService } from '../../../core/services/auth';
+import { AuthService } from '../../../core/services/auth.service';
 import { UserRequest } from '../../../core/models/api-response.model';
-import { ToastService } from '../../../core/services/toast';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-profile-edit',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
-  templateUrl: './profile-edit.html',
+  templateUrl: './profile-edit.component.html',
 })
 export class ProfileEdit implements OnInit {
   private fb = inject(FormBuilder);
@@ -31,7 +31,7 @@ export class ProfileEdit implements OnInit {
       name: ['', [Validators.required, Validators.minLength(2)]],
       phoneNumber: ['', [Validators.required, Validators.pattern(/^[0-9]{10,11}$/)]],
       email: [{ value: '', disabled: true }], // Email không cho sửa
-      cccd: [''] // Chỉ dùng cho Driver
+      cccd: [''], // Chỉ dùng cho Driver
     });
   }
 
@@ -42,14 +42,12 @@ export class ProfileEdit implements OnInit {
       this.userId = currentUser.id;
       this.isDriver = currentUser.role === 'DRIVER';
 
-
       this.editForm.patchValue({
         name: currentUser.name,
         phoneNumber: currentUser.phoneNumber,
         email: currentUser.email,
-        cccd: currentUser.cccd
+        cccd: currentUser.cccd,
       });
-
 
       if (this.isDriver) {
         this.editForm.get('cccd')?.setValidators([Validators.required]);
@@ -68,7 +66,6 @@ export class ProfileEdit implements OnInit {
 
     this.isSubmitting.set(true);
 
-
     const currentUser = this.authService.currentUser();
     if (!currentUser) {
       this.toastService.show('Phiên đăng nhập hết hạn.');
@@ -78,25 +75,20 @@ export class ProfileEdit implements OnInit {
 
     const formValues = this.editForm.getRawValue();
 
-
     const updateData: UserRequest = {
       name: formValues.name,
       phoneNumber: formValues.phoneNumber,
       email: formValues.email,
 
-
       userName: currentUser.userName,
       role: currentUser.role,
 
-
       cccd: this.isDriver ? formValues.cccd : undefined,
-
 
       password: 'NO_CHANGE_PASSWORD_123',
 
-
       imageUrl: currentUser.imageUrl,
-      accountType: currentUser.accountType
+      accountType: currentUser.accountType,
     };
 
     console.log('Sending Update Payload:', updateData);
@@ -118,7 +110,7 @@ export class ProfileEdit implements OnInit {
         console.error('Update Failed:', err);
         const msg = err.error?.message || 'Lỗi cập nhật hồ sơ.';
         this.toastService.show(msg);
-      }
+      },
     });
   }
 }

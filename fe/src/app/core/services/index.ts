@@ -1,5 +1,5 @@
 export * from './api.service';
-export * from './auth';
+export * from './auth.service';
 export * from './user.service';
 export * from './driver.service';
 export * from './ride.service';

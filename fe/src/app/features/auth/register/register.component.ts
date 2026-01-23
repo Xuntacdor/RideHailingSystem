@@ -9,7 +9,7 @@ import {
   AbstractControl,
   ValidationErrors,
 } from '@angular/forms';
-import { AuthService } from '../../../core/services/auth';
+import { AuthService } from '../../../core/services/auth.service';
 import { RegisterRequest } from '../../../core/models';
 import { LucideAngularModule, ChevronLeft } from 'lucide-angular';
 
@@ -26,8 +26,8 @@ export function passwordMatcher(control: AbstractControl): ValidationErrors | nu
   selector: 'app-register',
   standalone: true,
   imports: [CommonModule, RouterLink, ReactiveFormsModule, LucideAngularModule],
-  templateUrl: './register.html',
-  styleUrls: ['./register.css'],
+  templateUrl: './register.component.html',
+  styleUrls: ['./register.component.css'],
 })
 export class Register implements OnInit {
   private authService = inject(AuthService);
@@ -44,8 +44,7 @@ export class Register implements OnInit {
     this.router.navigate(['/welcome']);
   }
 
-  ngOnInit(): void {
-  }
+  ngOnInit(): void {}
 
   selectRole(role: 'USER' | 'DRIVER'): void {
     this.selectedRole = role;
@@ -91,7 +90,7 @@ export class Register implements OnInit {
 
       cccd: this.selectedRole === 'DRIVER' ? formData.cccd : undefined,
 
-      accountType: 'NORMAL'
+      accountType: 'NORMAL',
     };
 
     console.log('Dữ liệu gửi đi:', registerRequest);
@@ -106,7 +105,7 @@ export class Register implements OnInit {
         this.isSubmitting.set(false);
         console.error(err);
         this.errorMessage.set(err.error?.message || 'Đăng ký thất bại');
-      }
+      },
     });
   }
   resetRoleSelection(): void {

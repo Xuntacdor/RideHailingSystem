@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { AddressSaved } from './address-saved';
+import { AddressSaved } from './address-saved.component';
 
 describe('AddressSaved', () => {
   let component: AddressSaved;
@@ -8,9 +8,8 @@ describe('AddressSaved', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AddressSaved]
-    })
-    .compileComponents();
+      imports: [AddressSaved],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(AddressSaved);
     component = fixture.componentInstance;

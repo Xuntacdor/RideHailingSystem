@@ -13,7 +13,7 @@ import { RouteInfoComponent } from '../../components/userBooking/route-info/rout
 import { CustomerNotificationModalComponent, RideNotification } from '../../components/customer-notification-modal/customer-notification-modal.component';
 import { Coordinate, SearchResult, RouteInfo, VehicleType, Driver } from '../../models/models';
 import { jwtPayload, RideRequest, DriverPositionUpdate } from '../../core/models/api-response.model';
-import { AuthService } from '../../core/services/auth';
+import { AuthService } from '../../core/services/auth.service';
 import { Subscription } from 'rxjs';
 import { BookedRideInfoComponent } from '../../components/userBooking/booked-ride-info/booked-ride-info.component';
 

@@ -23,6 +23,6 @@ public class UserResponse {
     Role role;
     String cccd;
     String email;
-    String ImageUrl;
+    String imageUrl;
     String accountType;
 }
