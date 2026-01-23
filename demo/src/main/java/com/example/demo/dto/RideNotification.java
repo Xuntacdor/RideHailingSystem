@@ -22,8 +22,6 @@ public class RideNotification {
     Double startLongitude;
     Double endLatitude;
     Double endLongitude;
-    Double customerLatitude;
-    Double customerLongitude;
     Long distance;
     Long fare;
     VehicleType vehicleType;

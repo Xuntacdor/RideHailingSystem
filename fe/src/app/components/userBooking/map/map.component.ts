@@ -27,8 +27,10 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
     @Input() routeGeometry: any = null;
     @Input() isSettingOrigin = false;
     @Input() isSettingDestination = false;
-    @Input() activeDriver: Driver | null = null;  
-    @Input() driverRoute: any = null;  
+    @Input() activeDriver: Driver | null = null;
+    @Input() driverRoute: any = null;
+    @Input() userLocation: Coordinate | null = null;
+    @Input() showUserMarker = false;
 
     @Output() userLocationDetected = new EventEmitter<{ lng: number; lat: number }>();
     @Output() mapReady = new EventEmitter<void>();
@@ -37,13 +39,14 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
     map: Map | undefined;
     private originMarker: Marker | null = null;
     private destinationMarker: Marker | null = null;
+    private userMarker: Marker | null = null;
     private driverMarkers: { [driverId: string]: Marker } = {};
-    private activeDriverMarker: Marker | null = null; 
+    private activeDriverMarker: Marker | null = null;
     private geolocateControl: GeolocateControl | null = null;
     private animationDuration = 1000;
 
     constructor(private trackAsiaService: TrackAsiaService) { }
-    private userLocation: { lng: number; lat: number } | null = null;
+    // private userLocation: { lng: number; lat: number } | null = null; // Removed duplicate
 
     private animateMarkerTo(marker: Marker, targetLng: number, targetLat: number, duration: number = this.animationDuration): void {
         const startPos = marker.getLngLat();
@@ -151,6 +154,14 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
         if (changes['isSettingOrigin'] || changes['isSettingDestination']) {
             this.updateCursor();
         }
+
+        if (changes['showUserMarker'] || changes['userLocation']) {
+            if (this.showUserMarker && this.userLocation) {
+                this.updateUserMarker(this.userLocation);
+            } else {
+                this.removeUserMarker();
+            }
+        }
     }
 
 
@@ -159,6 +170,17 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
         if ('geolocation' in navigator) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
+                    // Update the local userLocation property, 
+                    // BUT be careful not to conflict with the @Input userLocation
+                    //Ideally, we should rely on the input for the driver view, and this local logic for the user view.
+                    // For now, I'll store it locally if the input is null?
+                    // Actually, the input is for when the *driver* views the map.
+                    // When the *user* views the map, they use this geolocation logic.
+                    // To avoid type errors, let's treat the local one separately or reuse the input property if we can assign to it (inputs are mutable).
+                    // However, TS complained about duplicate identifier.
+                    // I removed the duplicate 'private userLocation' property in this rewrite.
+                    // So 'this.userLocation' refers to the @Input.
+
                     this.userLocation = {
                         lng: position.coords.longitude,
                         lat: position.coords.latitude
@@ -345,7 +367,7 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
         });
         this.map.fitBounds(bounds, {
             padding: { top: 0, bottom: 500, left: 50, right: 50 },
-            maxZoom: 12
+            maxZoom: 15
         });
     }
 
@@ -368,8 +390,38 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
         if (this.map?.getLayer('route')) {
             this.map.removeLayer('route');
         }
+
         if (this.map?.getSource('route')) {
             this.map.removeSource('route');
+        }
+    }
+
+    private updateUserMarker(coords: Coordinate): void {
+        if (!this.map) return;
+
+        // Remove existing marker if it exists
+        if (this.userMarker) {
+            this.userMarker.remove();
+        }
+
+        const el = document.createElement('div');
+        el.className = 'user-marker';
+        el.style.width = '30px';
+        el.style.height = '30px';
+        el.style.background = '#3b82f6'; // Blue for user
+        el.style.borderRadius = '50%';
+        el.style.border = '3px solid white';
+        el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+
+        this.userMarker = new Marker(el)
+            .setLngLat([coords.lng, coords.lat])
+            .addTo(this.map);
+    }
+
+    private removeUserMarker(): void {
+        if (this.userMarker) {
+            this.userMarker.remove();
+            this.userMarker = null;
         }
     }
 

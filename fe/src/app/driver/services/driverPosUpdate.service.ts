@@ -31,7 +31,6 @@ export class DriverPosUpdateService {
     }
 
     getApproximateLocation(): Promise<{ lat: number; lng: number }> {
-        console.log('📱 Getting approximate location');
 
         return new Promise((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(
@@ -40,7 +39,6 @@ export class DriverPosUpdateService {
                         lat: position.coords.latitude,
                         lng: position.coords.longitude
                     };
-                    console.log('📍 Approximate location:', location);
                     resolve(location);
                 },
                 (error) => reject(error),
@@ -132,7 +130,6 @@ export class DriverPosUpdateService {
                 })
             });
 
-            console.log('Sent location:', location);
         } catch (error) {
             console.error('Error sending location:', error);
         }

@@ -1,42 +1,43 @@
-<div class="driver-container">
-  <!-- Show active ride component when ride is active -->
-  <app-driver-active-ride *ngIf="showActiveRide" [activeRide]="activeRide" (rideCompleted)="onRideCompleted()"
-    (rideCancelled)="onRideCancelled()">
+<div class="driver-container relative h-screen w-full overflow-hidden">
+  <app-map class="map absolute inset-0 z-0" [origin]="mapOrigin" [destination]="mapDestination"
+    [routeGeometry]="mapRouteGeometry"
+    [userLocation]="activeRide ? {lat: activeRide.pickupLat, lng: activeRide.pickupLng} : null"
+    [showUserMarker]="!!activeRide">
+  </app-map>
+
+  <!-- Show active ride overlay when ride is active -->
+  <app-driver-active-ride *ngIf="showActiveRide" class="absolute inset-0 z-10 pointer-events-none"
+    [activeRide]="activeRide" [driverId]="driverId" (rideCompleted)="onRideCompleted()"
+    (rideCancelled)="onRideCancelled()" (mapUpdate)="onMapUpdate($event)">
   </app-driver-active-ride>
 
-  <!-- Show default map when no active ride -->
-  <app-map *ngIf="!showActiveRide" class="map"></app-map>
-
-  <!-- TOP INFO BAR -->
-  <div class="top-bar" *ngIf="!showActiveRide">
+  <!-- <div class="top-bar relative z-10" *ngIf="!showActiveRide">
     <div class="wallet">
       <span>VND</span>
       <strong>900.000</strong>
     </div>
-    <!-- DRIVER AVATAR -->
     <div class="driver-avatar" (click)="goToProfile()">
       <img [src]="driverAvatar" alt="Driver Avatar" />
     </div>
-  </div>
+  </div> -->
 
   <!-- CENTER MESSAGE -->
-  <div class="status-message" *ngIf="!isOnline && !showActiveRide">
+  <div class="status-message relative z-10" *ngIf="!isOnline && !showActiveRide">
     Nhấn để bật/tắt chế độ<br />
     <b>sẵn sàng & tự động nhận cuốc</b>
   </div>
 
-  <!-- POWER BUTTON -->
-  <button *ngIf="!showActiveRide" class="power-btn" [class.online]="isOnline" (click)="toggleOnline()">
+  <button *ngIf="!showActiveRide" class="power-btn relative z-10" [class.online]="isOnline" (click)="toggleOnline()">
     {{ isOnline ? 'Đang kết nối' : 'Bật kết nối' }}
   </button>
-
-  <!-- STATUS BAR -->
-  <div class="status-bar" *ngIf="!showActiveRide">
+  <div class="status-bar relative z-10" *ngIf="!showActiveRide">
     {{ isOnline ? 'Bạn đang sẵn sàng nhận cuốc.' : 'Bạn đang không sẵn sàng nhận cuốc.' }}
   </div>
 </div>
 
-<!-- Driver Ride Request Modal -->
 <app-driver-notification-modal [isVisible]="showRideRequestModal" [rideRequest]="currentRideRequest"
   (accept$)="onAcceptRide($event)" (reject$)="onRejectRide($event)" (timeout$)="onRideRequestTimeout($event)">
 </app-driver-notification-modal>
+
+<app-driver-finished-ride *ngIf="showFinishedRide" [rideInfo]="finishedRideInfo" (close)="onCloseFinishedRide()">
+</app-driver-finished-ride>

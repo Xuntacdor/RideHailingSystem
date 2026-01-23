@@ -10,8 +10,10 @@ export interface RideRequestNotification {
     customerName: string;
     startLocation: string;
     endLocation: string;
-    customerLatitude: number;
-    customerLongitude: number;
+    startLatitude: number;
+    startLongitude: number;
+    endLatitude: number;
+    endLongitude: number;
     distance: number;
     fare: number;
     vehicleType: string;
@@ -25,7 +27,7 @@ export class DriverRideRequestService {
     private stompClient: RxStomp;
 
     constructor() {
-        console.log('🔌 [WS] Initializing DriverRideRequestService');
+        console.log('Initializing DriverRideRequestService');
 
         this.stompClient = new RxStomp();
         this.stompClient.configure({

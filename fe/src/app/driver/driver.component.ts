@@ -7,13 +7,16 @@ import { DriverNotificationModalComponent, DriverRideRequest } from './component
 import { AuthService } from '../core/services/auth';
 import { MapComponent } from '../components/userBooking/map/map.component';
 import { DriverPosUpdateService } from './services/driverPosUpdate.service';
-import { DriverActiveRideComponent, ActiveRide } from './pages/driver-active-ride/driver-active-ride.component';
+import { DriverActiveRideComponent, ActiveRide, MapUpdate } from './pages/driver-active-ride/driver-active-ride.component';
+import { DriverFinishedRideComponent, CompletedRideInfo } from './components/driver-finished-ride/driver-finished-ride.component';
+import { RideService } from '../core/services/ride.service';
+import { Coordinate } from '../models/models';
 
 
 @Component({
   selector: 'app-driver',
   standalone: true,
-  imports: [CommonModule, DriverNotificationModalComponent, MapComponent, DriverActiveRideComponent],
+  imports: [CommonModule, DriverNotificationModalComponent, MapComponent, DriverActiveRideComponent, DriverFinishedRideComponent],
   templateUrl: './driver.component.html',
   styleUrls: ['./driver.component.css']
 })
@@ -28,16 +31,23 @@ export class DriverComponent implements OnInit, OnDestroy {
   currentRideRequest: DriverRideRequest | null = null;
   driverStatus: 'Matching' | 'Resting' = 'Resting';
 
-  // Active ride state
   showActiveRide = false;
   activeRide: ActiveRide | null = null;
+
+  showFinishedRide = false;
+  finishedRideInfo: CompletedRideInfo | null = null;
+
+  mapOrigin: Coordinate | null = null;
+  mapDestination: Coordinate | null = null;
+  mapRouteGeometry: any = null;
 
   constructor(
     private router: Router,
     private driverRideRequestService: DriverRideRequestService,
     private authService: AuthService,
     private cdr: ChangeDetectorRef,
-    private driverPosUpdateService: DriverPosUpdateService
+    private driverPosUpdateService: DriverPosUpdateService,
+    private rideService: RideService
   ) { }
 
   ngOnInit(): void {
@@ -79,8 +89,19 @@ export class DriverComponent implements OnInit, OnDestroy {
     this.rideRequestSubscription = this.driverRideRequestService
       .subscribeToRideRequests(this.driverId)
       .subscribe({
-        next: (notification) => {
-          this.showRideRequestNotification(notification);
+        next: (notification: any) => {
+          if (notification.type === 'RIDE_CREATED') {
+            if (this.activeRide) {
+              console.log('Updating activeRide with actual ride ID:', notification.rideId);
+              this.activeRide = {
+                ...this.activeRide,
+                rideId: notification.rideId
+              };
+            }
+          } else {
+            this.showRideRequestNotification(notification);
+          }
+          this.cdr.detectChanges();
         },
         error: (err) => {
           console.error('WebSocket subscription error:', err);
@@ -89,7 +110,6 @@ export class DriverComponent implements OnInit, OnDestroy {
           console.log('WebSocket subscription completed');
         }
       });
-
 
   }
 
@@ -107,27 +127,26 @@ export class DriverComponent implements OnInit, OnDestroy {
       customerName: notification.customerName,
       startLocation: notification.startLocation,
       endLocation: notification.endLocation,
-      customerLatitude: notification.customerLatitude,
-      customerLongitude: notification.customerLongitude,
+      startLatitude: notification.startLatitude,
+      startLongitude: notification.startLongitude,
+      endLatitude: notification.endLatitude,
+      endLongitude: notification.endLongitude,
       distance: notification.distance,
       fare: notification.fare,
       vehicleType: notification.vehicleType,
       timestamp: notification.timestamp
     };
 
-    console.log('Current ride request set:', this.currentRideRequest);
-    console.log('Setting showRideRequestModal = true');
     this.showRideRequestModal = true;
-    console.log('Modal visibility flag:', this.showRideRequestModal);
 
-    console.log('Triggering change detection...');
     this.cdr.detectChanges();
-    console.log('Change detection triggered');
   }
 
   onAcceptRide(rideRequest: DriverRideRequest): void {
     if (this.driverId) {
       console.log('Driver accepting ride:', rideRequest.rideRequestId);
+      console.log(rideRequest.startLatitude + ' ' + rideRequest.startLongitude + 'aaaaaa');
+      console.log(rideRequest.endLatitude + ' ' + rideRequest.endLongitude + 'zzzzzz');
       this.driverRideRequestService.sendDriverResponse(
         rideRequest.rideRequestId,
         this.driverId,
@@ -135,18 +154,18 @@ export class DriverComponent implements OnInit, OnDestroy {
       );
       this.driverStatus = 'Matching';
 
-      // Show active ride component instead of navigating
       this.activeRide = {
         rideId: rideRequest.rideRequestId,
         customerId: rideRequest.customerId,
-        pickupLat: rideRequest.customerLatitude,
-        pickupLng: rideRequest.customerLongitude,
-        destinationLat: rideRequest.destinationLatitude,
-        destinationLng: rideRequest.destinationLongitude,
-        pickupLocation: rideRequest.startLocation,
-        destinationLocation: rideRequest.endLocation,
+        pickupLat: rideRequest.startLatitude,
+        pickupLng: rideRequest.startLongitude,
+        destinationLat: rideRequest.endLatitude,
+        destinationLng: rideRequest.endLongitude,
+        // pickupLocation: rideRequest.startLocation,
+        // destinationLocation: rideRequest.endLocation,
         status: 'CONFIRMED'
       };
+
       this.showActiveRide = true;
       this.showRideRequestModal = false;
       this.currentRideRequest = null;
@@ -184,11 +203,68 @@ export class DriverComponent implements OnInit, OnDestroy {
     this.router.navigate(['/driver-profile']);
   }
 
+  onMapUpdate(update: MapUpdate): void {
+    this.mapOrigin = update.origin;
+    this.mapDestination = update.destination;
+    this.mapRouteGeometry = update.routeGeometry;
+
+    this.cdr.detectChanges();
+  }
+
   onRideCompleted(): void {
     console.log('Ride completed');
+
+    if (!this.activeRide) return;
+
+    const rideId = this.activeRide.rideId;
+
+    // Immediately hide active ride and reset driver status
     this.showActiveRide = false;
     this.activeRide = null;
     this.driverStatus = 'Resting';
+    this.resetMap();
+
+    // Fetch ride data asynchronously for display
+    this.rideService.getRideById(rideId).subscribe({
+      next: (rideData) => {
+
+        this.finishedRideInfo = {
+          rideId: rideId,
+          // pickupLocation: pickupLocation,
+          // destinationLocation: destinationLocation,
+          distance: rideData.distance || 0,
+          fare: rideData.fare || 0,
+          customerName: rideData.customer?.name || 'Khách hàng',
+          startTime: rideData.startTime,
+          endTime: rideData.endTime || Date.now()
+        };
+
+        this.showFinishedRide = true;
+      },
+      error: (err) => {
+        console.error('Error fetching ride data:', err);
+        // Mock data if fetch fails
+        this.finishedRideInfo = {
+          rideId: rideId,
+          // pickupLocation: pickupLocation,
+          // destinationLocation: destinationLocation,
+          distance: 0,
+          fare: 0,
+          customerName: 'Khách hàng'
+        };
+
+        this.showFinishedRide = true;
+        this.resetMap();
+      }
+
+
+    });
+  }
+
+  onCloseFinishedRide(): void {
+    console.log('Closing finished ride screen');
+    this.showFinishedRide = false;
+    this.finishedRideInfo = null;
   }
 
   onRideCancelled(): void {
@@ -196,6 +272,13 @@ export class DriverComponent implements OnInit, OnDestroy {
     this.showActiveRide = false;
     this.activeRide = null;
     this.driverStatus = 'Resting';
+    this.resetMap();
+  }
+
+  private resetMap(): void {
+    this.mapOrigin = null;
+    this.mapDestination = null;
+    this.mapRouteGeometry = null;
   }
 
   ngOnDestroy(): void {

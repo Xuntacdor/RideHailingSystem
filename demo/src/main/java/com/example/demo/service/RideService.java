@@ -44,7 +44,9 @@ public class RideService {
 
     public Map<String, Object> createRide(RideRequest request) {
         log.info(">>> RideService.createRide() started");
-
+        log.info("Customer coordinates: [{} {}]", request.getCustomerLatitude(), request.getCustomerLongitude());
+        log.info("Driver coordinates: [{} {}]", request.getStartLatitude(), request.getStartLongitude());
+        log.info("End coordinates: [{} {}]", request.getEndLatitude(), request.getEndLongitude());
         String rideRequestId = UUID.randomUUID().toString();
         log.info("Generated ride request ID: {}", rideRequestId);
 
@@ -101,10 +103,8 @@ public class RideService {
         }
 
         if (response.getAccepted()) {
-            // Driver accepted - create the ride
             handleDriverAcceptance(pendingRide, response.getDriverId());
         } else {
-            // Driver rejected - try next driver
             handleDriverRejection(pendingRide);
         }
     }
@@ -113,13 +113,11 @@ public class RideService {
         log.info("Driver {} accepted ride request {}", driverId, pendingRide.getRideRequestId());
 
         try {
-            // Get driver and customer
             Driver driver = driverRepository.findById(driverId)
                     .orElseThrow(() -> new ResourceNotFoundException("Driver not found"));
             User customer = userRepository.findById(pendingRide.getRequest().getCustomerId())
                     .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
 
-            // Create the ride
             Ride ride = Ride.builder()
                     .driver(driver)
                     .customer(customer)
@@ -137,19 +135,20 @@ public class RideService {
 
             ride = rideRepository.save(ride);
 
-            // Notify customer
             notificationService.notifyRideAccepted(
                     pendingRide.getRequest().getCustomerId(),
                     driverId,
                     ride.getId());
 
-            // Remove from pending
+            notificationService.notifyDriverRideCreated(
+                    driverId,
+                    ride.getId(),
+                    pendingRide.getRequest().getCustomerId());
             pendingRides.remove(pendingRide.getRideRequestId());
 
             log.info("Ride {} created successfully", ride.getId());
         } catch (Exception e) {
             log.error("Error creating ride: {}", e.getMessage(), e);
-            // Try next driver
             handleDriverRejection(pendingRide);
         }
     }
@@ -157,18 +156,15 @@ public class RideService {
     private void handleDriverRejection(PendingRide pendingRide) {
         log.info("Driver rejected ride request {}", pendingRide.getRideRequestId());
 
-        // Move to next driver
         pendingRide.setCurrentDriverIndex(pendingRide.getCurrentDriverIndex() + 1);
 
         if (pendingRide.getCurrentDriverIndex() >= pendingRide.getDriverIds().size()) {
-            // No more drivers available
             log.warn("No more drivers available for ride request {}", pendingRide.getRideRequestId());
             notificationService.notifyNoDriverAvailable(
                     pendingRide.getRequest().getCustomerId(),
                     pendingRide.getRideRequestId());
             pendingRides.remove(pendingRide.getRideRequestId());
         } else {
-            // Send notification to next driver
             sendNotificationToCurrentDriver(pendingRide);
         }
     }
@@ -179,12 +175,14 @@ public class RideService {
         RideNotification notification = RideNotification.builder()
                 .rideRequestId(pendingRide.getRideRequestId())
                 .customerId(pendingRide.getRequest().getCustomerId())
+                // .startLocation(pendingRide.getRequest().getStartLocation())
+                // .endLocation(pendingRide.getRequest().getEndLocation())
                 .startLatitude(pendingRide.getRequest().getStartLatitude())
                 .startLongitude(pendingRide.getRequest().getStartLongitude())
                 .endLatitude(pendingRide.getRequest().getEndLatitude())
                 .endLongitude(pendingRide.getRequest().getEndLongitude())
-                .customerLatitude(pendingRide.getRequest().getCustomerLatitude())
-                .customerLongitude(pendingRide.getRequest().getCustomerLongitude())
+                // .customerLatitude(pendingRide.getRequest().getCustomerLatitude())
+                // .customerLongitude(pendingRide.getRequest().getCustomerLongitude())
                 .distance(pendingRide.getRequest().getDistance())
                 .fare(pendingRide.getRequest().getFare())
                 .vehicleType(pendingRide.getRequest().getVehicleType())
@@ -239,7 +237,6 @@ public class RideService {
         ride.setStatus(status);
         ride = rideRepository.save(ride);
 
-        // Notify customer about status change via WebSocket
         if (ride.getCustomer() != null) {
             notificationService.notifyRideStatusUpdate(
                     ride.getCustomer().getId(),
@@ -248,5 +245,38 @@ public class RideService {
         }
 
         return rideMapper.toResponse(ride);
+    }
+
+    public Map<String, Object> cancelRide(String rideId, String userId, String role) {
+        log.info("Cancelling ride {} by user {} with role {}", rideId, userId, role);
+
+        Ride ride = rideRepository.findById(rideId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ride not found with id: " + rideId));
+
+        if (role.equals("DRIVER") && (ride.getDriver() == null || !ride.getDriver().getId().equals(userId))) {
+            throw new RuntimeException("Not authorized to cancel this ride");
+        }
+        if (role.equals("CUSTOMER") && (ride.getCustomer() == null || !ride.getCustomer().getId().equals(userId))) {
+            throw new RuntimeException("Not authorized to cancel this ride");
+        }
+
+        ride.setStatus(Status.CANCELLED);
+        rideRepository.save(ride);
+
+        if (ride.getCustomer() != null && ride.getDriver() != null) {
+            notificationService.notifyRideCancellation(
+                    ride.getCustomer().getId(),
+                    ride.getDriver().getId(),
+                    rideId,
+                    role);
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Ride cancelled successfully");
+        response.put("rideId", rideId);
+
+        log.info("Ride {} cancelled successfully", rideId);
+        return response;
     }
 }

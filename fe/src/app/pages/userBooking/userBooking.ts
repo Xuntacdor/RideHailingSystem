@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TrackAsiaService } from '../../core/services/trackasia.service';
 import { RideService } from '../../core/services/ride.service';
@@ -15,6 +15,17 @@ import { Coordinate, SearchResult, RouteInfo, VehicleType, Driver } from '../../
 import { jwtPayload, RideRequest, DriverPositionUpdate } from '../../core/models/api-response.model';
 import { AuthService } from '../../core/services/auth';
 import { Subscription } from 'rxjs';
+import { BookedRideInfoComponent } from '../../components/userBooking/booked-ride-info/booked-ride-info.component';
+
+enum RideState {
+  IDLE = 'IDLE',           // Local state only, not sent to backend
+  PENDING = 'PENDING',     // Searching for driver (backend: PENDING)
+  CONFIRMED = 'CONFIRMED', // Driver accepted (backend: CONFIRMED)
+  PICKINGUP = 'PICKINGUP', // Driver arriving/at pickup (backend: PICKINGUP)
+  ONGOING = 'ONGOING',     // Ride in progress (backend: ONGOING)
+  FINISHED = 'FINISHED',   // Ride completed (backend: FINISHED)
+  CANCELLED = 'CANCELLED'  // Ride cancelled (backend: CANCELLED)
+}
 
 @Component({
   selector: 'app-root',
@@ -26,7 +37,8 @@ import { Subscription } from 'rxjs';
     VehicleSelectionComponent,
     LocationSearchComponent,
     RouteInfoComponent,
-    CustomerNotificationModalComponent
+    CustomerNotificationModalComponent,
+    BookedRideInfoComponent
   ],
   templateUrl: './userBooking.html',
   styleUrls: []
@@ -36,7 +48,7 @@ export class userBooking implements OnInit, OnDestroy {
   isTokenValid = true;
   isSettingOrigin = false;
   isSettingDestination = false;
-  isBooked = false;
+  rideState: RideState = RideState.IDLE;
   jwtPayload: jwtPayload | null = null;
 
 
@@ -58,13 +70,11 @@ export class userBooking implements OnInit, OnDestroy {
   rideInfo: any = null;
   bookingInProgress = false;
 
-  // WebSocket notification properties
   private rideStatusSubscription?: Subscription;
   currentRideId: string | null = null;
   showNotificationModal = false;
   notificationData: RideNotification | null = null;
 
-  // Driver tracking properties
   private driverPositionSubscription?: Subscription;
   currentDriverId: string | null = null;
   driverLocation: { lat: number; lng: number } | null = null;
@@ -79,11 +89,27 @@ export class userBooking implements OnInit, OnDestroy {
     private rideService: RideService,
     private rideStatusUpdateService: RideStatusUpdateService,
     private driverPosUpdateService: DriverPosUpdateService,
-    private bookingTypeService: BookingTypeService
+    private bookingTypeService: BookingTypeService,
+    private cdr: ChangeDetectorRef
   ) {
-    // Get JWT payload on component initialization
     this.jwtPayload = this.authService.getUserInfo();
     this.userName = this.jwtPayload?.name || '';
+  }
+
+  get RideState() {
+    return RideState;
+  }
+
+  getStatusText(): string {
+    switch (this.rideState) {
+      case RideState.PENDING: return 'Đang tìm tài xế...';
+      case RideState.CONFIRMED: return 'Đã tìm thấy tài xế!';
+      case RideState.PICKINGUP: return 'Tài xế đang đến';
+      case RideState.ONGOING: return 'Đang trong chuyến đi';
+      case RideState.FINISHED: return 'Chuyến đi hoàn tất';
+      case RideState.CANCELLED: return 'Đã hủy chuyến';
+      default: return '';
+    }
   }
 
   ngOnInit(): void {
@@ -125,7 +151,6 @@ export class userBooking implements OnInit, OnDestroy {
   }
 
   async onBookRide(vehicleType: VehicleType): Promise<void> {
-    // Improved validation
     if (!this.jwtPayload) {
       this.showErrorNotification('Please log in to book a ride.');
       return;
@@ -141,14 +166,12 @@ export class userBooking implements OnInit, OnDestroy {
       return;
     }
 
-    // Validate coordinates
     if (!this.isValidCoordinate(this.origin.lat, this.origin.lng) ||
       !this.isValidCoordinate(this.destination.lat, this.destination.lng)) {
       this.showErrorNotification('Invalid location coordinates. Please select valid locations.');
       return;
     }
 
-    // Check if origin and destination are too close
     const minDistance = 0.1; // 100 meters minimum
     if (this.routeInfo.distance < minDistance) {
       this.showErrorNotification('Pickup and destination are too close. Minimum distance is 100m.');
@@ -163,21 +186,20 @@ export class userBooking implements OnInit, OnDestroy {
     this.loading = true;
 
     try {
-      // Calculate fare based on distance and duration
       const distanceInMeters = this.routeInfo.distance * 1000;
       const durationInMinutes = this.routeInfo.duration;
       const fare = this.calculateFare(vehicleType, this.routeInfo.distance, durationInMinutes);
 
       const rideRequest: RideRequest = {
         customerId: this.jwtPayload.userId,
-        startLocation: this.origin.name!,
-        endLocation: this.destination.name!,
+        startLatitude: this.origin.lat,
+        startLongitude: this.origin.lng,
+        endLatitude: this.destination.lat,
+        endLongitude: this.destination.lng,
         customerLatitude: this.origin.lat,
         customerLongitude: this.origin.lng,
-        destinationLatitude: this.destination.lat,  
-        destinationLongitude: this.destination.lng,  
-        distance: Math.round(distanceInMeters), 
-        fare: Math.round(fare), 
+        distance: Math.round(distanceInMeters),
+        fare: Math.round(fare),
         vehicleType: this.mapVehicleTypeToBackend(vehicleType),
         startTime: Date.now(),
       };
@@ -213,7 +235,7 @@ export class userBooking implements OnInit, OnDestroy {
       this.loading = false;
     }
 
-    this.isBooked = true;
+    this.rideState = RideState.PENDING;
   }
 
   private isValidCoordinate(lat: number, lng: number): boolean {
@@ -252,7 +274,7 @@ export class userBooking implements OnInit, OnDestroy {
 
       const extraDistance = Math.max(0, distance - 2);
       const total = baseFare + (extraDistance * pricePerKm) + (duration * pricePerMinute);
-      return Math.round(total / 1000) * 1000; 
+      return Math.round(total / 1000) * 1000;
     }
 
     const baseFare = 10000;
@@ -407,6 +429,7 @@ export class userBooking implements OnInit, OnDestroy {
         next: (update) => {
           console.log('Received WebSocket notification:', update);
           this.handleRideNotification(update);
+          this.cdr.detectChanges();
         },
         error: (err) => {
           console.error('WebSocket subscription error:', err);
@@ -431,6 +454,9 @@ export class userBooking implements OnInit, OnDestroy {
       case 'NO_DRIVER_AVAILABLE':
         this.showNoDriverModal(update);
         break;
+      case 'RIDE_CANCELLED':
+        this.showCancellationModal(update);
+        break;
       default:
         console.log('Unknown notification type:', update.type);
     }
@@ -441,6 +467,9 @@ export class userBooking implements OnInit, OnDestroy {
 
     this.currentDriverId = update.driverId;
     this.currentRideStatus = 'CONFIRMED';
+    this.rideState = RideState.CONFIRMED;
+
+    this.routeGeometry = null;
 
     this.subscribeToDriverPosition(update.driverId);
 
@@ -472,12 +501,33 @@ export class userBooking implements OnInit, OnDestroy {
 
   private showNoDriverModal(update: any): void {
     this.showRideNotification = false;
+    this.rideState = RideState.IDLE;
     this.notificationData = {
       type: 'NO_DRIVER_AVAILABLE',
       rideRequestId: update.rideRequestId,
       message: update.message || 'No drivers available at the moment'
     };
     this.showNotificationModal = true;
+  }
+
+  private showCancellationModal(update: any): void {
+    this.showRideNotification = false;
+
+    const message = update.cancelledBy === 'DRIVER' ?
+      'Driver cancelled the ride' :
+      'Ride has been cancelled';
+
+    this.notificationData = {
+      type: 'RIDE_CANCELLED',
+      rideId: update.rideId,
+      message: message,
+      timestamp: update.timestamp
+    };
+    this.showNotificationModal = true;
+
+    setTimeout(() => {
+      this.resetToIdle();
+    }, 3000);
   }
 
   onCloseNotificationModal(): void {
@@ -494,11 +544,32 @@ export class userBooking implements OnInit, OnDestroy {
   }
 
   onCancelBooking(): void {
+    if (!this.currentRideId || !this.jwtPayload?.userId) {
+      this.resetToIdle();
+      return;
+    }
+
+    this.rideService.cancelRide(this.currentRideId, this.jwtPayload.userId, 'CUSTOMER')
+      .subscribe({
+        next: () => {
+          console.log('Ride cancelled successfully');
+          this.resetToIdle();
+        },
+        error: (err) => {
+          console.error('Error cancelling ride:', err);
+          alert('Failed to cancel ride. Please try again.');
+        }
+      });
+  }
+
+  private resetToIdle(): void {
     this.showNotificationModal = false;
     this.notificationData = null;
     this.currentRideId = null;
     this.rideInfo = null;
+    this.rideState = RideState.IDLE;
     this.rideStatusSubscription?.unsubscribe();
+    this.cleanupDriverTracking();
   }
 
   private subscribeToDriverPosition(driverId: string): void {
@@ -511,6 +582,7 @@ export class userBooking implements OnInit, OnDestroy {
           const update: DriverPositionUpdate = JSON.parse(message.body);
           console.log('Received driver position update:', update);
           this.updateDriverLocation(update);
+          this.cdr.detectChanges();
         },
         error: (err) => {
           console.error('Driver position subscription error:', err);
@@ -539,9 +611,10 @@ export class userBooking implements OnInit, OnDestroy {
 
     let targetLocation: Coordinate | null = null;
 
-    if (this.currentRideStatus === 'CONFIRMED' || this.currentRideStatus === 'PICKINGUP') {
+    if (this.rideState === RideState.CONFIRMED ||
+      this.rideState === RideState.PICKINGUP) {
       targetLocation = this.origin;
-    } else if (this.currentRideStatus === 'ONGOING') {
+    } else if (this.rideState === RideState.ONGOING) {
       targetLocation = this.destination;
     }
 
@@ -568,12 +641,36 @@ export class userBooking implements OnInit, OnDestroy {
     console.log('Ride status update:', update);
     this.currentRideStatus = update.status;
 
+    switch (update.status) {
+      case 'PICKINGUP':
+        this.rideState = RideState.PICKINGUP;
+        break;
+      case 'ONGOING':
+        this.rideState = RideState.ONGOING;
+        break;
+      case 'FINISHED':
+        this.rideState = RideState.FINISHED;
+        break;
+      case 'CANCELLED':
+        this.rideState = RideState.CANCELLED;
+        break;
+    }
+
     if (this.driverLocation) {
       this.calculateDriverRoute();
     }
 
     if (update.status === 'FINISHED' || update.status === 'CANCELLED') {
       this.cleanupDriverTracking();
+      this.routeGeometry = null;
+      this.destination = null;
+      this.origin = null; // Optional: reset origin too if desired, user requested clear markers
+      this.routeInfo = null;
+
+      setTimeout(() => {
+        this.rideState = RideState.IDLE;
+        this.cdr.detectChanges();
+      }, 3000);
     }
   }
 

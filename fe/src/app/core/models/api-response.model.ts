@@ -122,17 +122,16 @@ export interface RideRequest {
   driverId?: string;
   startTime?: number;
   endTime?: number;
-  startLocation: string;
-  endLocation: string;
+  startLatitude: number;
+  startLongitude: number;
+  endLatitude: number;
+  endLongitude: number;
   customerLatitude: number;
   customerLongitude: number;
-  destinationLatitude: number;  // Added: destination coordinates
-  destinationLongitude: number; // Added: destination coordinates
   distance: number;
   fare: number;
   status?: string;
   vehicleType: string;
-  pickupNotes?: string; // Added: optional pickup instructions
 }
 
 export interface CreateRideResponse {

@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { interval, Subscription } from 'rxjs';
 import { take } from 'rxjs/operators';
@@ -9,10 +9,10 @@ export interface DriverRideRequest {
   customerName: string;
   startLocation: string;
   endLocation: string;
-  customerLatitude: number;
-  customerLongitude: number;
-  destinationLatitude?: number;
-  destinationLongitude?: number;
+  startLatitude: number;
+  startLongitude: number;
+  endLatitude: number;
+  endLongitude: number;
   distance: number;
   fare: number;
   vehicleType: string;
@@ -28,10 +28,8 @@ export interface DriverRideRequest {
          class="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] animate-fadeIn">
       <div class="relative bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[28px] p-8 max-w-[480px] w-[90%] shadow-[0_25px_80px_rgba(0,0,0,0.4)] animate-slideUp overflow-hidden">
 
-        <!-- Pulse effect overlay -->
         <div class="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-[radial-gradient(circle,rgba(255,255,255,0.1)_0%,transparent_70%)] animate-pulse-glow pointer-events-none"></div>
 
-        <!-- Timer Container -->
         <div class="text-center mb-6 relative z-10">
           <div class="relative w-[100px] h-[100px] rounded-full mx-auto mb-3 shadow-[0_8px_24px_rgba(0,0,0,0.2)] animate-rotate-timer"
                [style.background]="'conic-gradient(white 0deg, white ' + (getProgress() * 3.6) + 'deg, rgba(255,255,255,0.2) ' + (getProgress() * 3.6) + 'deg, rgba(255,255,255,0.2) 360deg)'">
@@ -193,7 +191,7 @@ export interface DriverRideRequest {
     }
   `]
 })
-export class DriverNotificationModalComponent implements OnInit, OnDestroy {
+export class DriverNotificationModalComponent implements OnInit, OnDestroy, OnChanges {
   @Input() rideRequest: DriverRideRequest | null = null;
   @Input() isVisible = false;
   @Input() timeoutSeconds = 30;
@@ -206,7 +204,16 @@ export class DriverNotificationModalComponent implements OnInit, OnDestroy {
   private timerSubscription?: Subscription;
 
   ngOnInit(): void {
-    this.startTimer();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if ((changes['isVisible'] && this.isVisible) ||
+      (changes['rideRequest'] && this.rideRequest && this.isVisible)) {
+      this.stopTimer();
+      this.startTimer();
+    } else if (changes['isVisible'] && !this.isVisible) {
+      this.stopTimer();
+    }
   }
 
   ngOnDestroy(): void {

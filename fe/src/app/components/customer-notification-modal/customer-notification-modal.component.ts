@@ -2,13 +2,14 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export interface RideNotification {
-  type: 'RIDE_ACCEPTED' | 'RIDE_STATUS_UPDATE' | 'NO_DRIVER_AVAILABLE';
+  type: 'RIDE_ACCEPTED' | 'RIDE_STATUS_UPDATE' | 'NO_DRIVER_AVAILABLE' | 'RIDE_CANCELLED';
   rideId?: string;
   driverId?: string;
   status?: string;
   message?: string;
   rideRequestId?: string;
   timestamp?: number;
+  cancelledBy?: string;
   driverData?: {
     name: string;
     avatarUrl: string;
@@ -101,6 +102,21 @@ export interface RideNotification {
             <button class="flex-1 py-3.5 px-6 border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 mt-2 bg-gradient-to-br from-red-500 to-red-600 text-white hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(239,68,68,0.4)]"
                     (click)="onCancel()">Cancel</button>
           </div>
+        </div>
+
+        <!-- RIDE CANCELLED -->
+        <div *ngIf="notification?.type === 'RIDE_CANCELLED'" class="text-center">
+          <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 bg-gradient-to-br from-red-500 to-red-600 animate-scaleIn">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-10 h-10 text-white">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+
+          <h2 class="text-2xl font-bold mb-4 text-gray-800">Ride Cancelled</h2>
+          <p class="text-base text-gray-600 mb-6 leading-relaxed">{{ notification?.message || 'The ride has been cancelled.' }}</p>
+
+          <button class="w-full py-3.5 px-6 border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 bg-gradient-to-br from-gray-500 to-gray-600 text-white hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(107,114,128,0.4)]"
+                  (click)="close()">OK</button>
         </div>
 
       </div>
