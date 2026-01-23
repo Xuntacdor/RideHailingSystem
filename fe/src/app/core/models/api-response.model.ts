@@ -35,11 +35,8 @@ export interface RegisterRequest {
 }
 
 export interface AuthenticationResponse {
+  authenticated: boolean;
   token: string;
-  user: UserResponse;
-  userId: string;
-  email: string;
-  role: string;
 }
 
 /**
@@ -55,8 +52,6 @@ export interface UserResponse {
   userName: string;
   cccd?: string;
   accountType?: string;
-
-
 }
 
 export interface UserRequest {

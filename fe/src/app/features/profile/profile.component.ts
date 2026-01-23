@@ -1,18 +1,18 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../core/services/auth';
+import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
 import { UserResponse } from '../../core/models/api-response.model';
 import { jwtDecode } from 'jwt-decode';
-import { ToastService } from '../../core/services/toast';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
   imports: [CommonModule, RouterLink],
-  templateUrl: './profile.html',
-  styleUrls: ['./profile.css'],
+  templateUrl: './profile.component.html',
+  styleUrls: ['./profile.component.css'],
 })
 export class Profile implements OnInit {
   private router = inject(Router);
@@ -55,17 +55,15 @@ export class Profile implements OnInit {
 
     if (file && user) {
       // Validate sơ bộ client-side (tùy chọn)
-      if (file.size > 5 * 1024 * 1024) { // 5MB
+      if (file.size > 5 * 1024 * 1024) {
+        // 5MB
         this.toastService.show('File quá lớn!');
         return;
       }
 
-
       this.userService.uploadAvatar(user.id, file).subscribe({
         next: (response) => {
           if (response.results) {
-
-
             const updatedUser = { ...response.results };
             updatedUser.imageUrl = updatedUser.imageUrl + '?t=' + new Date().getTime();
 
@@ -77,7 +75,7 @@ export class Profile implements OnInit {
         error: (err) => {
           console.error('Upload lỗi:', err);
           this.toastService.show('Có lỗi xảy ra khi upload ảnh.');
-        }
+        },
       });
     }
   }

@@ -1,17 +1,21 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { AuthService } from '../../../core/services/auth';
-import { LoginRequest, Role } from '../../../core/models';
+import { AuthService } from '../../../core/services/auth.service';
+import { LoginRequest } from '../../../core/models';
 import { LucideAngularModule, ChevronLeft } from 'lucide-angular';
 import { UserService } from '../../../core/services/user.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { switchMap, catchError } from 'rxjs/operators';
+import { EMPTY, throwError } from 'rxjs';
+
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, RouterLink, ReactiveFormsModule, LucideAngularModule],
-  templateUrl: './login.html',
-  styleUrl: './login.css',
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.css',
 })
 export class Login {
   private authService = inject(AuthService);
@@ -19,13 +23,13 @@ export class Login {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   readonly ChevronLeft = ChevronLeft;
+  private destroyRef = inject(DestroyRef);
 
   loginForm: FormGroup;
   isSubmitting = signal(false);
   errorMessage = signal('');
 
   constructor() {
-    // Initialize login form
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
@@ -34,7 +38,6 @@ export class Login {
   back() {
     this.router.navigate(['/welcome']);
   }
-
 
   onSubmit(): void {
     if (this.loginForm.invalid) {
@@ -50,51 +53,51 @@ export class Login {
       password: this.loginForm.value.password,
     };
 
-    this.authService.loginUser(credentials).subscribe({
-      next: (response) => {
-        const userId = this.authService.getUserId();
-        if (!userId) {
-          this.isSubmitting.set(false);
-          this.errorMessage.set('Token invalid:Cannot get user id');
-          return;
-        }
-        this.userService.getUserById(userId).subscribe({
-          next: (userResponse) => {
-            console.log('User infor load', userResponse);
-            const role = userResponse.results.role;
-            this.isSubmitting.set(false);
-            if (role === 'DRIVER') {
-              this.router.navigate(['/driver']);
-            } else if (role === 'CUSTOMER' || role === 'USER') {
-              this.router.navigate(['/userBooking']);
-            } else if (role === 'ADMIN' || role === 'admin') {
-              this.router.navigate(['/admin']);
-            }
-            else {
-              this.router.navigate(['/welcome']);
-            }
-
-          },
-          error: (error) => {
-            console.error('User info load failed:', error);
-            this.isSubmitting.set(false);
-            this.errorMessage.set('Failed to load user information. Please try again.');
+    this.authService
+      .loginUser(credentials)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        switchMap((response) => {
+          const userId = this.authService.getUserId();
+          if (!userId) {
+            return throwError(() => new Error('Token invalid: Cannot get user id'));
           }
-        })
-      },
-      error: (error) => {
-        console.error('Login failed:', error);
-        this.isSubmitting.set(false);
+          return this.userService.getUserById(userId);
+        }),
 
-        if (error.status === 401) {
-          this.errorMessage.set('Invalid email or password');
-        } else if (error.status === 0) {
-          this.errorMessage.set('Unable to connect to server. Please try again.');
-        } else {
-          this.errorMessage.set(error.error?.message || 'Login failed. Please try again.');
-        }
-      },
-    });
+        catchError((error) => {
+          this.isSubmitting.set(false);
+
+          if (error.message && error.message.includes('Token invalid')) {
+            this.errorMessage.set(error.message);
+          } else if (error.status === 401) {
+            this.errorMessage.set('Invalid email or password');
+          } else if (error.status === 0) {
+            this.errorMessage.set('Unable to connect to server. Please try again.');
+          } else {
+            this.errorMessage.set(error.error?.message || 'Login failed. Please try again.');
+          }
+
+          return EMPTY;
+        })
+      )
+      .subscribe({
+        next: (userResponse) => {
+          this.isSubmitting.set(false);
+
+          const role = userResponse.results.role;
+
+          if (role === 'DRIVER') {
+            this.router.navigate(['/driver']);
+          } else if (role === 'CUSTOMER' || role === 'USER') {
+            this.router.navigate(['/userBooking']);
+          } else if (role === 'ADMIN' || role === 'admin') {
+            this.router.navigate(['/admin']);
+          } else {
+            this.router.navigate(['/welcome']);
+          }
+        },
+      });
   }
 
   hasError(fieldName: string, errorType: string): boolean {

@@ -38,7 +38,7 @@ public class UserMapper {
                 .role(user.getRole())
                 .cccd(user.getCccd())
                 .email(user.getEmail())
-                .ImageUrl(user.getImageUrl())
+                .imageUrl(user.getImageUrl())
                 .accountType(user.getAccountType())
                 .build();
     }

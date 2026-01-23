@@ -8,7 +8,7 @@ import { environment } from '../../../environments/environment';
 export class ApiService {
   protected apiUrl = environment.apiUrl;
 
-  constructor(protected http: HttpClient) {}
+  constructor(protected http: HttpClient) { }
 
   protected getHeaders(): HttpHeaders {
     const token = localStorage.getItem('auth_token');

@@ -9,7 +9,7 @@ import { LocationSearchComponent } from '../../components/userBooking/location-s
 import { RouteInfoComponent } from '../../components/userBooking/route-info/route-info.component';
 import { Coordinate, SearchResult, RouteInfo, VehicleType, Driver } from '../../models/models';
 import { jwtPayload, RideRequest } from '../../core/models/api-response.model';
-import { AuthService } from '../../core/services/auth';
+import { AuthService } from '../../core/services/auth.service';
 import { Router } from '@angular/router';
 
 @Component({
@@ -21,10 +21,10 @@ import { Router } from '@angular/router';
     UserHeaderComponent,
     VehicleSelectionComponent,
     LocationSearchComponent,
-    RouteInfoComponent
+    RouteInfoComponent,
   ],
   templateUrl: './userBooking.html',
-  styleUrls: []
+  styleUrls: [],
 })
 export class userBooking implements OnDestroy {
   loading = false;
@@ -33,7 +33,6 @@ export class userBooking implements OnDestroy {
   isSettingDestination = false;
 
   jwtPayload: jwtPayload | null = null;
-
 
   selectedVehicle: VehicleType = VehicleType.CAR;
 
@@ -52,8 +51,6 @@ export class userBooking implements OnDestroy {
   rideInfo: any = null;
   bookingInProgress = false;
 
-
-
   constructor(
     private trackAsiaService: TrackAsiaService,
     private authService: AuthService,
@@ -63,7 +60,6 @@ export class userBooking implements OnDestroy {
     // Get JWT payload on component initialization
     this.jwtPayload = this.authService.getUserInfo();
     this.userName = this.jwtPayload?.name || '';
-
   }
 
   onMapReady(): void {
@@ -143,7 +139,7 @@ export class userBooking implements OnDestroy {
           alert('Failed to create ride. Please try again.');
           this.bookingInProgress = false;
           this.loading = false;
-        }
+        },
       });
     } catch (error) {
       console.error('Booking error:', error);
@@ -162,22 +158,30 @@ export class userBooking implements OnDestroy {
     // Apply multipliers based on vehicle type
     let multiplier = 1.0;
     switch (vehicleType) {
-      case VehicleType.MOTORBIKE: multiplier = 1.0; break;
-      case VehicleType.CAR: multiplier = 2.5; break;
-      default: multiplier = 1.0;
+      case VehicleType.MOTORBIKE:
+        multiplier = 1.0;
+        break;
+      case VehicleType.CAR:
+        multiplier = 2.5;
+        break;
+      default:
+        multiplier = 1.0;
     }
 
     const extraDistance = Math.max(0, distance - 2);
-    const total = (baseFare + (extraDistance * pricePerKm) + (duration * pricePerMinute)) * multiplier;
+    const total = (baseFare + extraDistance * pricePerKm + duration * pricePerMinute) * multiplier;
     return Math.round(total / 1000) * 1000; // Round to nearest 1000 VND
   }
 
   private mapVehicleTypeToBackend(vehicleType: VehicleType): string {
     // Map frontend VehicleType enum to backend string
     switch (vehicleType) {
-      case VehicleType.MOTORBIKE: return 'MOTORBIKE';
-      case VehicleType.CAR: return 'CAR';
-      default: return 'MOTORBIKE';
+      case VehicleType.MOTORBIKE:
+        return 'MOTORBIKE';
+      case VehicleType.CAR:
+        return 'CAR';
+      default:
+        return 'MOTORBIKE';
     }
   }
 
@@ -223,7 +227,6 @@ export class userBooking implements OnDestroy {
   private selectDestination(result: SearchResult): void {
     this.destination = { lng: result.lng, lat: result.lat, name: result.display };
 
-
     if (this.origin && this.destination) {
       this.calculateRoute();
     }
@@ -265,7 +268,7 @@ export class userBooking implements OnDestroy {
         this.routeInfo = {
           distance: routeData.distance / 1000,
           duration: routeData.duration / 60000,
-          steps: this.extractRouteSteps(routeData.instructions || [])
+          steps: this.extractRouteSteps(routeData.instructions || []),
         };
 
         this.routeGeometry = routeData.geometry;
@@ -278,15 +281,17 @@ export class userBooking implements OnDestroy {
   }
 
   private extractRouteSteps(instructions: any[]): string[] {
-    return instructions.map((step: any, index: number) => {
-      const instruction = step.html_instructions?.replace(/<[^>]*>/g, '') || '';
-      const distance = step.distance?.text || '';
+    return instructions
+      .map((step: any, index: number) => {
+        const instruction = step.html_instructions?.replace(/<[^>]*>/g, '') || '';
+        const distance = step.distance?.text || '';
 
-      if (instruction && distance) {
-        return `${instruction} - ${distance}`;
-      }
-      return instruction || `Step ${index + 1}`;
-    }).filter(step => step.length > 0);
+        if (instruction && distance) {
+          return `${instruction} - ${distance}`;
+        }
+        return instruction || `Step ${index + 1}`;
+      })
+      .filter((step) => step.length > 0);
   }
 
   onClearRoute(): void {
@@ -303,5 +308,3 @@ export class userBooking implements OnDestroy {
     this.router.navigate(['/profile']);
   }
 }
-
-
