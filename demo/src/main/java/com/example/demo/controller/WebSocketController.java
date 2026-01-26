@@ -4,6 +4,7 @@ import java.security.Principal;
 
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 
 import com.example.demo.dto.DriverPosition;
@@ -23,14 +24,15 @@ public class WebSocketController {
     private final RideService rideService;
     private final DriverService driverService;
 
+    @PreAuthorize("hasRole('DRIVER')")
     @MessageMapping("/driver/response")
-    public void handleDriverResponse(@Payload @Valid DriverResponseRequest request,Principal principal) {
-        if(principal == null){
+    public void handleDriverResponse(@Payload @Valid DriverResponseRequest request, Principal principal) {
+        if (principal == null) {
             log.error("Unauthenticated user trying to respond to ride request");
             return;
         }
         boolean isOwner = driverService.isUserOwningDriverId(principal.getName(), request.getDriverId());
-        if(!isOwner){
+        if (!isOwner) {
             throw new SecurityException("You are not allowed to respond to ride requests for other drivers!");
         }
         log.info("Received driver response: {} for ride request: {}",
@@ -40,6 +42,7 @@ public class WebSocketController {
         rideService.handleDriverResponse(request);
     }
 
+    @PreAuthorize("hasRole('DRIVER')")
     @MessageMapping("/driver/updatePos")
     public void updateDriverPosition(@Payload @Valid DriverPosition driverPosition, Principal principal) {
 
