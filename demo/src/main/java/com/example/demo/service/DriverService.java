@@ -53,6 +53,13 @@ public class DriverService {
         return driverMapper.toResponse(driver);
     }
 
+    public boolean isUserOwningDriverId(String username, String driverId) {
+    Driver driver = driverRepository.findById(driverId)
+            .orElseThrow(() -> new RuntimeException("Driver not found"));
+    
+    return driver.getUser().getUserName().equals(username);
+}
+
     public DriverResponse getDriverById(String id) {
         Driver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));

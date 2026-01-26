@@ -24,7 +24,15 @@ public class WebSocketController {
     private final DriverService driverService;
 
     @MessageMapping("/driver/response")
-    public void handleDriverResponse(@Payload DriverResponseRequest request) {
+    public void handleDriverResponse(@Payload @Valid DriverResponseRequest request,Principal principal) {
+        if(principal == null){
+            log.error("Unauthenticated user trying to respond to ride request");
+            return;
+        }
+        boolean isOwner = driverService.isUserOwningDriverId(principal.getName(), request.getDriverId());
+        if(!isOwner){
+            throw new SecurityException("You are not allowed to respond to ride requests for other drivers!");
+        }
         log.info("Received driver response: {} for ride request: {}",
                 request.getAccepted() ? "ACCEPTED" : "REJECTED",
                 request.getRideRequestId());
@@ -38,6 +46,11 @@ public class WebSocketController {
         if (principal == null) {
             log.error("Unauthenticated user trying to update position");
             return;
+        }
+
+        boolean isOwner = driverService.isUserOwningDriverId(principal.getName(), driverPosition.getDriverId());
+        if (!isOwner) {
+            throw new SecurityException("You are not allowed to update the location of other drivers!");
         }
 
         log.info("Update pos for driver: {} by user: {}", driverPosition.getDriverId(), principal.getName());
