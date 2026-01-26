@@ -16,6 +16,7 @@ import com.example.demo.exception.ErrorCode;
 import com.example.demo.mapper.DriverMapper;
 import com.example.demo.repository.DriverRepository;
 import com.example.demo.repository.UserRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -139,12 +140,20 @@ public class DriverService {
                         vehicle.getStatus() == com.example.demo.enums.VehicleStatus.ACTIVE);
     }
 
-    public void updateDriverPosition(String id, Double lat, Double lng) {
+    @Transactional
+    public void updateDriverPosition(String id, Double lat, Double lng, String currentUsername) {
         Driver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        if (!driver.getUser().getUserName().equals(currentUsername)) {
+            log.warn("User {} tried to update position of driver {}", currentUsername, id);
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
         driver.setLatitude(lat);
         driver.setLongitude(lng);
         driverRepository.save(driver);
+
+        notificationService.notifyDriverPositionUpdate(id, lat, lng);
     }
 
     public void getDriverPosition(String id) {
