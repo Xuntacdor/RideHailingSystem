@@ -5,7 +5,8 @@ import {
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
 
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors, withXsrfConfiguration } from '@angular/common/http';
+import { authInterceptor, loggingInterceptor } from './core/interceptors/auth.interceptor';
 import { routes } from './app.routes';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import {
@@ -35,7 +36,13 @@ import {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideHttpClient(),
+    provideHttpClient(
+      withInterceptors([authInterceptor, loggingInterceptor]),
+      withXsrfConfiguration({
+        cookieName: 'XSRF-TOKEN',
+        headerName: 'X-XSRF-TOKEN',
+      })
+    ),
     provideRouter(routes),
     provideAnimations(),
     importProvidersFrom(

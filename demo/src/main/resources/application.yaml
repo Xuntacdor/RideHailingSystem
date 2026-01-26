@@ -9,9 +9,9 @@ spring:
   config:
     import: optional:file:.env[.properties]
   datasource:
-    url: ${DATABASE_URL:jdbc:sqlserver://localhost:1433;databaseName=zzzz;encrypt=false;trustServerCertificate=true;}
-    username: ${DATABASE_USERNAME:sa}
-    password: ${DATABASE_PASSWORD:123}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
   jpa:
     properties:
       hibernate:
