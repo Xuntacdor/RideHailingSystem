@@ -51,7 +51,7 @@ public class AuthenticationService {
     PasswordEncoder passwordEncoder;
     @NonFinal
     @Value("${spring.security.oauth2.resourceserver.jwt.secret}")
-    protected String signerKey;
+    protected String signalKey;
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
     private static final int DEFAULT_LENGTH = 12;
     private static final SecureRandom random = new SecureRandom();
@@ -105,7 +105,7 @@ public class AuthenticationService {
 
         JWSObject jwsObject = new JWSObject(header, payload);
         try {
-            jwsObject.sign(new MACSigner(hexStringToByteArray(signerKey)));
+            jwsObject.sign(new MACSigner(hexStringToByteArray(signalKey)));
             return jwsObject.serialize();
         } catch (JOSEException args) {
             throw new AppException(ErrorCode.SIGNAL_KEY_NOT_VAILID);
@@ -130,7 +130,7 @@ public class AuthenticationService {
             throws JOSEException, ParseException {
         String token = request.getToken();
 
-        JWSVerifier verifier = new MACVerifier(hexStringToByteArray(signerKey));
+        JWSVerifier verifier = new MACVerifier(hexStringToByteArray(signalKey));
 
         SignedJWT signedJWT = SignedJWT.parse(token);
 

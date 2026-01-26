@@ -1,4 +1,4 @@
-/demo/.env
+.env
 node_modules
 /fe/node_modules
 node_modules
