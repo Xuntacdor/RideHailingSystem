@@ -1,5 +1,6 @@
 export const environment = {
     production: false,
-    apiUrl: 'http://localhost:8080/api',
-    apiVersion: 'v1'
+    apiUrl: process.env['NG_APP_BACKEND_URL'],
+    apiVersion: 'v1',
+    trackAsiaKey: process.env['NG_APP_TRACK_ASIA_KEY']
 };
