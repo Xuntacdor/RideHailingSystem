@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT}
   tomcat:
     relaxed-query-chars: "|,{,},[,]"
 
@@ -18,8 +18,8 @@ spring:
         dialect: org.hibernate.dialect.SQLServerDialect
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
   cache:
     type: redis
   servlet:
@@ -28,11 +28,11 @@ spring:
       max-request-size: 5MB
 
 app:
-  signal-key: "c2fdf3cb275a6c40b6795cdab2e92ee6aec56cb4ea65be2fbe1d8b8eaccdbe86"
+  signal-key: ${JWT_SECRET}
   google:
     client-id: ${GOOGLE_CLIENT_ID:}
     client-secret: ${GOOGLE_CLIENT_SECRET:}
   upload:
-    avatar-dir: C:/Users/trimx1/zzz/demo/Img/avatar
+    avatar-dir: ${UPLOAD_DIR}
   public:
     avatar-base-url: /img/avatar
