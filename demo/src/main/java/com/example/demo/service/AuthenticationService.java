@@ -8,6 +8,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.StringJoiner;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,7 +50,8 @@ public class AuthenticationService {
     DriverRepository driverRepository;
     PasswordEncoder passwordEncoder;
     @NonFinal
-    protected static final String SIGNAL_KEY = "c2fdf3cb275a6c40b6795cdab2e92ee6aec56cb4ea65be2fbe1d8b8eaccdbe86";
+    @Value("${spring.security.oauth2.resourceserver.jwt.secret}")
+    protected String signerKey;
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
     private static final int DEFAULT_LENGTH = 12;
     private static final SecureRandom random = new SecureRandom();
@@ -84,7 +86,7 @@ public class AuthenticationService {
                 .subject(user.getId())
                 .issueTime(new Date())
                 .expirationTime(new Date(
-                        Instant.now().plus(30, ChronoUnit.DAYS).toEpochMilli()))
+                        Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli()))
                 .claim("scope", buildScope(user))
                 .claim("userId", user.getId())
                 .claim("name", user.getName())
@@ -103,7 +105,7 @@ public class AuthenticationService {
 
         JWSObject jwsObject = new JWSObject(header, payload);
         try {
-            jwsObject.sign(new MACSigner(hexStringToByteArray(SIGNAL_KEY)));
+            jwsObject.sign(new MACSigner(hexStringToByteArray(signerKey)));
             return jwsObject.serialize();
         } catch (JOSEException args) {
             throw new AppException(ErrorCode.SIGNAL_KEY_NOT_VAILID);
@@ -128,7 +130,7 @@ public class AuthenticationService {
             throws JOSEException, ParseException {
         String token = request.getToken();
 
-        JWSVerifier verifier = new MACVerifier(hexStringToByteArray(SIGNAL_KEY));
+        JWSVerifier verifier = new MACVerifier(hexStringToByteArray(signerKey));
 
         SignedJWT signedJWT = SignedJWT.parse(token);
 

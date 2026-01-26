@@ -3,30 +3,43 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError, tap, of } from 'rxjs';
 
+function getCookie(name: string): string | null {
+  const matches = document.cookie.match(
+    new RegExp('(?:^|; )' + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + '=([^;]*)')
+  );
+  return matches ? decodeURIComponent(matches[1]) : null;
+}
+
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
 
   const token = localStorage.getItem('auth_token');
 
+  const csrfToken = getCookie('XSRF-TOKEN');
+
   const publicEndpoints = ['/auth/login', '/auth/register'];
 
   const isPublic = publicEndpoints.some((url) => req.url.includes(url));
 
-  let authReq = req;
+  const isMutationRequest = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method);
+
+  let headers = req.headers;
+
+  const authReq = req.clone({ headers });
 
   if (token && !isPublic) {
-    authReq = req.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    headers = headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  if (isMutationRequest && csrfToken && !isPublic) {
+    headers = headers.set('X-XSRF-TOKEN', csrfToken);
   }
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401) {
         console.error('Hết phiên đăng nhập hoặc Token không hợp lệ.');
-        localStorage.removeItem('token');
+        localStorage.removeItem('auth_token');
         router.navigate(['/login']);
       } else if (error.status === 403) {
         console.error('Không có quyền truy cập (Forbidden).');
