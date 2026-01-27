@@ -36,3 +36,8 @@ app:
     avatar-dir: ${UPLOAD_DIR}
   public:
     avatar-base-url: /img/avatar
+
+PayOS:
+  clientId: ${PAYOS_CLIENT_ID}
+  clientSecret: ${PAYOS_API_KEY}
+  checksumKey: ${PAYOS_CHECKSUM_KEY}
