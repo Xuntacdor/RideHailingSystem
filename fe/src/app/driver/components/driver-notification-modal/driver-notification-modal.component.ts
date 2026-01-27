@@ -39,12 +39,12 @@ export interface DriverRideRequest {
               </div>
             </div>
           </div>
-          <p class="text-white text-[13px] opacity-90">seconds to respond</p>
+          <p class="text-white text-[13px] opacity-90">giây để phản hồi</p>
         </div>
 
         <!-- Title -->
         <h2 class="text-[28px] font-bold text-white text-center mb-2 relative z-10 drop-shadow-[0_2px_8px_rgba(0,0,0,0.2)]">
-          New Ride Request
+          Yêu Cầu Chuyến Mới
         </h2>
 
         <!-- Customer Name -->
@@ -65,7 +65,7 @@ export interface DriverRideRequest {
               </svg>
             </div>
             <div class="flex-1">
-              <label class="block text-xs text-gray-600 font-semibold uppercase mb-1">Pickup</label>
+              <label class="block text-xs text-gray-600 font-semibold uppercase mb-1">Điểm đón</label>
               <p class="text-[15px] text-gray-800 font-medium leading-snug">{{ rideRequest?.startLocation }}</p>
             </div>
           </div>
@@ -81,7 +81,7 @@ export interface DriverRideRequest {
               </svg>
             </div>
             <div class="flex-1">
-              <label class="block text-xs text-gray-600 font-semibold uppercase mb-1">Destination</label>
+              <label class="block text-xs text-gray-600 font-semibold uppercase mb-1">Điểm đến</label>
               <p class="text-[15px] text-gray-800 font-medium leading-snug">{{ rideRequest?.endLocation }}</p>
             </div>
           </div>
@@ -89,15 +89,15 @@ export interface DriverRideRequest {
           <!-- Info Grid -->
           <div class="grid grid-cols-3 gap-4 mt-5 pt-5 border-t border-gray-200">
             <div class="text-center">
-              <span class="block text-[11px] text-gray-400 font-semibold uppercase mb-1">Distance</span>
+              <span class="block text-[11px] text-gray-400 font-semibold uppercase mb-1">Khoảng cách</span>
               <span class="block text-base text-gray-800 font-bold">{{ formatDistance(rideRequest?.distance) }}</span>
             </div>
             <div class="text-center">
-              <span class="block text-[11px] text-gray-400 font-semibold uppercase mb-1">Fare</span>
+              <span class="block text-[11px] text-gray-400 font-semibold uppercase mb-1">Giá cước</span>
               <span class="block text-base text-green-500 font-bold">{{ formatFare(rideRequest?.fare) }}</span>
             </div>
             <div class="text-center">
-              <span class="block text-[11px] text-gray-400 font-semibold uppercase mb-1">Vehicle</span>
+              <span class="block text-[11px] text-gray-400 font-semibold uppercase mb-1">Phương tiện</span>
               <span class="block text-base text-gray-800 font-bold">{{ rideRequest?.vehicleType }}</span>
             </div>
           </div>
@@ -112,14 +112,14 @@ export interface DriverRideRequest {
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
-            Accept
+            Nhận
           </button>
           <button class="flex items-center justify-center gap-2 p-4 border-2 border-white rounded-2xl text-base font-bold cursor-pointer transition-all duration-300 bg-red-500/20 text-white hover:bg-red-500/40 hover:-translate-y-1 hover:shadow-[0_12px_28px_rgba(239,68,68,0.3)]"
                   (click)="reject()">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
-            Reject
+            Từ chối
           </button>
         </div>
 

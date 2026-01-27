@@ -1,5 +1,7 @@
 package com.mycompany.rideapp.entity;
 
+import org.hibernate.annotations.Nationalized;
+
 import com.mycompany.rideapp.enums.VehicleStatus;
 
 import jakarta.persistence.Entity;
@@ -41,7 +43,11 @@ public class VehicleRegister {
 
     String vehicleType;
     String vehicleNumber;
+    
+    @Nationalized
     String vehicleBrand;
+    
+    @Nationalized
     String vehicleColor;
     String licenseNumber;
 

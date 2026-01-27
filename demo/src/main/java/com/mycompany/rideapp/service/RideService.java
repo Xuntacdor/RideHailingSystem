@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.mycompany.rideapp.dto.PendingRide;
 import com.mycompany.rideapp.dto.RideNotification;
@@ -20,6 +21,8 @@ import com.mycompany.rideapp.entity.Ride;
 import com.mycompany.rideapp.entity.User;
 import com.mycompany.rideapp.enums.Status;
 import com.mycompany.rideapp.exception.ResourceNotFoundException;
+import com.mycompany.rideapp.exception.AppException;
+import com.mycompany.rideapp.exception.ErrorCode;
 import com.mycompany.rideapp.mapper.RideMapper;
 import com.mycompany.rideapp.repository.DriverRepository;
 import com.mycompany.rideapp.repository.RideRepository;
@@ -43,16 +46,7 @@ public class RideService {
     private final Map<String, PendingRide> pendingRides = new ConcurrentHashMap<>();
 
     public Map<String, Object> createRide(RideRequest request) {
-        log.info(">>> RideService.createRide() started");
-        log.info("Customer coordinates: [{} {}]", request.getCustomerLatitude(), request.getCustomerLongitude());
-        log.info("Driver coordinates: [{} {}]", request.getStartLatitude(), request.getStartLongitude());
-        log.info("End coordinates: [{} {}]", request.getEndLatitude(), request.getEndLongitude());
         String rideRequestId = UUID.randomUUID().toString();
-        log.info("Generated ride request ID: {}", rideRequestId);
-
-        log.info("Searching for nearest drivers at coordinates: [{}, {}]",
-                request.getCustomerLatitude(), request.getCustomerLongitude());
-
         List<DriverResponse> nearestDrivers = driverService.getNearestDrivers(
                 request.getCustomerLatitude(),
                 request.getCustomerLongitude(),
@@ -60,8 +54,7 @@ public class RideService {
                 request.getVehicleType());
 
         if (nearestDrivers.isEmpty()) {
-            log.warn("No available drivers found for request {}", rideRequestId);
-            throw new ResourceNotFoundException("No available drivers found");
+            throw new AppException(ErrorCode.NO_DRIVER_AVAILABLE);
         }
         List<String> driverIds = nearestDrivers.stream()
                 .map(DriverResponse::getId)
@@ -93,6 +86,7 @@ public class RideService {
         return response;
     }
 
+    @Transactional
     public void handleDriverResponse(DriverResponseRequest response) {
         String rideRequestId = response.getRideRequestId();
         PendingRide pendingRide = pendingRides.get(rideRequestId);

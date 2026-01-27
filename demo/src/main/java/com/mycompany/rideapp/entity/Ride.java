@@ -2,6 +2,8 @@ package com.mycompany.rideapp.entity;
 
 import java.util.List;
 
+import org.hibernate.annotations.Nationalized;
+
 import com.mycompany.rideapp.enums.Status;
 import com.mycompany.rideapp.enums.VehicleType;
 
@@ -48,6 +50,12 @@ public class Ride {
     Long fare;
     Status status;
     VehicleType vehicleType;
+    
+    @Nationalized
+    String startAddress;
+    
+    @Nationalized
+    String endAddress;
 
     @OneToMany(mappedBy = "ride")
     List<Review> reviews;

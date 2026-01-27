@@ -1,5 +1,7 @@
 package com.mycompany.rideapp.entity;
 
+import org.hibernate.annotations.Nationalized;
+
 import com.mycompany.rideapp.enums.VehicleType;
 
 import jakarta.persistence.Column;
@@ -30,6 +32,7 @@ public class BookingType {
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
 
+    @Nationalized
     @Column(nullable = false)
     String name;
 
@@ -49,6 +52,7 @@ public class BookingType {
     @Column(nullable = false)
     Long pricePerMinute;
 
+    @Nationalized
     String description;
 
     @Column(nullable = false)

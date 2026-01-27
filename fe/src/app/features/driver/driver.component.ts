@@ -11,6 +11,8 @@ import { DriverActiveRideComponent, ActiveRide, MapUpdate } from '../../driver/p
 import { DriverFinishedRideComponent, CompletedRideInfo } from '../../driver/components/driver-finished-ride/driver-finished-ride.component';
 import { RideService } from '../../core/services/ride.service';
 import { Coordinate } from '../../models/models';
+import { DriverService } from '../../core/services/driver.service';
+import { TrackAsiaService } from '../../core/services/trackasia.service';
 
 
 @Component({
@@ -47,7 +49,9 @@ export class DriverComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private cdr: ChangeDetectorRef,
     private driverPosUpdateService: DriverPosUpdateService,
-    private rideService: RideService
+    private rideService: RideService,
+    private driverService: DriverService,
+    private trackAsiaService: TrackAsiaService
   ) { }
 
   ngOnInit(): void {
@@ -64,14 +68,15 @@ export class DriverComponent implements OnInit, OnDestroy {
       this.driverPosUpdateService.startWatchingLocation();
 
       this.driverPosUpdateService.sendDriverLocation(this.driverId!);
+      this.driverService.updateDriverStatus(this.driverId!, 'ACTIVE');
 
       this.interval = setInterval(() => {
         this.driverPosUpdateService.sendDriverLocation(this.driverId!);
-      }, 10000);
+      }, 15000);
 
     } else {
       this.unsubscribeFromRideRequests();
-
+      this.driverService.updateDriverStatus(this.driverId!, 'INACTIVE');
       this.driverPosUpdateService.stopWatchingLocation();
 
       if (this.interval) {
@@ -117,16 +122,30 @@ export class DriverComponent implements OnInit, OnDestroy {
     this.rideRequestSubscription?.unsubscribe();
   }
 
-  private showRideRequestNotification(notification: RideRequestNotification): void {
+  private async showRideRequestNotification(notification: RideRequestNotification): Promise<void> {
     console.log('showRideRequestNotification called');
     console.log('Creating ride request object...');
+
+    let startLocation = notification.startLocation;
+    let endLocation = notification.endLocation;
+
+    try {
+      if (notification.startLatitude && notification.startLongitude) {
+        startLocation = await this.trackAsiaService.reverseGeocode(notification.startLongitude, notification.startLatitude);
+      }
+      if (notification.endLatitude && notification.endLongitude) {
+        endLocation = await this.trackAsiaService.reverseGeocode(notification.endLongitude, notification.endLatitude);
+      }
+    } catch (e) {
+      console.error('Error reverse geocoding:', e);
+    }
 
     this.currentRideRequest = {
       rideRequestId: notification.rideRequestId,
       customerId: notification.customerId,
       customerName: notification.customerName,
-      startLocation: notification.startLocation,
-      endLocation: notification.endLocation,
+      startLocation: startLocation || 'Đang cập nhật...',
+      endLocation: endLocation || 'Đang cập nhật...',
       startLatitude: notification.startLatitude,
       startLongitude: notification.startLongitude,
       endLatitude: notification.endLatitude,
@@ -145,8 +164,6 @@ export class DriverComponent implements OnInit, OnDestroy {
   onAcceptRide(rideRequest: DriverRideRequest): void {
     if (this.driverId) {
       console.log('Driver accepting ride:', rideRequest.rideRequestId);
-      console.log(rideRequest.startLatitude + ' ' + rideRequest.startLongitude + 'aaaaaa');
-      console.log(rideRequest.endLatitude + ' ' + rideRequest.endLongitude + 'zzzzzz');
       this.driverRideRequestService.sendDriverResponse(
         rideRequest.rideRequestId,
         this.driverId,
@@ -237,7 +254,7 @@ export class DriverComponent implements OnInit, OnDestroy {
         this.showFinishedRide = true;
         this.cdr.detectChanges();
       }
-    }, 3000); 
+    }, 3000);
 
     this.rideService.getRideById(rideId).subscribe({
       next: (rideData) => {
@@ -251,21 +268,21 @@ export class DriverComponent implements OnInit, OnDestroy {
           startTime: rideData.startTime,
           endTime: rideData.endTime || Date.now()
         };
-        
+
         this.showFinishedRide = true;
         this.cdr.detectChanges();
       },
       error: (err) => {
         clearTimeout(timeout);
         console.error('Error fetching ride data:', err);
-        
+
         this.finishedRideInfo = {
           rideId: rideId,
           distance: 0,
           fare: 0,
           customerName: 'Khách hàng'
         };
-        
+
         this.showFinishedRide = true;
         this.cdr.detectChanges();
       }

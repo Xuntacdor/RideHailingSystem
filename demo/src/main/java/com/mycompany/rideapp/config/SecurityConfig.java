@@ -49,7 +49,6 @@ import lombok.experimental.FieldDefaults;
 public class SecurityConfig {
 
         @Value("${spring.security.oauth2.resourceserver.jwt.secret}")
-        
 
         String signalKey;
 
@@ -108,7 +107,8 @@ public class SecurityConfig {
                                                 .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                                                 .ignoringRequestMatchers(PUBLIC))
 
-                                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))//thử sửa
+                                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))// thử
+                                                                                                                   // sửa
 
                                 .authorizeHttpRequests(auth -> auth
 
@@ -125,26 +125,27 @@ public class SecurityConfig {
 
                                 // .oauth2Login(oauth2 -> oauth2
 
-                                //                 .successHandler(oAuth2SuccessHandler)
+                                // .successHandler(oAuth2SuccessHandler)
 
-                                //                 .failureHandler(oAuth2FailureHandler)
+                                // .failureHandler(oAuth2FailureHandler)
 
                                 // )
 
                                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
-                                http.addFilterAfter(new OncePerRequestFilter(){
-                                        @Override
-                                        protected void doFilterInternal(HttpServletRequest request,HttpServletResponse response, FilterChain filterChain)
-                                        throws ServletException, IOException{
-                                                CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
-                                                if (csrfToken != null) {
-                                                        csrfToken.getToken();
+                // http.addFilterAfter(new OncePerRequestFilter(){
+                // @Override
+                // protected void doFilterInternal(HttpServletRequest
+                // request,HttpServletResponse response, FilterChain filterChain)
+                // throws ServletException, IOException{
+                // CsrfToken csrfToken = (CsrfToken)
+                // request.getAttribute(CsrfToken.class.getName());
+                // if (csrfToken != null) {
+                // csrfToken.getToken();
 
-                                                        
-                                                }
-                                                filterChain.doFilter(request, response);
-                                        }
-                                },CsrfFilter.class);
+                // }
+                // filterChain.doFilter(request, response);
+                // }
+                // },CsrfFilter.class);
 
                 return http.build();
 
@@ -183,7 +184,7 @@ public class SecurityConfig {
                                 "Accept",
 
                                 "X-Requested-With",
-                                
+
                                 "x-xsrf-token"
 
                 ));

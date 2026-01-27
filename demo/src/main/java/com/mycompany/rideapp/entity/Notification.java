@@ -1,5 +1,8 @@
 package com.mycompany.rideapp.entity;
 
+import org.hibernate.annotations.Nationalized;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -23,6 +26,9 @@ public class Notification {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
+    
+    @Nationalized
+    @Column(length = 1000)
     String content;
     Boolean isRead;
 

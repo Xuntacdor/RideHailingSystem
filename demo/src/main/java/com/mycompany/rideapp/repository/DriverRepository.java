@@ -18,7 +18,8 @@ public interface DriverRepository extends JpaRepository<Driver, String> {
 
         List<Driver> findByDriverStatus(String driverStatus);
 
-        @Query("SELECT d FROM Driver d WHERE d.driverStatus = 'AVAILABLE' ORDER BY " +
+        @Query("SELECT d FROM Driver d WHERE d.driverStatus = com.mycompany.rideapp.enums.AccountStatus.ACTIVE ORDER BY "
+                        +
                         "((d.latitude - :lat) * (d.latitude - :lat) + (d.longitude - :lng) * (d.longitude - :lng)) ASC")
         List<Driver> findNearestDrivers(@Param("lat") Double lat, @Param("lng") Double lng,
                         org.springframework.data.domain.Pageable pageable);
