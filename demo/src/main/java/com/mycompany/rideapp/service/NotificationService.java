@@ -36,7 +36,7 @@ public class NotificationService {
         );
     }
 
-    public void notifyRideAccepted(String customerId, com.example.demo.entity.Driver driver, String rideId) {
+    public void notifyRideAccepted(String customerId, com.mycompany.rideapp.entity.Driver driver, String rideId) {
         log.info("Notifying customer {} that driver {} accepted ride {}", customerId, driver.getId(), rideId);
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "RIDE_ACCEPTED");
@@ -74,7 +74,7 @@ public class NotificationService {
         );
     }
 
-    public void notifyRideStatusUpdate(String customerId, String rideId, com.example.demo.enums.Status status, com.example.demo.entity.Driver driver) {
+    public void notifyRideStatusUpdate(String customerId, String rideId, com.mycompany.rideapp.enums.Status status, com.mycompany.rideapp.entity.Driver driver) {
         log.info("Notifying customer {} about ride {} status change to {}", customerId, rideId, status);
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "RIDE_STATUS_UPDATE");
