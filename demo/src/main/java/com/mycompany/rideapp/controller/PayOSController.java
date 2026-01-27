@@ -32,12 +32,13 @@ import java.util.Map;
 @RequestMapping("/api/v1/payos")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "${app.cors.allowed-origins}")
+// @CrossOrigin(origins = "${app.cors.allowed-origins}")
+@CrossOrigin(origins = "*")
 public class PayOSController {
 
     private final PayOS payOS;
 
-    @PreAuthorize("hasRole('USER') or hasRole('DRIVER')")
+//     @PreAuthorize("hasRole('USER') or hasRole('DRIVER')")
     @PostMapping("/create")
     public ResponseEntity<ApiResponse<CreatePaymentLinkResponse>> createPaymentLink(
             @RequestBody PaymentRequest request) {
