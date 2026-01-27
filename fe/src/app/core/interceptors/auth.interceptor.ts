@@ -25,8 +25,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   let headers = req.headers;
 
-  const authReq = req.clone({ headers });
-
   if (token && !isPublic) {
     headers = headers.set('Authorization', `Bearer ${token}`);
   }
@@ -34,6 +32,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   if (isMutationRequest && csrfToken && !isPublic) {
     headers = headers.set('X-XSRF-TOKEN', csrfToken);
   }
+
+  const authReq = req.clone({ headers });
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {

@@ -17,13 +17,13 @@ import { RouteInfo } from '../../../models/models';
           <div class="w-px h-4 bg-gray-300"></div>
           <div class="flex items-center gap-1">
             <span class="text-sm font-bold text-gray-700">{{ Math.round(routeInfo.duration) }}</span>
-            <span class="text-xs text-gray-500">min</span>
+            <span class="text-xs text-gray-500">phút</span>
           </div>
         </div>
         <button
           (click)="onClearRoute()"
           class="px-3 py-1 text-xs bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-medium transition-colors">
-          Clear
+          Xóa
         </button>
       </div>
     }

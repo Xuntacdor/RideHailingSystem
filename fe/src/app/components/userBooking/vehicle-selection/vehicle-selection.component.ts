@@ -58,9 +58,9 @@ import { BookingTypeResponse } from '../../../core/services/booking-type.service
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
-        <span>Processing...</span>
+        <span>Đang xử lý...</span>
       } @else {
-        <span>Book {{ getSelectedVehicleName() }}</span>
+        <span>Đặt {{ getSelectedVehicleName() }}</span>
       }
     </button>
   </div>
@@ -107,16 +107,16 @@ export class VehicleSelectionComponent implements OnChanges {
     this.vehicles = [
       {
         type: VehicleType.MOTORBIKE,
-        name: 'Bike',
-        description: 'Fast and affordable for 1 person',
+        name: 'Xe Máy',
+        description: 'Nhanh chóng và tiết kiệm',
         icon: '🛵',
         priceMultiplier: 1.0,
         image: '/images/motorbike.png'
       },
       {
         type: VehicleType.CAR,
-        name: 'Car',
-        description: 'Comfortable ride for 4 people',
+        name: 'Ô tô',
+        description: 'Thoải mái cho 4 người',
         icon: '🚗',
         priceMultiplier: 2.5,
         image: '/images/car.png'

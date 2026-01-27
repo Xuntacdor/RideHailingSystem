@@ -3,6 +3,8 @@ package com.mycompany.rideapp.entity;
 
 import java.util.List;
 
+import org.hibernate.annotations.Nationalized;
+
 import com.mycompany.rideapp.enums.AccountStatus;
 import com.mycompany.rideapp.enums.Role;
 
@@ -34,7 +36,10 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
+    
+    @Nationalized
     String name;
+    
     String userName;
     String phoneNumber;
     String password;

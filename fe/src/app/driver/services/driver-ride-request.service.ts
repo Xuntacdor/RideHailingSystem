@@ -27,45 +27,33 @@ export class DriverRideRequestService {
     private stompClient: RxStomp;
 
     constructor() {
-        console.log('Initializing DriverRideRequestService');
 
         this.stompClient = new RxStomp();
         this.stompClient.configure({
             webSocketFactory: () => {
-                console.log('🌐 [WS] Creating WebSocket connection to: http://localhost:8080/ws');
                 return new SockJS('http://localhost:8080/ws');
             },
             heartbeatIncoming: 0,
             heartbeatOutgoing: 25000,
             reconnectDelay: 5000,
-            debug: (str) => {
-                console.log('🐛 [WS-DEBUG]', str);
-            }
         });
 
         // Add connection status listeners
         this.stompClient.connected$.subscribe(() => {
-            console.log('✅ [WS] CONNECTED to WebSocket server');
-            console.log('🎉 [WS] Ready to receive ride requests!');
         });
 
         this.stompClient.connectionState$.subscribe((state) => {
-            console.log('🔄 [WS] Connection state changed:', state);
         });
 
         // IMPORTANT: Activate immediately like customer service
-        console.log('🚀 [WS] Activating connection immediately...');
         this.stompClient.activate();
     }
 
     disconnect(): void {
-        console.log('🔌 [WS] Disconnecting...');
         this.stompClient.deactivate();
-        console.log('❌ [WS] Disconnected');
     }
 
     subscribeToRideRequests(driverId: string): Observable<RideRequestNotification> {
-        console.log(`📡 [WS] Watching topic: /topic/driver/${driverId}`);
 
         return this.stompClient
             .watch(`/topic/driver/${driverId}`)
@@ -76,7 +64,6 @@ export class DriverRideRequestService {
                         const parsed = JSON.parse(message.body);
                         return parsed;
                     } catch (error) {
-                        console.error('❌ [WS] Failed to parse message:', error);
                         throw error;
                     }
                 })

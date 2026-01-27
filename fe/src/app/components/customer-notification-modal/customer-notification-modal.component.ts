@@ -38,7 +38,7 @@ export interface RideNotification {
             </svg>
           </div>
 
-          <h2 class="text-2xl font-bold mb-4 text-gray-800">Driver Assigned!</h2>
+          <h2 class="text-2xl font-bold mb-4 text-gray-800">Tài xế đã được phân công!</h2>
 
           <div *ngIf="notification?.driverData" class="bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl p-5 my-6 text-left">
             <div class="w-20 h-20 rounded-full overflow-hidden mx-auto mb-4 border-4 border-white shadow-lg">
@@ -58,10 +58,10 @@ export interface RideNotification {
             </div>
           </div>
 
-          <p class="text-base text-green-500 font-semibold mb-6">Driver is on the way!</p>
+          <p class="text-base text-green-500 font-semibold mb-6">Tài xế đang đến!</p>
 
           <button class="w-full py-3.5 px-6 border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 bg-gradient-to-br from-indigo-500 to-purple-600 text-white hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(102,126,234,0.4)]"
-                  (click)="close()">Got it!</button>
+                  (click)="close()">Đã hiểu!</button>
         </div>
 
         <!-- RIDE STATUS UPDATE -->
@@ -82,7 +82,7 @@ export interface RideNotification {
           <p class="text-base text-gray-600 mb-6 leading-relaxed">{{ getStatusMessage(notification?.status) }}</p>
 
           <button class="w-full py-3.5 px-6 border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 bg-gradient-to-br from-indigo-500 to-purple-600 text-white hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(102,126,234,0.4)]"
-                  (click)="close()">OK</button>
+                  (click)="close()">Đồng ý</button>
         </div>
 
         <!-- NO DRIVER AVAILABLE -->
@@ -93,16 +93,17 @@ export interface RideNotification {
             </svg>
           </div>
 
-          <h2 class="text-2xl font-bold mb-4 text-gray-800">No Driver Available</h2>
-          <p class="text-base text-gray-600 mb-6 leading-relaxed">{{ notification?.message || 'Sorry, we couldn\'t find a nearby driver. Please try again.' }}</p>
+          <h2 class="text-2xl font-bold mb-4 text-gray-800">Không tìm thấy tài xế</h2>
+          <p class="text-base text-gray-600 mb-6 leading-relaxed">Rất tiếc, chúng tôi không tìm thấy tài xế nào gần đây.</p>
 
           <div class="flex gap-3">
             <button class="flex-1 py-3.5 px-6 border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 mt-2 bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(59,130,246,0.4)]"
-                    (click)="onRetry()">Retry</button>
+                    (click)="onRetry()">Thử lại</button>
             <button class="flex-1 py-3.5 px-6 border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 mt-2 bg-gradient-to-br from-red-500 to-red-600 text-white hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(239,68,68,0.4)]"
-                    (click)="onCancel()">Cancel</button>
+                    (click)="close()">Hủy</button>
           </div>
         </div>
+
 
         <!-- RIDE CANCELLED -->
         <div *ngIf="notification?.type === 'RIDE_CANCELLED'" class="text-center">
@@ -112,11 +113,11 @@ export interface RideNotification {
             </svg>
           </div>
 
-          <h2 class="text-2xl font-bold mb-4 text-gray-800">Ride Cancelled</h2>
-          <p class="text-base text-gray-600 mb-6 leading-relaxed">{{ notification?.message || 'The ride has been cancelled.' }}</p>
+          <h2 class="text-2xl font-bold mb-4 text-gray-800">Chuyến đi đã bị hủy</h2>
+          <p class="text-base text-gray-600 mb-6 leading-relaxed">{{ notification?.message || 'Chuyến đi này đã bị hủy.' }}</p>
 
           <button class="w-full py-3.5 px-6 border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 bg-gradient-to-br from-gray-500 to-gray-600 text-white hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(107,114,128,0.4)]"
-                  (click)="close()">OK</button>
+                  (click)="close()">Đồng ý</button>
         </div>
 
       </div>
@@ -191,24 +192,24 @@ export class CustomerNotificationModalComponent {
 
   getStatusTitle(status?: string): string {
     const titles: Record<string, string> = {
-      'CONFIRMED': 'Ride Confirmed!',
-      'PICKINGUP': 'Driver Is On The Way',
-      'ONGOING': 'Trip In Progress',
-      'FINISHED': 'Trip Completed',
-      'REJECTED': 'Ride Cancelled'
+      'CONFIRMED': 'Đã xác nhận chuyến đi!',
+      'PICKINGUP': 'Tài xế đang đến',
+      'ONGOING': 'Đang trong chuyến đi',
+      'FINISHED': 'Chuyến đi hoàn thành',
+      'REJECTED': 'Chuyến đi bị hủy'
     };
-    return titles[status || ''] || 'Status Update';
+    return titles[status || ''] || 'Cập nhật trạng thái';
   }
 
   getStatusMessage(status?: string): string {
     const messages: Record<string, string> = {
-      'CONFIRMED': 'Your ride has been confirmed. The driver will arrive shortly.',
-      'PICKINGUP': 'Your driver is heading to your pickup location.',
-      'ONGOING': 'Your trip has started. Enjoy your ride!',
-      'FINISHED': 'You have arrived at your destination. Thank you for riding with us!',
-      'REJECTED': 'Your ride has been cancelled.'
+      'CONFIRMED': 'Chuyến đi của bạn đã được xác nhận. Tài xế sẽ đến ngay.',
+      'PICKINGUP': 'Tài xế đang di chuyển đến điểm đón của bạn.',
+      'ONGOING': 'Chuyến đi đã bắt đầu. Chúc bạn có một chuyến đi vui vẻ!',
+      'FINISHED': 'Bạn đã đến nơi. Cảm ơn bạn đã sử dụng dịch vụ!',
+      'REJECTED': 'Chuyến đi của bạn đã bị hủy.'
     };
-    return messages[status || ''] || 'Your ride status has been updated.';
+    return messages[status || ''] || 'Trạng thái chuyến đi của bạn đã được cập nhật.';
   }
 
   getStatusIconClass(status?: string): string {

@@ -85,6 +85,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
   driverLocation: { lat: number; lng: number } | null = null;
   activeDriver: Driver | null = null;
   notificationData: RideNotification | null = null;
+  driverInfo: any | null = null;
   showNotificationModal = false;
 
   // Driver tracking
@@ -155,14 +156,14 @@ export class UserBookingComponent implements OnInit, OnDestroy {
       this.origin = {
         lng: event.lng,
         lat: event.lat,
-        name: address || 'Your location'
+        name: address || 'Vị trí của bạn'
       };
     } catch (error) {
       console.error('Error detecting user location:', error);
       this.origin = {
         lng: event.lng,
         lat: event.lat,
-        name: 'Your location'
+        name: 'Vị trí của bạn'
       };
     }
   }
@@ -171,12 +172,12 @@ export class UserBookingComponent implements OnInit, OnDestroy {
     // Validation
     const validation = this.validateBookingRequest();
     if (!validation.valid) {
-      this.showErrorNotification(validation.error || 'Invalid booking request');
+      this.showErrorNotification(validation.error || 'Yêu cầu đặt xe không hợp lệ');
       return;
     }
 
     if (!this.isBookingTypesLoaded) {
-      this.showErrorNotification('Loading pricing information. Please wait...');
+      this.showErrorNotification('Đang tải thông tin giá. Vui lòng chờ...');
       return;
     }
 
@@ -221,18 +222,28 @@ export class UserBookingComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error creating ride:', error);
-          const errorMessage = this.parseErrorMessage(error);
-          this.showErrorNotification(errorMessage);
+
+          // Check for NO_DRIVER_AVAILABLE error (code 1052) or basic 404 if code missing
+          if (error?.error?.code === 1052) {
+            this.showNoDriverModal({
+              rideRequestId: `failed-${Date.now()}`,
+              message: 'Rất tiếc, hiện không có tài xế nào gần đây.'
+            });
+          } else {
+            const errorMessage = this.parseErrorMessage(error);
+            this.showErrorNotification(errorMessage);
+          }
 
           this.isBookingInProgress = false;
           this.loading = false;
+          this.cdr.detectChanges();
         }
       });
 
       this.subscriptions.add(sub);
     } catch (error) {
       console.error('Booking error:', error);
-      this.showErrorNotification('An unexpected error occurred. Please try again.');
+      this.showErrorNotification('Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.');
       this.isBookingInProgress = false;
       this.loading = false;
     }
@@ -244,25 +255,25 @@ export class UserBookingComponent implements OnInit, OnDestroy {
 
   private validateBookingRequest(): { valid: boolean; error?: string } {
     if (!this.jwtPayload) {
-      return { valid: false, error: 'Please log in to book a ride.' };
+      return { valid: false, error: 'Vui lòng đăng nhập để đặt xe.' };
     }
 
     if (!this.origin || !this.destination) {
-      return { valid: false, error: 'Please select both pickup and destination locations.' };
+      return { valid: false, error: 'Vui lòng chọn điểm đón và điểm đến.' };
     }
 
     if (!this.routeInfo) {
-      return { valid: false, error: 'Unable to calculate route. Please try selecting locations again.' };
+      return { valid: false, error: 'Không thể tính toán lộ trình. Vui lòng thử chọn lại địa điểm.' };
     }
 
     if (!this.isValidCoordinate(this.origin.lat, this.origin.lng) ||
       !this.isValidCoordinate(this.destination.lat, this.destination.lng)) {
-      return { valid: false, error: 'Invalid location coordinates. Please select valid locations.' };
+      return { valid: false, error: 'Tọa độ không hợp lệ. Vui lòng chọn địa điểm hợp lệ.' };
     }
 
     const minDistance = 0.1;
     if (this.routeInfo.distance < minDistance) {
-      return { valid: false, error: 'Pickup and destination are too close. Minimum distance is 100m.' };
+      return { valid: false, error: 'Điểm đón và điểm đến quá gần nhau. Khoảng cách tối thiểu là 100m.' };
     }
 
     return { valid: true };
@@ -330,7 +341,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
       }
     } catch (error) {
       console.error('Search submission error:', error);
-      this.showErrorNotification('Failed to search location');
+      this.showErrorNotification('Tìm kiếm địa điểm thất bại');
     }
   }
 
@@ -373,7 +384,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
       }
     } catch (error) {
       console.error('Routing error:', error);
-      this.showErrorNotification('Failed to calculate route. Please try again.');
+      this.showErrorNotification('Không thể tìm đường. Vui lòng thử lại.');
     }
   }
 
@@ -507,18 +518,22 @@ export class UserBookingComponent implements OnInit, OnDestroy {
 
     this.subscribeToDriverPosition(update.driverId);
 
+    const driverDetails = {
+      name: update.driverName || 'Driver',
+      avatarUrl: update.driverAvatar || 'assets/default-avatar.png',
+      rating: update.driverRating || 4.5,
+      vehicleModel: update.vehicleModel || 'Vehicle',
+      vehiclePlate: update.vehiclePlate || 'N/A',
+      phoneNumber: update.driverPhone || 'N/A'
+    };
+
+    this.driverInfo = driverDetails;
+
     this.notificationData = {
       type: 'RIDE_ACCEPTED',
       rideId: update.rideId,
       driverId: update.driverId,
-      driverData: {
-        name: update.driverName || 'Driver',
-        avatarUrl: update.driverAvatar || 'assets/default-avatar.png',
-        rating: update.driverRating || 4.5,
-        vehicleModel: update.vehicleModel || 'Vehicle',
-        vehiclePlate: update.vehiclePlate || 'N/A',
-        phoneNumber: update.driverPhone || 'N/A'
-      }
+      driverData: driverDetails
     };
     this.showNotificationModal = true;
 
@@ -552,15 +567,15 @@ export class UserBookingComponent implements OnInit, OnDestroy {
     this.notificationData = {
       type: 'NO_DRIVER_AVAILABLE',
       rideRequestId: update.rideRequestId,
-      message: update.message || 'No drivers available at the moment'
+      message: update.message || 'Không có tài xế nào khả dụng lúc này'
     };
     this.showNotificationModal = true;
   }
 
   private showCancellationModal(update: any): void {
     const message = update.cancelledBy === 'DRIVER' ?
-      'Driver cancelled the ride' :
-      'Ride has been cancelled';
+      'Tài xế đã hủy chuyến đi' :
+      'Chuyến đi đã bị hủy';
 
     this.notificationData = {
       type: 'RIDE_CANCELLED',
@@ -721,6 +736,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
   private resetToIdle(): void {
     this.showNotificationModal = false;
     this.notificationData = null;
+    this.driverInfo = null;
     this.currentRideId = null;
     this.rideState = RideState.IDLE;
     this.rideStatusSubscription?.unsubscribe();

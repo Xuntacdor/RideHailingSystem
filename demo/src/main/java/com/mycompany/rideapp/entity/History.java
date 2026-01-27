@@ -1,5 +1,7 @@
 package com.mycompany.rideapp.entity;
 
+import org.hibernate.annotations.Nationalized;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -23,7 +25,11 @@ public class History {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
+    
+    @Nationalized
     String startPlace;
+    
+    @Nationalized
     String endPlace;
 
     @ManyToOne

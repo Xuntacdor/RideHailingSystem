@@ -2,6 +2,8 @@ package com.mycompany.rideapp.entity;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.Nationalized;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -34,6 +36,7 @@ public class Coupon {
     @Column(unique = true, nullable = false)
     String code;
 
+    @Nationalized
     String content;
 
     Double discountPercentage;
