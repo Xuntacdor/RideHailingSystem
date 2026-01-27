@@ -1,0 +1,71 @@
+package com.mycompany.rideapp.mapper;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.mycompany.rideapp.dto.request.RideRequest;
+import com.mycompany.rideapp.dto.response.RideResponse;
+import com.mycompany.rideapp.dto.response.UserResponse;
+import com.mycompany.rideapp.entity.Ride;
+import com.mycompany.rideapp.entity.User;
+import com.mycompany.rideapp.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
+
+@Component
+@RequiredArgsConstructor
+public class RideMapper {
+    @Autowired
+    private final UserRepository userRepository;
+    @Autowired
+    private final com.mycompany.rideapp.repository.DriverRepository driverRepository;
+    @Autowired
+    private final DriverMapper driverMapper;
+    @Autowired
+    private final UserMapper userMapper;
+    // private final ReviewMapper reviewMapper;
+    // private final PaymentMapper paymentMapper;
+
+    public Ride toEntity(RideRequest dto) {
+        com.mycompany.rideapp.entity.Driver driver = driverRepository.findById(dto.getDriverId()).orElse(null);
+        User customer = userRepository.findById(dto.getCustomerId()).orElse(null);
+
+        return Ride.builder()
+                .driver(driver)
+                .customer(customer)
+                .startTime(dto.getStartTime())
+                .endTime(dto.getEndTime())
+                .startLatitude(dto.getStartLatitude())
+                .startLongitude(dto.getStartLongitude())
+                .endLatitude(dto.getEndLatitude())
+                .endLongitude(dto.getEndLongitude())
+                .distance(dto.getDistance())
+                .fare(dto.getFare())
+                .status(dto.getStatus())
+                .vehicleType(dto.getVehicleType())
+                .build();
+    }
+
+    public RideResponse toResponse(Ride entity) {
+        com.mycompany.rideapp.dto.response.DriverResponse driver = entity.getDriver() != null
+                ? driverMapper.toResponse(entity.getDriver())
+                : null;
+        UserResponse customer = entity.getCustomer() != null ? userMapper.toResponse(entity.getCustomer()) : null;
+
+        return RideResponse.builder()
+                .id(entity.getId())
+                .driver(driver)
+                .customer(customer)
+                .startTime(entity.getStartTime())
+                .endTime(entity.getEndTime())
+                .startLatitude(entity.getStartLatitude())
+                .startLongitude(entity.getStartLongitude())
+                .endLatitude(entity.getEndLatitude())
+                .endLongitude(entity.getEndLongitude())
+                .distance(entity.getDistance())
+                .fare(entity.getFare())
+                .status(entity.getStatus())
+                .vehicleType(entity.getVehicleType())
+                .build();
+    }
+}

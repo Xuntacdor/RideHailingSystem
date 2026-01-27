@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule,Location } from '@angular/common';
 
 @Component({
   selector: 'app-driver-vehicle',
@@ -8,4 +8,11 @@ import { CommonModule } from '@angular/common';
   templateUrl: './driver-vehicle.component.html',
   styleUrls: ['./driver-vehicle.component.css']
 })
-export class DriverVehicleComponent {}
+export class DriverVehicleComponent {
+
+  constructor(private location: Location) {}
+
+  goBack() {
+    this.location.back();
+  }
+}
