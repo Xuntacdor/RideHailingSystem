@@ -20,20 +20,12 @@ public class NotificationService {
 
     public void sendRideRequestToDriver(String driverId, RideNotification notification) {
         log.info("Sending ride request {} to driver {}", notification.getRideRequestId(), driverId);
-        messagingTemplate.convertAndSendToUser(
-            driverId,
-            "/queue/ride",
-            notification
-        );
+        messagingTemplate.convertAndSend("/topic/driver/" + driverId, notification);
     }
 
     public void notifyCustomer(String customerId, Object message) {
         log.info("Notifying customer {} with message", customerId);
-        messagingTemplate.convertAndSendToUser(
-            customerId,
-            "/queue/ride",
-            message
-        );
+        messagingTemplate.convertAndSend("/topic/customer/" + customerId, message);
     }
 
     public void notifyRideAccepted(String customerId, com.mycompany.rideapp.entity.Driver driver, String rideId) {
@@ -53,11 +45,7 @@ public class NotificationService {
         payload.put("type", "NO_DRIVER_AVAILABLE");
         payload.put("rideRequestId", rideRequestId);
         payload.put("message", "No available drivers found. Please try again later.");
-        messagingTemplate.convertAndSendToUser(
-            customerId,
-            "/queue/ride",
-            payload
-        );
+        messagingTemplate.convertAndSend("/topic/customer/" + customerId, (Object) payload);
     }
 
     public void notifyDriverPositionUpdate(String driverId, Double lat, Double lng) {
@@ -67,11 +55,7 @@ public class NotificationService {
         payload.put("driverId", driverId);
         payload.put("lat", lat);
         payload.put("lng", lng);
-        messagingTemplate.convertAndSendToUser(
-            driverId,
-            "/queue/ride",
-            payload
-        );
+        messagingTemplate.convertAndSend("/topic/driver/" + driverId + "/updatePos", (Object) payload);
     }
 
     public void notifyRideStatusUpdate(String customerId, String rideId, com.mycompany.rideapp.enums.Status status, com.mycompany.rideapp.entity.Driver driver) {
@@ -103,11 +87,7 @@ public class NotificationService {
         customerPayload.put("message",
                 cancelledBy.equals("DRIVER") ? "Driver cancelled the ride" : "You cancelled the ride");
         customerPayload.put("timestamp", System.currentTimeMillis());
-        messagingTemplate.convertAndSendToUser(
-            customerId,
-            "/queue/ride",
-            customerPayload
-        );
+        messagingTemplate.convertAndSend("/topic/customer/" + customerId, (Object) customerPayload);
 
         // Notify driver
         Map<String, Object> driverPayload = new HashMap<>();
@@ -117,11 +97,7 @@ public class NotificationService {
         driverPayload.put("message",
                 cancelledBy.equals("CUSTOMER") ? "Customer cancelled the ride" : "You cancelled the ride");
         driverPayload.put("timestamp", System.currentTimeMillis());
-        messagingTemplate.convertAndSendToUser(
-            driverId,
-            "/queue/ride",
-            driverPayload
-        );
+        messagingTemplate.convertAndSend("/topic/driver/" + driverId, (Object) driverPayload);
     }
 
     public void notifyDriverRideCreated(String driverId, String rideId, String customerId) {
@@ -131,11 +107,7 @@ public class NotificationService {
         payload.put("rideId", rideId);
         payload.put("customerId", customerId);
         payload.put("timestamp", System.currentTimeMillis());
-        messagingTemplate.convertAndSendToUser(
-            driverId,
-            "/queue/ride",
-            payload
-        );
+        messagingTemplate.convertAndSend("/topic/driver/" + driverId, (Object) payload);
     }
 
 }
