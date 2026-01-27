@@ -1,68 +1,82 @@
 <div class="w-full h-screen relative overflow-hidden bg-gray-100">
-  <app-map [origin]="origin" [destination]="destination" [routeGeometry]="routeGeometry"
-    [isSettingOrigin]="isSettingOrigin" [isSettingDestination]="isSettingDestination" [activeDriver]="activeDriver"
+  <!-- Map Component -->
+  <app-map [origin]="origin" [destination]="destination" [routeGeometry]="routeGeometry" [activeDriver]="activeDriver"
     [driverRoute]="driverRouteGeometry" (mapReady)="onMapReady()" (tokenInvalid)="onTokenInvalid()"
     (userLocationDetected)="onUserLocationDetected($event)" class="absolute inset-0 z-0">
   </app-map>
 
-  <!-- <div class="absolute top-0 left-0 right-0 z-10">
-    <div class="pb-safe h-6"></div>
-
-    <app-user-header [userName]="userName">
-    </app-user-header>
-  </div> -->
-
+  <!-- API Token Invalid Error -->
   @if (!isTokenValid) {
-  <div class=" absolute top-20 left-5 right-5 z-20 p-4 bg-red-500 text-white rounded-2xl shadow-lg">
+  <div class="absolute top-20 left-5 right-5 z-20 p-4 bg-red-500 text-white rounded-2xl shadow-lg">
     ❌ API Key invalid!
   </div>
   }
 
-
-  @if(rideState === RideState.IDLE || rideState === RideState.PENDING) {
-  <div class="absolute bottom-0 left-0 right-0 z-30 p-4 pt-2 ">
+  <!-- Booking Panel (IDLE & PENDING States) -->
+  @if (rideState === RideState.IDLE || rideState === RideState.PENDING) {
+  <div class="absolute bottom-0 left-0 right-0 z-30 p-4 pt-2">
     <div
       class="bg-gradient-to-b from-white/50 to-white/30 backdrop-blur-md rounded-3xl shadow-2xl drop-shadow-2xl flex flex-col gap-1">
+
+      <!-- Location Search -->
       <app-location-search placeholder="Where are you going?" [suggestions]="searchSuggestions"
         [showSuggestions]="showSearchSuggestions" (searchChanged)="onSearchChanged($event)"
         (suggestionSelected)="onSuggestionSelected($event)" (searchSubmitted)="onSearchSubmitted($event)"
         class="w-full pt-5">
       </app-location-search>
 
+      <!-- Route Info -->
       @if (routeInfo) {
-      <app-route-info [routeInfo]="routeInfo" (clearRoute)="onClearRoute()"></app-route-info>
+      <app-route-info [routeInfo]="routeInfo" (clearRoute)="onClearRoute()">
+      </app-route-info>
       }
 
-      @if (routeInfo) {
+      <!-- Vehicle Selection -->
+      @if (routeInfo && isBookingTypesLoaded) {
       <app-vehicle-selection [selectedVehicle]="selectedVehicle" [routeInfo]="routeInfo" [bookingTypes]="bookingTypes"
-        (vehicleSelected)="onVehicleSelected($event)" (bookRideClicked)="onBookRide($event)" class="px-6 pb-6">
+        [disabled]="isBookingInProgress || !isBookingTypesLoaded" (vehicleSelected)="onVehicleSelected($event)"
+        (bookRideClicked)="onBookRide($event)" class="px-6 pb-6">
       </app-vehicle-selection>
       }
 
-      <!-- Safe area padding for mobile -->
-    </div>
-    <!-- <div class="pb-safe h-6"></div> -->
+      <!-- Loading Indicator for Booking Types -->
+      @if (routeInfo && !isBookingTypesLoaded) {
+      <div class="px-6 pb-6 text-center text-gray-600">
+        <p>Loading pricing information...</p>
+      </div>
+      }
 
+    </div>
   </div>
   }
 
-  @if(rideState === RideState.CONFIRMED ||
+  @if (rideState === RideState.CONFIRMED ||
   rideState === RideState.PICKINGUP ||
   rideState === RideState.ONGOING) {
-  <div class="absolute bottom-0 left-0 right-0 z-30 p-4 pt-2 ">
+  <div class="absolute bottom-0 left-0 right-0 z-30 p-4 pt-2">
     <div
       class="bg-gradient-to-b from-white/50 to-white/30 backdrop-blur-md rounded-3xl shadow-2xl drop-shadow-2xl flex flex-col gap-1">
       <app-booked-ride-info [driverData]="notificationData?.driverData" [rideStatus]="getStatusText()"
-        [driverLocation]="driverLocation" [destination]="destination || null" (cancelRide)="onCancelBooking()">
+        [driverLocation]="driverLocation" [destination]="destination" (cancelRide)="onCancelBooking()">
       </app-booked-ride-info>
-      <!-- Safe area padding for mobile -->
     </div>
-    <!-- <div class="pb-safe h-6"></div> -->
-
   </div>
   }
 
-
+  <!-- Loading Overlay -->
+  @if (loading) {
+  <div class="absolute inset-0 z-40 bg-black/20 backdrop-blur-sm flex items-center justify-center">
+    <div class="bg-white rounded-full p-4 shadow-lg">
+      <svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none"
+        viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+        </path>
+      </svg>
+    </div>
+  </div>
+  }
 
 </div>
 

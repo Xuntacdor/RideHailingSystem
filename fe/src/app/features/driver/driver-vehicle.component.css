@@ -11,6 +11,16 @@
   padding: 28px 16px;
 }
 
+.vehicle-topbar {
+  height: 56px;
+  background: white;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
 .vehicle-header h3 {
   margin: 0;
 }

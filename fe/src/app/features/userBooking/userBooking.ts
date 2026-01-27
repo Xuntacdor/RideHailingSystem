@@ -1,39 +1,49 @@
+// userBooking.component.ts
 import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Subscription } from 'rxjs';
+
+// Services
 import { TrackAsiaService } from '../../core/services/trackasia.service';
+import { AuthService } from '../../core/services/auth.service';
+import { BookingTypeService, BookingTypeResponse } from '../../core/services/booking-type.service';
 import { RideService } from '../../core/services/ride.service';
 import { RideStatusUpdateService } from '../../core/services/ride-status-update.service';
 import { DriverPosUpdateService } from '../../driver/services/driverPosUpdate.service';
-import { BookingTypeService, BookingTypeResponse } from '../../core/services/booking-type.service';
+
+// Components
 import { MapComponent } from '../../components/userBooking/map/map.component';
-import { UserHeaderComponent } from '../../components/userBooking/user-header/user-header.component';
 import { VehicleSelectionComponent } from '../../components/userBooking/vehicle-selection/vehicle-selection.component';
 import { LocationSearchComponent } from '../../components/userBooking/location-search/location-search.component';
 import { RouteInfoComponent } from '../../components/userBooking/route-info/route-info.component';
 import { CustomerNotificationModalComponent, RideNotification } from '../../components/customer-notification-modal/customer-notification-modal.component';
-import { Coordinate, SearchResult, RouteInfo, VehicleType, Driver } from '../../models/models';
-import { jwtPayload, RideRequest, DriverPositionUpdate } from '../../core/models/api-response.model';
-import { AuthService } from '../../core/services/auth.service';
-import { Subscription } from 'rxjs';
 import { BookedRideInfoComponent } from '../../components/userBooking/booked-ride-info/booked-ride-info.component';
 
+// Models
+import { Coordinate, SearchResult, RouteInfo, VehicleType, Driver } from '../../models/models';
+import { jwtPayload, RideRequest, DriverPositionUpdate } from '../../core/models/api-response.model';
+
 enum RideState {
-  IDLE = 'IDLE',           // Local state only, not sent to backend
-  PENDING = 'PENDING',     // Searching for driver (backend: PENDING)
-  CONFIRMED = 'CONFIRMED', // Driver accepted (backend: CONFIRMED)
-  PICKINGUP = 'PICKINGUP', // Driver arriving/at pickup (backend: PICKINGUP)
-  ONGOING = 'ONGOING',     // Ride in progress (backend: ONGOING)
-  FINISHED = 'FINISHED',   // Ride completed (backend: FINISHED)
-  CANCELLED = 'CANCELLED'  // Ride cancelled (backend: CANCELLED)
+  IDLE = 'IDLE',
+  PENDING = 'PENDING',
+  CONFIRMED = 'CONFIRMED',
+  PICKINGUP = 'PICKINGUP',
+  ONGOING = 'ONGOING',
+  FINISHED = 'FINISHED',
+  CANCELLED = 'CANCELLED'
+}
+
+interface RouteGeometry {
+  type: 'LineString';
+  coordinates: [number, number][];
 }
 
 @Component({
-  selector: 'app-root',
+  selector: 'app-user-booking',
   standalone: true,
   imports: [
     CommonModule,
     MapComponent,
-    UserHeaderComponent,
     VehicleSelectionComponent,
     LocationSearchComponent,
     RouteInfoComponent,
@@ -43,86 +53,92 @@ enum RideState {
   templateUrl: './userBooking.html',
   styleUrls: []
 })
-export class userBooking implements OnInit, OnDestroy {
-  loading = false;
+export class UserBookingComponent implements OnInit, OnDestroy {
+  // Constants
+  private readonly SEARCH_DEBOUNCE_MS = 300;
+  private readonly DRIVER_ROUTE_DEBOUNCE_MS = 3000;
+  private readonly DRIVER_MOVEMENT_THRESHOLD_KM = 0.05; // 50 meters
+
+  // UI State
   isTokenValid = true;
-  isSettingOrigin = false;
-  isSettingDestination = false;
-  rideState: RideState = RideState.IDLE;
-  jwtPayload: jwtPayload | null = null;
-
-
+  loading = false;
   selectedVehicle: VehicleType = VehicleType.CAR;
   bookingTypes: BookingTypeResponse[] = [];
+  isBookingTypesLoaded = false;
+  isBookingInProgress = false;
 
+  // Location State
   origin: Coordinate | null = null;
   destination: Coordinate | null = null;
-
   routeInfo: RouteInfo | null = null;
-  routeGeometry: any = null;
+  routeGeometry: RouteGeometry | null = null;
+  driverRouteGeometry: RouteGeometry | null = null;
 
+  // Search State
   searchSuggestions: SearchResult[] = [];
   showSearchSuggestions = false;
   private searchDebounceTimer: any;
-  userName: string;
 
-  showRideNotification = false;
-  rideInfo: any = null;
-  bookingInProgress = false;
-
-  private rideStatusSubscription?: Subscription;
+  // Ride State
+  rideState: RideState = RideState.IDLE;
   currentRideId: string | null = null;
-  showNotificationModal = false;
-  notificationData: RideNotification | null = null;
-
-  private driverPositionSubscription?: Subscription;
-  currentDriverId: string | null = null;
   driverLocation: { lat: number; lng: number } | null = null;
   activeDriver: Driver | null = null;
-  driverRouteGeometry: any = null;
-  currentRideStatus: string | null = null;
+  notificationData: RideNotification | null = null;
+  showNotificationModal = false;
 
+  // Driver tracking
+  private lastRouteCalculation: { lat: number; lng: number } | null = null;
+  private driverRouteDebounceTimer: any;
+
+  // Auth
+  jwtPayload: jwtPayload | null = null;
+  userName: string;
+
+  // Lifecycle flags
+  private isDestroyed = false;
+
+  // Subscriptions
+  private subscriptions = new Subscription();
+  private rideStatusSubscription?: Subscription;
+  private driverPositionSubscription?: Subscription;
+
+  get RideState() {
+    return RideState;
+  }
 
   constructor(
     private trackAsiaService: TrackAsiaService,
     private authService: AuthService,
+    private bookingTypeService: BookingTypeService,
     private rideService: RideService,
     private rideStatusUpdateService: RideStatusUpdateService,
     private driverPosUpdateService: DriverPosUpdateService,
-    private bookingTypeService: BookingTypeService,
     private cdr: ChangeDetectorRef
   ) {
     this.jwtPayload = this.authService.getUserInfo();
     this.userName = this.jwtPayload?.name || '';
   }
 
-  get RideState() {
-    return RideState;
-  }
-
-  getStatusText(): string {
-    switch (this.rideState) {
-      case RideState.PENDING: return 'Đang tìm tài xế...';
-      case RideState.CONFIRMED: return 'Đã tìm thấy tài xế!';
-      case RideState.PICKINGUP: return 'Tài xế đang đến';
-      case RideState.ONGOING: return 'Đang trong chuyến đi';
-      case RideState.FINISHED: return 'Chuyến đi hoàn tất';
-      case RideState.CANCELLED: return 'Đã hủy chuyến';
-      default: return '';
-    }
-  }
-
   ngOnInit(): void {
-    this.bookingTypeService.getAllBookingTypes().subscribe({
+    this.loadBookingTypes();
+  }
+
+
+  private loadBookingTypes(): void {
+    const sub = this.bookingTypeService.getAllBookingTypes().subscribe({
       next: (types) => {
         this.bookingTypes = types;
+        this.isBookingTypesLoaded = true;
         console.log('Loaded booking types:', types);
       },
       error: (error) => {
         console.error('Error loading booking types:', error);
         this.bookingTypes = [];
+        this.isBookingTypesLoaded = false;
       }
     });
+    this.subscriptions.add(sub);
   }
 
   onMapReady(): void {
@@ -134,15 +150,91 @@ export class userBooking implements OnInit, OnDestroy {
   }
 
   async onUserLocationDetected(event: { lng: number; lat: number }): Promise<void> {
-    const address = await this.trackAsiaService.reverseGeocode(event.lng, event.lat);
-    this.origin = { lng: event.lng, lat: event.lat, name: address || 'Your location' };
+    try {
+      const address = await this.trackAsiaService.reverseGeocode(event.lng, event.lat);
+      this.origin = {
+        lng: event.lng,
+        lat: event.lat,
+        name: address || 'Your location'
+      };
+    } catch (error) {
+      console.error('Error detecting user location:', error);
+      this.origin = {
+        lng: event.lng,
+        lat: event.lat,
+        name: 'Your location'
+      };
+    }
   }
 
-  onLocationClicked(event: { lng: number; lat: number; type: 'origin' | 'destination' }): void {
-    if (event.type === 'origin') {
-      this.setOriginFromClick(event.lng, event.lat);
-    } else {
-      this.setDestinationFromClick(event.lng, event.lat);
+  async onBookRide(vehicleType: VehicleType): Promise<void> {
+    // Validation
+    const validation = this.validateBookingRequest();
+    if (!validation.valid) {
+      this.showErrorNotification(validation.error || 'Invalid booking request');
+      return;
+    }
+
+    if (!this.isBookingTypesLoaded) {
+      this.showErrorNotification('Loading pricing information. Please wait...');
+      return;
+    }
+
+    if (this.isBookingInProgress) {
+      return;
+    }
+
+    this.isBookingInProgress = true;
+    this.loading = true;
+
+    try {
+      const distanceInMeters = this.routeInfo!.distance * 1000;
+      const durationInMinutes = this.routeInfo!.duration;
+      const fare = this.calculateFare(vehicleType, this.routeInfo!.distance, durationInMinutes);
+
+      const rideRequest: RideRequest = {
+        customerId: this.jwtPayload!.userId,
+        startLatitude: this.origin!.lat,
+        startLongitude: this.origin!.lng,
+        endLatitude: this.destination!.lat,
+        endLongitude: this.destination!.lng,
+        customerLatitude: this.origin!.lat,
+        customerLongitude: this.origin!.lng,
+        distance: Math.round(distanceInMeters),
+        fare: Math.round(fare),
+        vehicleType: this.mapVehicleTypeToBackend(vehicleType),
+        startTime: Date.now(),
+      };
+
+      const sub = this.rideService.createRide(rideRequest).subscribe({
+        next: (response) => {
+          console.log('Ride created successfully:', response);
+
+          // Update state INSIDE subscribe callback
+          this.currentRideId = response.rideRequestId;
+          this.rideState = RideState.PENDING;
+          this.subscribeToRideUpdates();
+
+          this.isBookingInProgress = false;
+          this.loading = false;
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Error creating ride:', error);
+          const errorMessage = this.parseErrorMessage(error);
+          this.showErrorNotification(errorMessage);
+
+          this.isBookingInProgress = false;
+          this.loading = false;
+        }
+      });
+
+      this.subscriptions.add(sub);
+    } catch (error) {
+      console.error('Booking error:', error);
+      this.showErrorNotification('An unexpected error occurred. Please try again.');
+      this.isBookingInProgress = false;
+      this.loading = false;
     }
   }
 
@@ -150,155 +242,58 @@ export class userBooking implements OnInit, OnDestroy {
     this.selectedVehicle = type;
   }
 
-  async onBookRide(vehicleType: VehicleType): Promise<void> {
+  private validateBookingRequest(): { valid: boolean; error?: string } {
     if (!this.jwtPayload) {
-      this.showErrorNotification('Please log in to book a ride.');
-      return;
+      return { valid: false, error: 'Please log in to book a ride.' };
     }
 
     if (!this.origin || !this.destination) {
-      this.showErrorNotification('Please select both pickup and destination locations.');
-      return;
+      return { valid: false, error: 'Please select both pickup and destination locations.' };
     }
 
     if (!this.routeInfo) {
-      this.showErrorNotification('Unable to calculate route. Please try selecting locations again.');
-      return;
+      return { valid: false, error: 'Unable to calculate route. Please try selecting locations again.' };
     }
 
     if (!this.isValidCoordinate(this.origin.lat, this.origin.lng) ||
       !this.isValidCoordinate(this.destination.lat, this.destination.lng)) {
-      this.showErrorNotification('Invalid location coordinates. Please select valid locations.');
-      return;
+      return { valid: false, error: 'Invalid location coordinates. Please select valid locations.' };
     }
 
-    const minDistance = 0.1; // 100 meters minimum
+    const minDistance = 0.1;
     if (this.routeInfo.distance < minDistance) {
-      this.showErrorNotification('Pickup and destination are too close. Minimum distance is 100m.');
-      return;
+      return { valid: false, error: 'Pickup and destination are too close. Minimum distance is 100m.' };
     }
 
-    if (this.bookingInProgress) {
-      return;
-    }
-
-    this.bookingInProgress = true;
-    this.loading = true;
-
-    try {
-      const distanceInMeters = this.routeInfo.distance * 1000;
-      const durationInMinutes = this.routeInfo.duration;
-      const fare = this.calculateFare(vehicleType, this.routeInfo.distance, durationInMinutes);
-
-      const rideRequest: RideRequest = {
-        customerId: this.jwtPayload.userId,
-        startLatitude: this.origin.lat,
-        startLongitude: this.origin.lng,
-        endLatitude: this.destination.lat,
-        endLongitude: this.destination.lng,
-        customerLatitude: this.origin.lat,
-        customerLongitude: this.origin.lng,
-        distance: Math.round(distanceInMeters),
-        fare: Math.round(fare),
-        vehicleType: this.mapVehicleTypeToBackend(vehicleType),
-        startTime: Date.now(),
-      };
-
-      this.rideService.createRide(rideRequest).subscribe({
-        next: (response) => {
-          console.log('Ride created successfully:', response);
-          this.rideInfo = {
-            rideRequestId: response.rideRequestId,
-            status: response.status,
-            message: response.message,
-            nearestDriversCount: response.nearestDriversCount,
-          };
-          this.currentRideId = response.rideRequestId;
-          this.showRideNotification = true;
-          this.bookingInProgress = false;
-          this.loading = false;
-
-          this.subscribeToRideUpdates();
-        },
-        error: (error) => {
-          console.error('Error creating ride:', error);
-          const errorMessage = this.parseErrorMessage(error);
-          this.showErrorNotification(errorMessage);
-          this.bookingInProgress = false;
-          this.loading = false;
-        }
-      });
-    } catch (error) {
-      console.error('Booking error:', error);
-      this.showErrorNotification('An unexpected error occurred. Please try again.');
-      this.bookingInProgress = false;
-      this.loading = false;
-    }
-
-    this.rideState = RideState.PENDING;
+    return { valid: true };
   }
 
   private isValidCoordinate(lat: number, lng: number): boolean {
-    return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180 &&
-      lat !== 0 && lng !== 0;
-  }
-
-  private parseErrorMessage(error: any): string {
-    if (error?.error?.message) {
-      return error.error.message;
-    }
-    if (error?.message) {
-      return error.message;
-    }
-    if (error?.status === 404) {
-      return 'No drivers available at the moment. Please try again later.';
-    }
-    if (error?.status === 400) {
-      return 'Invalid booking request. Please check your locations and try again.';
-    }
-    return 'Failed to create ride. Please try again.';
-  }
-
-  private showErrorNotification(message: string): void {
-    console.error('Booking error:', message);
-    alert(message);
+    return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180 && lat !== 0 && lng !== 0;
   }
 
   private calculateFare(vehicleType: VehicleType, distance: number, duration: number): number {
     const bookingType = this.bookingTypes.find(bt => bt.vehicleType === vehicleType.toString());
 
     if (bookingType) {
-      const baseFare = bookingType.baseFare;
-      const pricePerKm = bookingType.pricePerKm;
-      const pricePerMinute = bookingType.pricePerMinute;
-
+      const { baseFare, pricePerKm, pricePerMinute } = bookingType;
       const extraDistance = Math.max(0, distance - 2);
       const total = baseFare + (extraDistance * pricePerKm) + (duration * pricePerMinute);
       return Math.round(total / 1000) * 1000;
     }
 
+    // Fallback pricing
     const baseFare = 10000;
     const pricePerKm = 5000;
     const pricePerMinute = 1000;
-
-    let multiplier = 1.0;
-    switch (vehicleType) {
-      case VehicleType.MOTORBIKE: multiplier = 1.0; break;
-      case VehicleType.CAR: multiplier = 2.5; break;
-      default: multiplier = 1.0;
-    }
-
+    const multiplier = vehicleType === VehicleType.CAR ? 2.5 : 1.0;
     const extraDistance = Math.max(0, distance - 2);
     const total = (baseFare + (extraDistance * pricePerKm) + (duration * pricePerMinute)) * multiplier;
     return Math.round(total / 1000) * 1000;
   }
 
   private mapVehicleTypeToBackend(vehicleType: VehicleType): string {
-    switch (vehicleType) {
-      case VehicleType.MOTORBIKE: return 'MOTORBIKE';
-      case VehicleType.CAR: return 'CAR';
-      default: return 'MOTORBIKE';
-    }
+    return vehicleType === VehicleType.MOTORBIKE ? 'MOTORBIKE' : 'CAR';
   }
 
   onSearchChanged(query: string): void {
@@ -310,27 +305,32 @@ export class userBooking implements OnInit, OnDestroy {
     }
 
     this.searchDebounceTimer = setTimeout(async () => {
-      this.searchSuggestions = await this.trackAsiaService.search(query, 5);
-      this.showSearchSuggestions = this.searchSuggestions.length > 0;
-    });
-  }
+      if (this.isDestroyed) return;
 
-  onCloseRideNotification() {
-    this.showRideNotification = false;
-    this.rideInfo = null;
+      try {
+        this.searchSuggestions = await this.trackAsiaService.search(query, 5);
+        this.showSearchSuggestions = this.searchSuggestions.length > 0;
+        this.cdr.detectChanges();
+      } catch (error) {
+        console.error('Search error:', error);
+        this.searchSuggestions = [];
+        this.showSearchSuggestions = false;
+      }
+    }, this.SEARCH_DEBOUNCE_MS);
   }
 
   async onSearchSubmitted(query: string): Promise<void> {
     if (!query.trim()) return;
 
-    this.loading = true;
+    // Don't show loading screen during search - it blocks interaction
     try {
       const results = await this.trackAsiaService.search(query, 1);
       if (results[0]) {
         this.selectDestination(results[0]);
       }
-    } finally {
-      this.loading = false;
+    } catch (error) {
+      console.error('Search submission error:', error);
+      this.showErrorNotification('Failed to search location');
     }
   }
 
@@ -339,73 +339,106 @@ export class userBooking implements OnInit, OnDestroy {
     this.showSearchSuggestions = false;
   }
 
-  private selectDestination(result: SearchResult): void {
-    this.destination = { lng: result.lng, lat: result.lat, name: result.display };
-
+  private async selectDestination(result: SearchResult): Promise<void> {
+    this.destination = {
+      lng: result.lng,
+      lat: result.lat,
+      name: result.display
+    };
 
     if (this.origin && this.destination) {
-      this.calculateRoute(this.destination.lng, this.destination.lat);
+      await this.calculateRoute();
     }
   }
 
-  private async setOriginFromClick(lng: number, lat: number): Promise<void> {
-    this.isSettingOrigin = false;
-    const address = await this.trackAsiaService.reverseGeocode(lng, lat);
-    this.origin = { lng, lat, name: address };
-
-    if (this.destination) {
-      this.calculateRoute(lng, lat);
-    }
-  }
-
-  private async setDestinationFromClick(lng: number, lat: number): Promise<void> {
-    this.isSettingDestination = false;
-    const address = await this.trackAsiaService.reverseGeocode(lng, lat);
-    this.destination = { lng, lat, name: address };
-
-    if (this.origin) {
-      this.calculateRoute(lng, lat);
-    }
-  }
-
-  private async calculateRoute(lng: number, lat: number): Promise<void> {
+  private async calculateRoute(): Promise<void> {
     if (!this.origin || !this.destination) return;
 
-    this.loading = true;
+    // Don't show loading screen during route calculation - it blocks interaction
     try {
       const routeData = await this.trackAsiaService.getDirections(
         this.origin.lng,
         this.origin.lat,
-        lng,
-        lat
+        this.destination.lng,
+        this.destination.lat
       );
 
       if (routeData) {
         this.routeInfo = {
           distance: routeData.distance / 1000,
-          duration: routeData.duration / 60000,
+          duration: routeData.duration / 60,
           steps: this.extractRouteSteps(routeData.instructions || [])
         };
-
         this.routeGeometry = routeData.geometry;
       }
     } catch (error) {
       console.error('Routing error:', error);
-    } finally {
-      this.loading = false;
+      this.showErrorNotification('Failed to calculate route. Please try again.');
     }
   }
 
-  private extractRouteSteps(instructions: any[]): string[] {
-    return instructions.map((step: any, index: number) => {
-      const instruction = step.html_instructions?.replace(/<[^>]*>/g, '') || '';
-      const distance = step.distance?.text || '';
+  private calculateDriverRouteDebounced(location: { lat: number; lng: number }): void {
+    if (this.lastRouteCalculation) {
+      const distance = this.calculateDistance(
+        this.lastRouteCalculation.lat,
+        this.lastRouteCalculation.lng,
+        location.lat,
+        location.lng
+      );
 
-      if (instruction && distance) {
-        return `${instruction} - ${distance}`;
+      if (distance < this.DRIVER_MOVEMENT_THRESHOLD_KM) {
+        return;
       }
-      return instruction || `Step ${index + 1}`;
-    }).filter(step => step.length > 0);
+    }
+
+    clearTimeout(this.driverRouteDebounceTimer);
+    this.driverRouteDebounceTimer = setTimeout(async () => {
+      if (this.isDestroyed) return;
+      await this.calculateDriverRoute();
+      this.lastRouteCalculation = { ...location };
+    }, this.DRIVER_ROUTE_DEBOUNCE_MS);
+  }
+
+  private async calculateDriverRoute(): Promise<void> {
+    if (!this.driverLocation) return;
+
+    let targetLocation: Coordinate | null = null;
+
+    if (this.rideState === RideState.CONFIRMED || this.rideState === RideState.PICKINGUP) {
+      targetLocation = this.origin;
+    } else if (this.rideState === RideState.ONGOING) {
+      targetLocation = this.destination;
+    }
+
+    if (!targetLocation) return;
+
+    try {
+      const routeData = await this.trackAsiaService.getDirections(
+        this.driverLocation.lng,
+        this.driverLocation.lat,
+        targetLocation.lng,
+        targetLocation.lat
+      );
+
+      if (routeData) {
+        this.driverRouteGeometry = routeData.geometry;
+
+        this.routeInfo = {
+          distance: routeData.distance / 1000,
+          duration: routeData.duration / 60,
+          steps: this.routeInfo?.steps || []
+        };
+
+        console.log('Driver route calculated:', {
+          distance: this.routeInfo.distance,
+          duration: this.routeInfo.duration
+        });
+
+        this.cdr.detectChanges();
+      }
+    } catch (error) {
+      console.error('Error calculating driver route:', error);
+    }
   }
 
   onClearRoute(): void {
@@ -414,13 +447,19 @@ export class userBooking implements OnInit, OnDestroy {
     this.destination = null;
   }
 
-  // WebSocket subscription 
+  // ============================================================================
+  // WEBSOCKET SUBSCRIPTIONS
+  // ============================================================================
+
   private subscribeToRideUpdates(): void {
     const customerId = this.jwtPayload?.userId;
     if (!customerId) {
       console.error('No customer ID available for WebSocket subscription');
       return;
     }
+
+    // Unsubscribe existing subscription
+    this.rideStatusSubscription?.unsubscribe();
 
     console.log(`Subscribing to ride updates for customer: ${customerId}`);
     this.rideStatusSubscription = this.rideStatusUpdateService
@@ -463,12 +502,7 @@ export class userBooking implements OnInit, OnDestroy {
   }
 
   private showDriverAssignedModal(update: any): void {
-    this.showRideNotification = false;
-
-    this.currentDriverId = update.driverId;
-    this.currentRideStatus = 'CONFIRMED';
     this.rideState = RideState.CONFIRMED;
-
     this.routeGeometry = null;
 
     this.subscribeToDriverPosition(update.driverId);
@@ -487,6 +521,20 @@ export class userBooking implements OnInit, OnDestroy {
       }
     };
     this.showNotificationModal = true;
+
+    // Immediately show driver marker if location is available in the update
+    console.log('[MARKER DEBUG] RIDE_ACCEPTED update:', update);
+    if (update.driverLat && update.driverLng) {
+      console.log('[MARKER DEBUG] Setting initial driver location from payload:', update.driverLat, update.driverLng);
+      this.updateDriverLocation({
+        driverId: update.driverId,
+        lat: update.driverLat,
+        lng: update.driverLng,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      console.warn('[MARKER DEBUG] No driver location in ride accepted payload');
+    }
   }
 
   private showStatusUpdateModal(update: any): void {
@@ -500,7 +548,6 @@ export class userBooking implements OnInit, OnDestroy {
   }
 
   private showNoDriverModal(update: any): void {
-    this.showRideNotification = false;
     this.rideState = RideState.IDLE;
     this.notificationData = {
       type: 'NO_DRIVER_AVAILABLE',
@@ -511,8 +558,6 @@ export class userBooking implements OnInit, OnDestroy {
   }
 
   private showCancellationModal(update: any): void {
-    this.showRideNotification = false;
-
     const message = update.cancelledBy === 'DRIVER' ?
       'Driver cancelled the ride' :
       'Ride has been cancelled';
@@ -530,14 +575,117 @@ export class userBooking implements OnInit, OnDestroy {
     }, 3000);
   }
 
+  private subscribeToDriverPosition(driverId: string): void {
+    // console.log(`Subscribing to driver position for driver: ${driverId}`);
+
+    // Unsubscribe existing subscription
+    this.driverPositionSubscription?.unsubscribe();
+
+    this.driverPositionSubscription = this.driverPosUpdateService
+      .subscribeToDriverPositionUpdates(driverId)
+      .subscribe({
+        next: (message) => {
+          const update: DriverPositionUpdate = JSON.parse(message.body);
+          console.log('[MARKER DEBUG] Received driver position update:', update);
+          this.updateDriverLocation(update);
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Driver position subscription error:', err);
+        }
+      });
+  }
+
+  private async updateDriverLocation(update: DriverPositionUpdate): Promise<void> {
+    this.driverLocation = { lat: update.lat, lng: update.lng };
+
+    this.activeDriver = {
+      id: update.driverId,
+      name: this.notificationData?.driverData?.name || 'Driver',
+      vehicleType: this.selectedVehicle,
+      lng: update.lng,
+      lat: update.lat,
+      rating: this.notificationData?.driverData?.rating || 4.5,
+      icon: this.selectedVehicle === VehicleType.CAR ? '🚗' : '🏍️'
+    };
+
+    console.log('[MARKER DEBUG] Updated activeDriver state:', this.activeDriver);
+
+    if (this.driverLocation) {
+      this.calculateDriverRouteDebounced(this.driverLocation);
+    }
+  }
+
+  private async handleRideStatusUpdate(update: any): Promise<void> {
+    console.log('Ride status update:', update);
+
+    // Update driver position if included in the status update
+    if (update.driverId && update.driverLat && update.driverLng) {
+      console.log('[MARKER DEBUG] Updating driver position from status update:', update.driverLat, update.driverLng);
+      await this.updateDriverLocation({
+        driverId: update.driverId,
+        lat: update.driverLat,
+        lng: update.driverLng,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const previousState = this.rideState;
+
+    switch (update.status) {
+      case 'PICKINGUP':
+        this.rideState = RideState.PICKINGUP;
+        // When driver starts picking up, calculate route from driver to user
+        if (this.driverLocation) {
+          await this.calculateDriverRoute();
+        }
+        break;
+      case 'ONGOING':
+        this.rideState = RideState.ONGOING;
+        // When ride starts, clear driver route and show route to destination
+        this.driverRouteGeometry = null;
+        if (this.origin && this.destination) {
+          await this.calculateRouteToDestination();
+        }
+        break;
+      case 'FINISHED':
+        this.rideState = RideState.FINISHED;
+        break;
+      case 'CANCELLED':
+        this.rideState = RideState.CANCELLED;
+        break;
+    }
+
+    // Only recalculate driver route if we're in PICKINGUP or CONFIRMED state
+    if ((this.rideState === RideState.PICKINGUP || this.rideState === RideState.CONFIRMED)
+      && this.driverLocation && previousState === this.rideState) {
+      await this.calculateDriverRoute();
+    }
+
+    if (update.status === 'FINISHED' || update.status === 'CANCELLED') {
+      this.cleanupDriverTracking();
+      this.routeGeometry = null;
+      this.destination = null;
+      this.routeInfo = null;
+
+      setTimeout(() => {
+        this.rideState = RideState.IDLE;
+        this.cdr.detectChanges();
+      }, 3000);
+    }
+  }
+
+  // ============================================================================
+  // NOTIFICATION HANDLERS
+  // ============================================================================
+
   onCloseNotificationModal(): void {
     this.showNotificationModal = false;
     this.notificationData = null;
   }
 
   onRetryBooking(): void {
-    this.showNotificationModal = false;
-    this.notificationData = null;
+    this.onCloseNotificationModal();
     if (this.selectedVehicle) {
       this.onBookRide(this.selectedVehicle);
     }
@@ -549,147 +697,183 @@ export class userBooking implements OnInit, OnDestroy {
       return;
     }
 
-    this.rideService.cancelRide(this.currentRideId, this.jwtPayload.userId, 'CUSTOMER')
-      .subscribe({
-        next: () => {
-          console.log('Ride cancelled successfully');
-          this.resetToIdle();
-        },
-        error: (err) => {
-          console.error('Error cancelling ride:', err);
-          alert('Failed to cancel ride. Please try again.');
-        }
-      });
+    this.loading = true;
+    const sub = this.rideService.cancelRide(
+      this.currentRideId,
+      this.jwtPayload.userId,
+      'CUSTOMER'
+    ).subscribe({
+      next: () => {
+        console.log('Ride cancelled successfully');
+        this.resetToIdle();
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error cancelling ride:', err);
+        this.showErrorNotification('Failed to cancel ride. Please try again.');
+        this.loading = false;
+      }
+    });
+
+    this.subscriptions.add(sub);
   }
 
   private resetToIdle(): void {
     this.showNotificationModal = false;
     this.notificationData = null;
     this.currentRideId = null;
-    this.rideInfo = null;
     this.rideState = RideState.IDLE;
     this.rideStatusSubscription?.unsubscribe();
     this.cleanupDriverTracking();
-  }
 
-  private subscribeToDriverPosition(driverId: string): void {
-    console.log(`Subscribing to driver position for driver: ${driverId}`);
-
-    this.driverPositionSubscription = this.driverPosUpdateService
-      .subscribeToDriverPositionUpdates(driverId)
-      .subscribe({
-        next: (message) => {
-          const update: DriverPositionUpdate = JSON.parse(message.body);
-          console.log('Received driver position update:', update);
-          this.updateDriverLocation(update);
-          this.cdr.detectChanges();
-        },
-        error: (err) => {
-          console.error('Driver position subscription error:', err);
-        }
-      });
-  }
-
-  private updateDriverLocation(update: DriverPositionUpdate): void {
-    this.driverLocation = { lat: update.lat, lng: update.lng };
-
-    this.activeDriver = {
-      id: update.driverId,
-      name: 'Driver',
-      vehicleType: VehicleType.CAR,
-      lng: update.lng,
-      lat: update.lat,
-      rating: 4.5,
-      icon: '🚗'
-    };
-
-    this.calculateDriverRoute();
-  }
-
-  private async calculateDriverRoute(): Promise<void> {
-    if (!this.driverLocation) return;
-
-    let targetLocation: Coordinate | null = null;
-
-    if (this.rideState === RideState.CONFIRMED ||
-      this.rideState === RideState.PICKINGUP) {
-      targetLocation = this.origin;
-    } else if (this.rideState === RideState.ONGOING) {
-      targetLocation = this.destination;
-    }
-
-    if (!targetLocation) return;
-
-    try {
-      const routeData = await this.trackAsiaService.getDirections(
-        this.driverLocation.lng,
-        this.driverLocation.lat,
-        targetLocation.lng,
-        targetLocation.lat
-      );
-
-      if (routeData) {
-        this.driverRouteGeometry = routeData.geometry;
-        console.log('Driver route calculated:', routeData);
-      }
-    } catch (error) {
-      console.error('Error calculating driver route:', error);
-    }
-  }
-
-  private handleRideStatusUpdate(update: any): void {
-    console.log('Ride status update:', update);
-    this.currentRideStatus = update.status;
-
-    switch (update.status) {
-      case 'PICKINGUP':
-        this.rideState = RideState.PICKINGUP;
-        break;
-      case 'ONGOING':
-        this.rideState = RideState.ONGOING;
-        break;
-      case 'FINISHED':
-        this.rideState = RideState.FINISHED;
-        break;
-      case 'CANCELLED':
-        this.rideState = RideState.CANCELLED;
-        break;
-    }
-
-    if (this.driverLocation) {
-      this.calculateDriverRoute();
-    }
-
-    if (update.status === 'FINISHED' || update.status === 'CANCELLED') {
-      this.cleanupDriverTracking();
-      this.routeGeometry = null;
-      this.destination = null;
-      this.origin = null; // Optional: reset origin too if desired, user requested clear markers
-      this.routeInfo = null;
-
-      setTimeout(() => {
-        this.rideState = RideState.IDLE;
-        this.cdr.detectChanges();
-      }, 3000);
-    }
+    // Keep origin, clear route
+    this.destination = null;
+    this.routeInfo = null;
+    this.routeGeometry = null;
   }
 
   private cleanupDriverTracking(): void {
     console.log('Cleaning up driver tracking');
     this.driverPositionSubscription?.unsubscribe();
     this.driverPositionSubscription = undefined;
-    this.currentDriverId = null;
     this.driverLocation = null;
     this.activeDriver = null;
     this.driverRouteGeometry = null;
-    this.currentRideStatus = null;
+    this.lastRouteCalculation = null;
+    clearTimeout(this.driverRouteDebounceTimer);
   }
+
+  // ============================================================================
+  // HELPER METHODS
+  // ============================================================================
+
+  getStatusText(): string {
+    const statusMap: Record<RideState, string> = {
+      [RideState.IDLE]: '',
+      [RideState.PENDING]: 'Đang tìm tài xế...',
+      [RideState.CONFIRMED]: 'Đã tìm thấy tài xế!',
+      [RideState.PICKINGUP]: 'Tài xế đang đến',
+      [RideState.ONGOING]: 'Đang trong chuyến đi',
+      [RideState.FINISHED]: 'Chuyến đi hoàn tất',
+      [RideState.CANCELLED]: 'Đã hủy chuyến'
+    };
+    return statusMap[this.rideState] || '';
+  }
+
+  private parseErrorMessage(error: any): string {
+    if (error?.status === 0) {
+      return 'Lỗi mạng. Vui lòng kiểm tra kết nối internet.';
+    }
+
+    if (error?.name === 'TimeoutError') {
+      return 'Yêu cầu hết thời gian chờ. Vui lòng thử lại.';
+    }
+
+    if (error?.error?.message) {
+      return error.error.message;
+    }
+
+    if (error?.message) {
+      return error.message;
+    }
+
+    if (error?.status === 404) {
+      return 'Không có tài xế khả dụng. Vui lòng thử lại sau.';
+    }
+
+    if (error?.status === 400) {
+      return 'Yêu cầu không hợp lệ. Vui lòng kiểm tra địa điểm và thử lại.';
+    }
+
+    if (error?.status === 500) {
+      return 'Lỗi máy chủ. Vui lòng thử lại sau.';
+    }
+
+    return 'Không thể tạo chuyến đi. Vui lòng thử lại.';
+  }
+
+  private showErrorNotification(message: string): void {
+    console.error('Error:', message);
+    alert(message); // TODO: Replace with toast notification service
+  }
+
+  private extractRouteSteps(instructions: any[]): string[] {
+    return instructions
+      .map((step: any, index: number) => {
+        const instruction = step.html_instructions?.replace(/<[^>]*>/g, '') || '';
+        const distance = step.distance?.text || '';
+
+        if (instruction && distance) {
+          return `${instruction} - ${distance}`;
+        }
+        return instruction || `Bước ${index + 1}`;
+      })
+      .filter(step => step.length > 0);
+  }
+
+  private async calculateRouteToDestination(): Promise<void> {
+    if (!this.origin || !this.destination) return;
+
+    try {
+      const routeData = await this.trackAsiaService.getDirections(
+        this.origin.lng,
+        this.origin.lat,
+        this.destination.lng,
+        this.destination.lat
+      );
+
+      if (routeData) {
+        this.routeInfo = {
+          distance: routeData.distance / 1000,
+          duration: routeData.duration / 60,
+          steps: this.extractRouteSteps(routeData.instructions || [])
+        };
+        this.routeGeometry = routeData.geometry;
+
+        console.log('Route to destination calculated:', {
+          distance: this.routeInfo.distance,
+          duration: this.routeInfo.duration
+        });
+
+        this.cdr.detectChanges();
+      }
+    } catch (error) {
+      console.error('Error calculating route to destination:', error);
+    }
+  }
+
+  private calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+    const R = 6371;
+    const dLat = this.toRadians(lat2 - lat1);
+    const dLng = this.toRadians(lng2 - lng1);
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.toRadians(lat1)) * Math.cos(this.toRadians(lat2)) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  private toRadians(degrees: number): number {
+    return degrees * (Math.PI / 180);
+  }
+
+  // ============================================================================
+  // LIFECYCLE HOOKS
+  // ============================================================================
 
   ngOnDestroy(): void {
+    this.isDestroyed = true;
+
     clearTimeout(this.searchDebounceTimer);
+    clearTimeout(this.driverRouteDebounceTimer);
+
+    this.subscriptions.unsubscribe();
     this.rideStatusSubscription?.unsubscribe();
     this.cleanupDriverTracking();
+
+    console.log('UserBookingComponent destroyed');
   }
 }
-
-

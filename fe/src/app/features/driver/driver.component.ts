@@ -67,7 +67,7 @@ export class DriverComponent implements OnInit, OnDestroy {
 
       this.interval = setInterval(() => {
         this.driverPosUpdateService.sendDriverLocation(this.driverId!);
-      }, 3000);
+      }, 10000);
 
     } else {
       this.unsubscribeFromRideRequests();
@@ -153,6 +153,7 @@ export class DriverComponent implements OnInit, OnDestroy {
         true
       );
       this.driverStatus = 'Matching';
+      this.driverPosUpdateService.setDriverStatus('Matching');
 
       this.activeRide = {
         rideId: rideRequest.rideRequestId,
@@ -222,42 +223,52 @@ export class DriverComponent implements OnInit, OnDestroy {
     this.showActiveRide = false;
     this.activeRide = null;
     this.driverStatus = 'Resting';
+    this.driverPosUpdateService.setDriverStatus('Resting');
     this.resetMap();
 
-    // Fetch ride data asynchronously for display
+    const timeout = setTimeout(() => {
+      if (!this.showFinishedRide) {
+        this.finishedRideInfo = {
+          rideId: rideId,
+          distance: 0,
+          fare: 0,
+          customerName: 'Khách hàng'
+        };
+        this.showFinishedRide = true;
+        this.cdr.detectChanges();
+      }
+    }, 3000); 
+
     this.rideService.getRideById(rideId).subscribe({
       next: (rideData) => {
+        clearTimeout(timeout);
 
         this.finishedRideInfo = {
           rideId: rideId,
-          // pickupLocation: pickupLocation,
-          // destinationLocation: destinationLocation,
           distance: rideData.distance || 0,
           fare: rideData.fare || 0,
           customerName: rideData.customer?.name || 'Khách hàng',
           startTime: rideData.startTime,
           endTime: rideData.endTime || Date.now()
         };
-
+        
         this.showFinishedRide = true;
+        this.cdr.detectChanges();
       },
       error: (err) => {
+        clearTimeout(timeout);
         console.error('Error fetching ride data:', err);
-        // Mock data if fetch fails
+        
         this.finishedRideInfo = {
           rideId: rideId,
-          // pickupLocation: pickupLocation,
-          // destinationLocation: destinationLocation,
           distance: 0,
           fare: 0,
           customerName: 'Khách hàng'
         };
-
+        
         this.showFinishedRide = true;
-        this.resetMap();
+        this.cdr.detectChanges();
       }
-
-
     });
   }
 
@@ -272,6 +283,7 @@ export class DriverComponent implements OnInit, OnDestroy {
     this.showActiveRide = false;
     this.activeRide = null;
     this.driverStatus = 'Resting';
+    this.driverPosUpdateService.setDriverStatus('Resting');
     this.resetMap();
   }
 

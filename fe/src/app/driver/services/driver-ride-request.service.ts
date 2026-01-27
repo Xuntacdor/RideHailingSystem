@@ -71,21 +71,12 @@ export class DriverRideRequestService {
             .watch(`/topic/driver/${driverId}`)
             .pipe(
                 map((message) => {
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log('📨 [WS] RAW MESSAGE RECEIVED');
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log('Message object:', message);
-                    console.log('Message body (raw):', message.body);
-                    console.log('Message headers:', message.headers);
 
                     try {
                         const parsed = JSON.parse(message.body);
-                        console.log('✅ [WS] PARSED DATA:', parsed);
-                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                         return parsed;
                     } catch (error) {
                         console.error('❌ [WS] Failed to parse message:', error);
-                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                         throw error;
                     }
                 })

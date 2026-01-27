@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Coordinate } from '../../../models/models';
 import { RideService } from '../../../core/services/ride.service';
 import { TrackAsiaService } from '../../../core/services/trackasia.service';
+import { DriverPosUpdateService } from '../../services/driverPosUpdate.service'; // Check path
+import { Subscription } from 'rxjs';
 
 export interface MapUpdate {
     origin: Coordinate | null;
@@ -61,8 +63,9 @@ export interface ActiveRide {
             <button 
                 *ngIf="navigationState === 'TO_DESTINATION' && !arrivedAtDestinationPoint"
                 (click)="completeRide()"
-                class="w-full px-4 py-4 border-0 rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(59,130,246,0.3)]">
-                Hoàn thành chuyến
+                [disabled]="isCompletingRide"
+                class="w-full px-4 py-4 border-0 rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(59,130,246,0.3)] disabled:opacity-70">
+                {{ isCompletingRide ? 'Đang hoàn thành...' : 'Hoàn thành chuyến' }}
             </button>
             
             <button 
@@ -111,13 +114,16 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
     arrivedAtPickupPoint = false;
     arrivedAtDestinationPoint = false;
     showCancelModal = false;
+    isCompletingRide = false;
 
     private pickupCoordinate: Coordinate | null = null;
     private destinationCoordinate: Coordinate | null = null;
+    private locationSubscription?: Subscription;
 
     constructor(
         private rideService: RideService,
         private trackAsiaService: TrackAsiaService,
+        private driverPosUpdateService: DriverPosUpdateService,
         private cdr: ChangeDetectorRef
     ) { }
 
@@ -125,6 +131,7 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
         if (this.activeRide) {
             this.initializeRide();
         }
+        this.subscribeToLocationUpdates();
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -134,12 +141,60 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
         }
     }
 
+    private subscribeToLocationUpdates(): void {
+        this.locationSubscription = this.driverPosUpdateService.location$.subscribe(location => {
+            if (location) {
+                this.checkArrival(location);
+            }
+        });
+    }
+
+    private checkArrival(currentLocation: { lat: number; lng: number }): void {
+        if (this.navigationState === 'TO_DESTINATION' && !this.arrivedAtDestinationPoint && !this.isCompletingRide) {
+            if (this.destinationCoordinate) {
+                const distance = this.calculateDistance(
+                    currentLocation.lat,
+                    currentLocation.lng,
+                    this.destinationCoordinate.lat,
+                    this.destinationCoordinate.lng
+                );
+
+                // If within 50 meters, confirm arrival
+                if (distance < 0.05) { // 0.05 km = 50m
+                    console.log('Arrived at destination (auto-detected)');
+                    // Consider auto-completing? 
+                    // The user requested: "hien luon modal chu k phai bam 1 nut"
+                    // So yes, we should complete ride.
+                    this.completeRide();
+                }
+            }
+        }
+    }
+
+    private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+        const R = 6371; // Radius of the earth in km
+        const dLat = this.deg2rad(lat2 - lat1);
+        const dLon = this.deg2rad(lon2 - lon1);
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const d = R * c; // Distance in km
+        return d;
+    }
+
+    private deg2rad(deg: number): number {
+        return deg * (Math.PI / 180);
+    }
+
     private initializeRide(): void {
         if (!this.activeRide) return;
 
         this.navigationState = 'TO_PICKUP';
         this.arrivedAtPickupPoint = false;
         this.arrivedAtDestinationPoint = false;
+        this.isCompletingRide = false;
 
         this.pickupCoordinate = {
             lat: this.activeRide.pickupLat,
@@ -164,25 +219,25 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
         if (!this.pickupCoordinate) return;
 
         try {
-            navigator.geolocation.getCurrentPosition(
-                async (position) => {
-                    const driverLng = position.coords.longitude;
-                    const driverLat = position.coords.latitude;
+            const position = await this.driverPosUpdateService.getApproximateLocation();
+            const driverLng = position.lng;
+            const driverLat = position.lat;
 
-                    const routeData = await this.trackAsiaService.getDirections(
-                        driverLng,
-                        driverLat,
-                        this.pickupCoordinate!.lng,
-                        this.pickupCoordinate!.lat
-                    );
-
-                    if (routeData) {
-                        this.emitMapUpdate(routeData.geometry);
-                        this.cdr.detectChanges();
-                    }
-                },
-                (error) => console.error('Error getting driver location:', error)
+            const routeData = await this.trackAsiaService.getDirections(
+                driverLng,
+                driverLat,
+                this.pickupCoordinate!.lng,
+                this.pickupCoordinate!.lat
             );
+
+            if (routeData) {
+                this.emitMapUpdate(
+                    routeData.geometry,
+                    { lat: driverLat, lng: driverLng },
+                    this.pickupCoordinate
+                );
+                this.cdr.detectChanges();
+            }
         } catch (error) {
             console.error('Error calculating route:', error);
         }
@@ -197,12 +252,13 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     markArrived(): void {
-        if (!this.activeRide) return;
+        if (!this.activeRide || this.arrivedAtPickupPoint) return;
 
         this.rideService.updateRideStatus(this.activeRide.rideId, 'PICKINGUP')
             .subscribe({
                 next: () => {
                     this.arrivedAtPickupPoint = true;
+                    this.cdr.detectChanges();
                 },
                 error: (err) => {
                     alert('Không thể cập nhật trạng thái');
@@ -236,43 +292,46 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
         if (!this.destinationCoordinate) return;
 
         try {
-            navigator.geolocation.getCurrentPosition(
-                async (position) => {
-                    const driverLng = position.coords.longitude;
-                    const driverLat = position.coords.latitude;
+            const position = await this.driverPosUpdateService.getApproximateLocation();
+            const driverLng = position.lng;
+            const driverLat = position.lat;
 
-                    const routeData = await this.trackAsiaService.getDirections(
-                        driverLng,
-                        driverLat,
-                        this.destinationCoordinate!.lng,
-                        this.destinationCoordinate!.lat
-                    );
-
-                    if (routeData) {
-                        console.log('Route to destination calculated, emitting update');
-                        this.emitMapUpdate(routeData.geometry);
-                        this.cdr.detectChanges();
-                    }
-                },
-                (error) => console.error('Error getting driver location for calculate route to destination:', error)
+            const routeData = await this.trackAsiaService.getDirections(
+                driverLng,
+                driverLat,
+                this.destinationCoordinate!.lng,
+                this.destinationCoordinate!.lat
             );
+
+            if (routeData) {
+                console.log('Route to destination calculated, emitting update');
+                this.emitMapUpdate(
+                    routeData.geometry,
+                    this.pickupCoordinate, // Or current driver location if continuously updating
+                    this.destinationCoordinate
+                );
+                this.cdr.detectChanges();
+            }
         } catch (error) {
             console.error('Error calculating route to destination:', error);
         }
     }
 
-    private emitMapUpdate(geometry: any): void {
+    private emitMapUpdate(geometry: any, origin: Coordinate | null, destination: Coordinate | null): void {
         this.mapUpdate.emit({
-            origin: this.pickupCoordinate,
-            destination: this.destinationCoordinate,
+            origin: origin,
+            destination: destination,
             routeGeometry: geometry
         });
-        console.log('emit map update');
+        console.log('emit map update with origin/dest');
         this.cdr.detectChanges();
     }
 
     completeRide(): void {
-        if (!this.activeRide) return;
+        if (!this.activeRide || this.isCompletingRide) return;
+
+        this.isCompletingRide = true;
+        this.cdr.detectChanges();
 
         this.rideService.updateRideStatus(this.activeRide.rideId, 'FINISHED')
             .subscribe({
@@ -280,11 +339,13 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
                     console.log('Ride completed with data:', rideResponse);
 
                     this.rideCompleted.emit();
-
+                    this.isCompletingRide = false;
                 },
                 error: (err) => {
                     console.error('Error completing ride:', err);
                     alert('Không thể hoàn thành chuyến đi');
+                    this.isCompletingRide = false;
+                    this.cdr.detectChanges();
                 }
             });
     }
@@ -311,5 +372,6 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     ngOnDestroy(): void {
+        this.locationSubscription?.unsubscribe();
     }
 }

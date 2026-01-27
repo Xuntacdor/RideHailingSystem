@@ -110,6 +110,12 @@ export interface RideResponse {
   startTime?: number;
   endTime?: number;
   vehicleType: string;
+  driverLat?: number;
+  driverLng?: number;
+  startLatitude?: number;
+  startLongitude?: number;
+  endLatitude?: number;
+  endLongitude?: number;
 }
 
 export interface RideRequest {
