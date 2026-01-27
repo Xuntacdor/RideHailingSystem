@@ -16,6 +16,7 @@ import com.mycompany.rideapp.exception.ErrorCode;
 import com.mycompany.rideapp.mapper.DriverMapper;
 import com.mycompany.rideapp.repository.DriverRepository;
 import com.mycompany.rideapp.repository.UserRepository;
+import com.mycompany.rideapp.enums.*;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
+
 public class DriverService {
     DriverRepository driverRepository;
     UserRepository userRepository;
@@ -33,7 +35,7 @@ public class DriverService {
     DriverMapper driverMapper;
     NotificationService notificationService;
 
-
+    
     public DriverResponse createDriver(DriverRequest request) {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
@@ -89,7 +91,7 @@ public class DriverService {
         Driver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-        driver.setDriverStatus(status);
+        driver.setDriverStatus(AccountStatus.valueOf(status));
         driverRepository.save(driver);
 
         log.info("Driver status updated to {} for ID: {}", status, driver.getId());
@@ -109,14 +111,12 @@ public class DriverService {
     }
 
     public List<DriverResponse> getAllDrivers() {
-        log.info("Getting all drivers");
         return driverRepository.findAll().stream()
                 .map(driverMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
     public List<DriverResponse> getDriversByStatus(String status) {
-        log.info("Getting drivers with status: {}", status);
         return driverRepository.findByDriverStatus(status).stream()
                 .map(driverMapper::toResponse)
                 .collect(Collectors.toList());
@@ -124,12 +124,8 @@ public class DriverService {
 
     public List<DriverResponse> getNearestDrivers(Double lat, Double lng, int limit,
             com.mycompany.rideapp.enums.VehicleType vehicleType) {
-        // Fetch more drivers to account for filtering by vehicle type
         List<Driver> drivers = driverRepository.findNearestDrivers(lat, lng,
                 org.springframework.data.domain.PageRequest.of(0, limit * 3));
-
-        log.info("Getting {} nearest drivers for lat: {}, lng: {}, vehicleType: {}", limit, lat, lng,
-                                vehicleType);
         return drivers.stream()
                 .filter(driver -> hasVehicleType(driver, vehicleType))
                 .limit(limit)
@@ -160,5 +156,6 @@ public class DriverService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         notificationService.notifyDriverPositionUpdate(id, driver.getLatitude(), driver.getLongitude());
     }
+
 
 }

@@ -393,7 +393,7 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
             bounds.extend(coord as [number, number]);
         });
         this.map.fitBounds(bounds, {
-            padding: { top: 0, bottom: 500, left: 50, right: 50 },
+            padding: { top: 50, bottom: 50, left: 50, right: 50 },
             maxZoom: 15
         });
     }
@@ -532,8 +532,8 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
             bounds.extend(coord as [number, number]);
         });
         this.map.fitBounds(bounds, {
-            padding: { top: 50, bottom: 300, left: 50, right: 50 },
-            maxZoom: 15
+            padding: { top: 50, bottom: 50, left: 50, right: 50 },
+            maxZoom: 14
         });
     }
 

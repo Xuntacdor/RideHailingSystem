@@ -2,8 +2,11 @@ package com.mycompany.rideapp.entity;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.Nationalized;
+
 import com.mycompany.rideapp.enums.TicketStatus;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -45,7 +48,12 @@ public class SupportTicket {
     @JoinColumn(name = "assigned_agent_id", referencedColumnName = "id")
     User assignedAgent;
 
+    @Nationalized
+    @Column(length = 200)
     String title;
+    
+    @Nationalized
+    @Column(length = 2000)
     String description;
 
     @Enumerated(EnumType.STRING)

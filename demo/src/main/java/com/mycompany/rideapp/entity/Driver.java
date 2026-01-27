@@ -3,6 +3,11 @@ package com.mycompany.rideapp.entity;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.annotations.Nationalized;
+
+import com.mycompany.rideapp.enums.AccountStatus;
+import com.mycompany.rideapp.enums.Status;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -39,7 +44,10 @@ public class Driver {
     User user;
 
     String licenseNumber;
-    String driverStatus;
+    @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
+    AccountStatus driverStatus;
+    
+    @Nationalized
     String address;
     String avatarUrl;
     Double rating;

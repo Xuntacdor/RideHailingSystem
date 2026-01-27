@@ -1,5 +1,8 @@
 package com.mycompany.rideapp.entity;
 
+import org.hibernate.annotations.Nationalized;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -37,5 +40,8 @@ public class Review {
     User reviewee;
 
     Long rating;
+    
+    @Nationalized
+    @Column(length = 500)
     String comment;
 }

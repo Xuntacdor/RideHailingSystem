@@ -1,6 +1,9 @@
 
 package com.mycompany.rideapp.dto.request;
 
+import com.cloudinary.provisioning.Account;
+import com.mycompany.rideapp.enums.AccountStatus;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
@@ -23,7 +26,7 @@ public class DriverRequest {
     @Size(min = 8, message = "LICENSE_NUMBER_INVALID")
     String licenseNumber;
 
-    String driverStatus;
+    AccountStatus driverStatus;
 
     @NotNull(message = "ADDRESS_NOT_NULL")
     String address;

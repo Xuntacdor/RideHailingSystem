@@ -1,4 +1,8 @@
 package com.mycompany.rideapp.entity;
+
+import org.hibernate.annotations.Nationalized;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -23,6 +27,9 @@ public class Rate {
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
     Long star;
+    
+    @Nationalized
+    @Column(length = 500)
     String comment;
 
     @ManyToOne

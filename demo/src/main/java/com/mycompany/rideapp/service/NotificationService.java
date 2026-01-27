@@ -36,6 +36,19 @@ public class NotificationService {
         payload.put("rideId", rideId);
         payload.put("driverLat", driver.getLatitude());
         payload.put("driverLng", driver.getLongitude());
+
+        // Add detailed driver info
+        payload.put("driverName", driver.getUser().getName());
+        payload.put("driverAvatar", driver.getAvatarUrl());
+        payload.put("driverRating", driver.getRating());
+        payload.put("driverPhone", driver.getUser().getPhoneNumber());
+
+        if (!driver.getVehicleRegister().isEmpty()) {
+            var vehicle = driver.getVehicleRegister().get(0);
+            payload.put("vehicleModel", vehicle.getVehicleBrand() + " " + vehicle.getVehicleType());
+            payload.put("vehiclePlate", vehicle.getVehicleNumber());
+        }
+
         messagingTemplate.convertAndSend("/topic/customer/" + customerId, (Object) payload);
     }
 
@@ -58,21 +71,22 @@ public class NotificationService {
         messagingTemplate.convertAndSend("/topic/driver/" + driverId + "/updatePos", (Object) payload);
     }
 
-    public void notifyRideStatusUpdate(String customerId, String rideId, com.mycompany.rideapp.enums.Status status, com.mycompany.rideapp.entity.Driver driver) {
+    public void notifyRideStatusUpdate(String customerId, String rideId, com.mycompany.rideapp.enums.Status status,
+            com.mycompany.rideapp.entity.Driver driver) {
         log.info("Notifying customer {} about ride {} status change to {}", customerId, rideId, status);
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "RIDE_STATUS_UPDATE");
         payload.put("rideId", rideId);
         payload.put("status", status.toString());
         payload.put("timestamp", System.currentTimeMillis());
-        
+
         // Include driver position if available
         if (driver != null) {
             payload.put("driverId", driver.getId());
             payload.put("driverLat", driver.getLatitude());
             payload.put("driverLng", driver.getLongitude());
         }
-        
+
         messagingTemplate.convertAndSend("/topic/customer/" + customerId, (Object) payload);
     }
 

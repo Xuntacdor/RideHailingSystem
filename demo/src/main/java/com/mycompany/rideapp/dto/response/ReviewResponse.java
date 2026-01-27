@@ -1,9 +1,4 @@
-
 package com.mycompany.rideapp.dto.response;
-
-import java.util.List;
-
-import com.mycompany.rideapp.enums.AccountStatus;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -17,13 +12,11 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class DriverResponse {
+public class ReviewResponse {
     String id;
-    UserResponse user;
-    String licenseNumber;
-    AccountStatus driverStatus;
-    String address;
-    String avatarUrl;
-    Double rating;
-    List<String> vehicleIds;
+    String rideId;
+    UserResponse reviewer;
+    UserResponse reviewee;
+    Long rating;
+    String comment;
 }
