@@ -52,6 +52,10 @@ public class RideMapper {
                 : null;
         UserResponse customer = entity.getCustomer() != null ? userMapper.toResponse(entity.getCustomer()) : null;
 
+        // Get driver's current location
+        Double driverLat = entity.getDriver() != null ? entity.getDriver().getLatitude() : null;
+        Double driverLng = entity.getDriver() != null ? entity.getDriver().getLongitude() : null;
+
         return RideResponse.builder()
                 .id(entity.getId())
                 .driver(driver)
@@ -62,6 +66,8 @@ public class RideMapper {
                 .startLongitude(entity.getStartLongitude())
                 .endLatitude(entity.getEndLatitude())
                 .endLongitude(entity.getEndLongitude())
+                .driverLat(driverLat)
+                .driverLng(driverLng)
                 .distance(entity.getDistance())
                 .fare(entity.getFare())
                 .status(entity.getStatus())

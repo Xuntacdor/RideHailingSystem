@@ -1,5 +1,5 @@
 import { Component, ViewChild, ElementRef, AfterViewInit, OnDestroy, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
-import { Map, Marker, NavigationControl, GeolocateControl, Popup, LngLatBounds } from 'trackasia-gl';
+import { Map as TrackAsiaMap, Marker, NavigationControl, GeolocateControl, Popup, LngLatBounds } from 'trackasia-gl';
 import { TrackAsiaService } from '../../../core/services/trackasia.service';
 import { Coordinate, Driver } from '../../../models/models';
 
@@ -36,7 +36,7 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
     @Output() mapReady = new EventEmitter<void>();
     @Output() tokenInvalid = new EventEmitter<void>();
 
-    map: Map | undefined;
+    map: TrackAsiaMap | undefined;
     private originMarker: Marker | null = null;
     private destinationMarker: Marker | null = null;
     private userMarker: Marker | null = null;
@@ -44,11 +44,18 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
     private activeDriverMarker: Marker | null = null;
     private geolocateControl: GeolocateControl | null = null;
     private animationDuration = 1000;
+    private markerAnimations = new Map<Marker, number>();
 
     constructor(private trackAsiaService: TrackAsiaService) { }
     // private userLocation: { lng: number; lat: number } | null = null; // Removed duplicate
 
     private animateMarkerTo(marker: Marker, targetLng: number, targetLat: number, duration: number = this.animationDuration): void {
+        // Cancel any existing animation for this marker
+        if (this.markerAnimations.has(marker)) {
+            cancelAnimationFrame(this.markerAnimations.get(marker)!);
+            this.markerAnimations.delete(marker);
+        }
+
         const startPos = marker.getLngLat();
         const startLng = startPos.lng;
         const startLat = startPos.lat;
@@ -74,11 +81,13 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
             marker.setLngLat([currentLng, currentLat]);
 
             if (progress < 1) {
-                requestAnimationFrame(animate);
+                this.markerAnimations.set(marker, requestAnimationFrame(animate));
+            } else {
+                this.markerAnimations.delete(marker);
             }
         };
 
-        requestAnimationFrame(animate);
+        this.markerAnimations.set(marker, requestAnimationFrame(animate));
     }
 
 
@@ -136,6 +145,7 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
         }
 
         if (changes['activeDriver'] && this.map) {
+            console.log('[MARKER DEBUG] MapComponent activeDriver changed:', this.activeDriver);
             if (this.activeDriver) {
                 this.updateActiveDriverMarker(this.activeDriver);
             } else {
@@ -225,7 +235,7 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
                 showUserLocation: true
             });
 
-            this.map = new Map({
+            this.map = new TrackAsiaMap({
                 container: this.mapContainer.nativeElement,
                 style: this.trackAsiaService.getStyleUrl('streets'),
                 center: [this.userLocation.lng, this.userLocation.lat],
@@ -243,6 +253,23 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
                 console.log('Map loaded successfully at user location');
                 this.mapReady.emit();
                 this.geolocateControl!.trigger();
+
+                // Render existing inputs that might have been set before map load
+                if (this.origin) {
+                    this.placeOriginMarker(this.origin.lng, this.origin.lat, this.origin.name || 'Origin');
+                }
+                if (this.destination) {
+                    this.placeDestinationMarker(this.destination.lng, this.destination.lat, this.destination.name || 'Destination');
+                }
+                if (this.routeGeometry) {
+                    this.displayRoute(this.routeGeometry);
+                }
+                if (this.activeDriver) {
+                    this.updateActiveDriverMarker(this.activeDriver);
+                }
+                if (this.driverRoute) {
+                    this.displayDriverRoute(this.driverRoute);
+                }
 
                 if (this.drivers.length > 0) {
                     this.updateDriverMarkers();
@@ -458,7 +485,7 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
                 `))
                 .addTo(this.map!);
 
-            console.log('Active driver marker created');
+            console.log('[MARKER DEBUG] Active driver marker created at:', driver.lng, driver.lat);
         }
     }
 
@@ -526,6 +553,8 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
     }
 
     ngOnDestroy(): void {
+        this.markerAnimations.forEach(id => cancelAnimationFrame(id));
+        this.markerAnimations.clear();
         this.originMarker?.remove();
         this.destinationMarker?.remove();
         this.removeActiveDriverMarker();

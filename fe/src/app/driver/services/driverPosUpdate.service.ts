@@ -1,7 +1,7 @@
 import { Injectable, Input } from '@angular/core';
 import { RxStomp } from '@stomp/rx-stomp';
 import SockJS from 'sockjs-client';
-import { Observable } from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
 
 @Injectable({
     providedIn: 'root'
@@ -9,8 +9,15 @@ import { Observable } from 'rxjs';
 export class DriverPosUpdateService {
     private stompClient: RxStomp;
     private currentLocation: { lat: number; lng: number } | null = null;
+    private locationSubject = new BehaviorSubject<{ lat: number; lng: number } | null>(null);
+    public location$ = this.locationSubject.asObservable();
+
     private watchId: number | null = null;
-    @Input() driverStatus: 'Matching' | 'Resting' = 'Resting';
+    driverStatus: 'Matching' | 'Resting' = 'Resting';
+
+    setDriverStatus(status: 'Matching' | 'Resting') {
+        this.driverStatus = status;
+    }
 
     constructor() {
         this.stompClient = new RxStomp();
@@ -19,9 +26,9 @@ export class DriverPosUpdateService {
             heartbeatIncoming: 0,
             heartbeatOutgoing: 25000,
             reconnectDelay: 5000,
-            debug: (str) => {
-                console.log(str);
-            }
+            // debug: (str) => {
+            //     console.log(str);
+            // }
         });
         this.stompClient.activate();
     }
@@ -31,6 +38,10 @@ export class DriverPosUpdateService {
     }
 
     getApproximateLocation(): Promise<{ lat: number; lng: number }> {
+        // Use cached location if strictly watching
+        if (this.watchId !== null && this.currentLocation) {
+            return Promise.resolve(this.currentLocation);
+        }
 
         return new Promise((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(
@@ -39,45 +50,48 @@ export class DriverPosUpdateService {
                         lat: position.coords.latitude,
                         lng: position.coords.longitude
                     };
+                    // Update current location locally just in case
+                    this.currentLocation = location;
                     resolve(location);
                 },
                 (error) => reject(error),
                 {
                     enableHighAccuracy: false,
-                    timeout: 10000,
-                    maximumAge: 30000
-                }
-            );
-        });
-    }
-
-    private getLatAndLng(): Promise<{ lat: number; lng: number }> {
-        return new Promise((resolve, reject) => {
-            if (!navigator.geolocation) {
-                reject('Geolocation doesnt suppo');
-                return;
-            }
-
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const location = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    };
-                    this.currentLocation = location;
-                    resolve(location);
-                },
-                (error) => {
-                    reject(`Can't get location: ${error.message}`);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
+                    timeout: 5000,
                     maximumAge: 0
                 }
             );
         });
     }
+
+    // private getLatAndLng(): Promise<{ lat: number; lng: number }> {
+    //     return new Promise((resolve, reject) => {
+    //         if (!navigator.geolocation) {
+    //             reject('Geolocation doesnt suppo');
+    //             return;
+    //         }
+
+    //         navigator.geolocation.getCurrentPosition(
+    //             (position) => {
+    //                 const location = {
+    //                     lat: position.coords.latitude,
+    //                     lng: position.coords.longitude
+    //                 };
+    //                 this.currentLocation = location;
+    //                 this.locationSubject.next(location);
+    //                 resolve(location);
+    //             },
+    //             (error) => {
+    //                 reject(`Can't get location: ${error.message}`);
+    //             },
+    //             {
+    //                 enableHighAccuracy: false,
+    //                 timeout: 10000,
+    //                 maximumAge: 30000
+    //             }
+    //         );
+    //     });
+    // }
 
     startWatchingLocation(): void {
         if (!navigator.geolocation) {
@@ -87,19 +101,21 @@ export class DriverPosUpdateService {
 
         this.watchId = navigator.geolocation.watchPosition(
             (position) => {
-                this.currentLocation = {
+                const location = {
                     lat: position.coords.latitude,
                     lng: position.coords.longitude
                 };
+                this.currentLocation = location;
+                this.locationSubject.next(location);
                 console.log('Location updated:', this.currentLocation);
             },
             (error) => {
                 console.error('Error watching location:', error.message);
             },
             {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 2000
+                enableHighAccuracy: false,
+                timeout: 5000,
+                maximumAge: 10000
             }
         );
     }
@@ -113,12 +129,8 @@ export class DriverPosUpdateService {
 
     async sendDriverLocation(driverId: string): Promise<void> {
         try {
-            let location;
-            if (this.driverStatus == 'Matching') {
-                location = await this.getLatAndLng();
-            } else {
-                location = await this.getApproximateLocation();
-            }
+            let location = await this.getApproximateLocation();
+
 
             this.stompClient.publish({
                 destination: '/app/driver/updatePos',

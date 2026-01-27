@@ -34,21 +34,21 @@ public class WebSocketController {
     }
 
     @MessageMapping("/driver/updatePos")
-    public void updateDriverPosition(@Payload DriverPosition driverPosition, Principal principal) {
+    public void updateDriverPosition(@Payload DriverPosition driverPosition) {
         if (driverPosition == null){
             log.error("Driver position payload is null");
             return;
         }
-        if(!isValidCoordinate(driverPosition.getLat(),driverPosition.getLng())){
-            log.warn("Invalid coordinates received from user: {}", principal != null ? principal.getName() : "Unknown");
-            return;
-        }
-        if(principal == null){
-            log.error("Unauthenticated user trying to update position");
-            return;
-        }
+        // if(!isValidCoordinate(driverPosition.getLat(),driverPosition.getLng())){
+        //     log.warn("Invalid coordinates received from user: {}", principal != null ? principal.getName() : "Unknown");
+        //     return;
+        // }
+        // if(principal == null){
+        //     log.error("Unauthenticated user trying to update position");
+        //     return;
+        // }
 
-        log.info("Update pos for driver: {} by user: {}", driverPosition.getDriverId(), principal.getName());
+        // log.info("Update pos for driver: {} by user: {}", driverPosition.getDriverId(), principal.getName());
         driverService.updateDriverPosition(driverPosition.getDriverId(),
                 driverPosition.getLat(),
                 driverPosition.getLng());

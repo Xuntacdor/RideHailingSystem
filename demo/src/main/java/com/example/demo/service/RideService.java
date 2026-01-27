@@ -137,7 +137,7 @@ public class RideService {
 
             notificationService.notifyRideAccepted(
                     pendingRide.getRequest().getCustomerId(),
-                    driverId,
+                    driver,
                     ride.getId());
 
             notificationService.notifyDriverRideCreated(
@@ -241,7 +241,8 @@ public class RideService {
             notificationService.notifyRideStatusUpdate(
                     ride.getCustomer().getId(),
                     rideId,
-                    status);
+                    status,
+                    ride.getDriver());
         }
 
         return rideMapper.toResponse(ride);

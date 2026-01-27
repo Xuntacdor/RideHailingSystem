@@ -28,12 +28,14 @@ public class NotificationService {
         messagingTemplate.convertAndSend("/topic/customer/" + customerId, message);
     }
 
-    public void notifyRideAccepted(String customerId, String driverId, String rideId) {
-        log.info("Notifying customer {} that driver {} accepted ride {}", customerId, driverId, rideId);
+    public void notifyRideAccepted(String customerId, com.example.demo.entity.Driver driver, String rideId) {
+        log.info("Notifying customer {} that driver {} accepted ride {}", customerId, driver.getId(), rideId);
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "RIDE_ACCEPTED");
-        payload.put("driverId", driverId);
+        payload.put("driverId", driver.getId());
         payload.put("rideId", rideId);
+        payload.put("driverLat", driver.getLatitude());
+        payload.put("driverLng", driver.getLongitude());
         messagingTemplate.convertAndSend("/topic/customer/" + customerId, (Object) payload);
     }
 
@@ -56,13 +58,21 @@ public class NotificationService {
         messagingTemplate.convertAndSend("/topic/driver/" + driverId + "/updatePos", (Object) payload);
     }
 
-    public void notifyRideStatusUpdate(String customerId, String rideId, com.example.demo.enums.Status status) {
+    public void notifyRideStatusUpdate(String customerId, String rideId, com.example.demo.enums.Status status, com.example.demo.entity.Driver driver) {
         log.info("Notifying customer {} about ride {} status change to {}", customerId, rideId, status);
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "RIDE_STATUS_UPDATE");
         payload.put("rideId", rideId);
         payload.put("status", status.toString());
         payload.put("timestamp", System.currentTimeMillis());
+        
+        // Include driver position if available
+        if (driver != null) {
+            payload.put("driverId", driver.getId());
+            payload.put("driverLat", driver.getLatitude());
+            payload.put("driverLng", driver.getLongitude());
+        }
+        
         messagingTemplate.convertAndSend("/topic/customer/" + customerId, (Object) payload);
     }
 

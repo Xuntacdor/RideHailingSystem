@@ -9,7 +9,7 @@ interface SearchResult {
 
 interface RouteResult {
     distance: number; // meters
-    duration: number; // milliseconds
+    duration: number; // seconds
     geometry: any; // GeoJSON geometry
     instructions?: any[];
 }
@@ -131,7 +131,7 @@ export class TrackAsiaService {
 
                 return {
                     distance: leg.distance.value, // meters
-                    duration: leg.duration.value * 1000, // convert seconds to milliseconds
+                    duration: leg.duration.value, // seconds
                     geometry: {
                         type: 'LineString',
                         coordinates: coordinates

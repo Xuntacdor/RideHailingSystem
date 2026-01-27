@@ -9,7 +9,7 @@ import { Register } from './features/auth/register/register.component';
 import { Profile } from './features/profile/profile.component';
 import { authGuard } from './core/guards/auth-guard';
 import { publicGuard } from './core/guards/public-guard';
-import { userBooking } from './features/userBooking/userBooking';
+import { UserBookingComponent } from './features/userBooking/userBooking';
 import { AddressSaved } from './features/profile/address-saved/address-saved.component';
 import { PaymentMethods } from './features/profile/payment-methods/payment-methods.component';
 import { ProfileEdit } from './features/profile/profile-edit/profile-edit.component';
@@ -30,7 +30,7 @@ export const routes: Routes = [
   { path: 'register', component: Register },
 
   { path: 'profile', component: Profile, canActivate: [authGuard] },
-  { path: 'userBooking', component: userBooking },
+  { path: 'userBooking', component: UserBookingComponent },
   {
     path: 'profile',
     component: Profile,

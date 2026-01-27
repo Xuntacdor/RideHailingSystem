@@ -27,6 +27,8 @@ public class RideResponse {
     Double startLongitude;
     Double endLatitude;
     Double endLongitude;
+    Double driverLat;
+    Double driverLng;
     Long distance;
     Long fare;
     Status status;

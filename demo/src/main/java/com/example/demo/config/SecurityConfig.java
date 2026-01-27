@@ -123,13 +123,13 @@ public class SecurityConfig {
 
                                 )
 
-                                .oauth2Login(oauth2 -> oauth2
+                                // .oauth2Login(oauth2 -> oauth2
 
-                                                .successHandler(oAuth2SuccessHandler)
+                                //                 .successHandler(oAuth2SuccessHandler)
 
-                                                .failureHandler(oAuth2FailureHandler)
+                                //                 .failureHandler(oAuth2FailureHandler)
 
-                                )
+                                // )
 
                                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
                                 http.addFilterAfter(new OncePerRequestFilter(){
