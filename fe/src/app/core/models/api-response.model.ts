@@ -133,6 +133,7 @@ export interface RideRequest {
   fare: number;
   status?: string;
   vehicleType: string;
+  rideDate?: string;
 }
 
 export interface CreateRideResponse {

@@ -1,5 +1,6 @@
 package com.mycompany.rideapp.entity;
 
+import java.sql.Date;
 import java.util.List;
 
 import org.hibernate.annotations.Nationalized;
@@ -50,12 +51,14 @@ public class Ride {
     Long fare;
     Status status;
     VehicleType vehicleType;
-    
+
     @Nationalized
     String startAddress;
-    
+
     @Nationalized
     String endAddress;
+
+    Date rideDate;
 
     @OneToMany(mappedBy = "ride")
     List<Review> reviews;

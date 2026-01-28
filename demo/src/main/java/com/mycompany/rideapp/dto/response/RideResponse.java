@@ -33,6 +33,7 @@ public class RideResponse {
     Long fare;
     Status status;
     VehicleType vehicleType;
+    String rideDate;
 
     // List<ReviewResponse> reviews;
     // List<PaymentResponse> payments;
