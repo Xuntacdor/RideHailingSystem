@@ -41,8 +41,8 @@ import { CommonModule } from '@angular/common';
           <button 
             (click)="onCancel()"
             class="w-full py-4 font-semibold text-gray-700 transition-colors bg-gray-100 rounded-2xl hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300">
-            Cancel Request
-          </button>
+            Hủy tìm kiếm tài xế
+            </button>
         </div>
 
         <!-- Bottom Progress Bar (Indeterminate) -->
@@ -87,3 +87,12 @@ export class FindingDriverModalComponent {
         this.cancelSearch.emit();
     }
 }
+
+
+
+
+
+
+
+
+

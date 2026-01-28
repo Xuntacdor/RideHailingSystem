@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mycompany.rideapp.dto.request.RideRequest;
@@ -106,8 +107,8 @@ public class RideController {
     @DeleteMapping("/{rideId}/cancel")
     public ResponseEntity<java.util.Map<String, Object>> cancelRide(
             @PathVariable String rideId,
-            @org.springframework.web.bind.annotation.RequestParam String userId,
-            @org.springframework.web.bind.annotation.RequestParam String role) {
+            @RequestParam String userId,
+            @RequestParam String role) {
 
         try {
             java.util.Map<String, Object> response = rideService.cancelRide(rideId, userId, role);

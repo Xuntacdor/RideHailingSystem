@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Coordinate } from '../../../models/models';
 import { RideService } from '../../../core/services/ride.service';
 import { TrackAsiaService } from '../../../core/services/trackasia.service';
-import { DriverPosUpdateService } from '../../services/driverPosUpdate.service'; // Check path
+import { DriverPosUpdateService } from '../../services/driverPosUpdate.service';
+import { DriverRideRequestService } from '../../services/driver-ride-request.service';
 import { Subscription } from 'rxjs';
 
 export interface MapUpdate {
@@ -119,17 +120,20 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
     private pickupCoordinate: Coordinate | null = null;
     private destinationCoordinate: Coordinate | null = null;
     private locationSubscription?: Subscription;
+    private notificationSubscription?: Subscription;
 
     constructor(
         private rideService: RideService,
         private trackAsiaService: TrackAsiaService,
         private driverPosUpdateService: DriverPosUpdateService,
+        private driverRideRequestService: DriverRideRequestService,
         private cdr: ChangeDetectorRef
     ) { }
 
     ngOnInit(): void {
         if (this.activeRide) {
             this.initializeRide();
+            this.subscribeToNotifications();
         }
         this.subscribeToLocationUpdates();
     }
@@ -138,7 +142,30 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
         if (changes['activeRide'] && changes['activeRide'].currentValue && !changes['activeRide'].firstChange) {
             console.log('Active ride changed, reinitializing map and route');
             this.initializeRide();
+            // Re-subscribe if ride changes (though likely handled by parent unmounting/remounting or just keeping same connection)
+            if (!this.notificationSubscription) {
+                this.subscribeToNotifications();
+            }
         }
+    }
+
+    private subscribeToNotifications(): void {
+        if (!this.driverId) return;
+
+        this.notificationSubscription = this.driverRideRequestService
+            .subscribeToRideRequests(this.driverId)
+            .subscribe({
+                next: (notification: any) => {
+                    if (notification.type === 'RIDE_CANCELLED') {
+                        console.log('Ride cancelled notification received:', notification);
+                        if (notification.rideId === this.activeRide?.rideId) {
+                            alert('Chuyến đi đã bị hủy bởi khách hàng');
+                            this.rideCancelled.emit();
+                        }
+                    }
+                },
+                error: (err) => console.error('Notification subscription error:', err)
+            });
     }
 
     private subscribeToLocationUpdates(): void {
@@ -373,5 +400,6 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
 
     ngOnDestroy(): void {
         this.locationSubscription?.unsubscribe();
+        this.notificationSubscription?.unsubscribe();
     }
 }
