@@ -236,7 +236,7 @@ export interface SupportTicketResponse {
 
 export interface SupportTicketRequest {
   userId: string;
-  subject: string;
+  title: string;
   description: string;
   priority?: string;
 }

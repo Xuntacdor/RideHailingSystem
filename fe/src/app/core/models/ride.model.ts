@@ -3,16 +3,33 @@
  */
 export interface RideResponse {
   id: string;
-  customerId: string;
-  driverId?: string;
-  startLocation: string;
-  endLocation: string;
-  status: string;
-  fare: number;
+  driver?: {
+    id: string;
+    name: string;
+    phoneNumber: string;
+    avatarUrl?: string;
+    rating?: number;
+  };
+  customer?: {
+    id: string;
+    name: string;
+    phoneNumber: string;
+    imageUrl?: string;
+  };
+  startTime: number;
+  endTime?: number;
+  startLatitude: number;
+  startLongitude: number;
+  endLatitude: number;
+  endLongitude: number;
   distance: number;
-  duration: number;
-  createdAt: string;
-  updatedAt: string;
+  fare: number;
+  status: 'PENDING' | 'CONFIRMED' | 'PICKINGUP' | 'ONGOING' | 'FINISHED' | 'CANCELLED';
+  vehicleType: 'MOTORBIKE' | 'CAR' | 'CAR_7_SEATS';
+  startAddress: string;
+  endAddress: string;
+  reviews?: any[];
+  payments?: any[];
 }
 
 export interface RideRequest {

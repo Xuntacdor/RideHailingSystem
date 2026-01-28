@@ -13,6 +13,9 @@ import { UserBookingComponent } from './features/userBooking/userBooking';
 import { AddressSaved } from './features/profile/address-saved/address-saved.component';
 import { PaymentMethods } from './features/profile/payment-methods/payment-methods.component';
 import { ProfileEdit } from './features/profile/profile-edit/profile-edit.component';
+import { TravelHistoryComponent } from './features/profile/travel-history/travel-history.component';
+import { PrivacyPolicyComponent } from './features/profile/privacy-policy/privacy-policy.component';
+import { ReportIssueComponent } from './features/report-issue/report-issue.component';
 import { AdminDashboardComponent } from './features/admin/admin-dashboard/admin-dashboard.component';
 export const routes: Routes = [
   // { path: '', redirectTo: 'driver', pathMatch: 'full' },
@@ -50,6 +53,21 @@ export const routes: Routes = [
   {
     path: 'profile/payment',
     component: PaymentMethods,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'profile/travel-history',
+    component: TravelHistoryComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'profile/privacy-policy',
+    component: PrivacyPolicyComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'report-issue',
+    component: ReportIssueComponent,
     canActivate: [authGuard],
   },
 

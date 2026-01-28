@@ -1,0 +1,196 @@
+<div class="min-h-screen bg-gray-50 pb-6">
+    <!-- Header -->
+    <div class="bg-white shadow-sm sticky top-0 z-10 px-4 py-3 flex items-center gap-3">
+        <button (click)="goBack()" class="p-2 -ml-2 rounded-full hover:bg-gray-100 text-gray-600">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+        </button>
+        <h2 class="text-lg font-bold text-gray-800">Chính sách quyền riêng tư</h2>
+    </div>
+
+    <!-- Content -->
+    <div class="px-4 py-6 space-y-6">
+        <!-- Introduction -->
+        <section class="bg-white rounded-2xl p-5 shadow-sm">
+            <h3 class="text-lg font-bold text-gray-900 mb-3">Giới thiệu</h3>
+            <p class="text-sm text-gray-600 leading-relaxed">
+                Chúng tôi cam kết bảo vệ quyền riêng tư của bạn. Chính sách này giải thích cách chúng tôi thu thập,
+                sử dụng và bảo vệ thông tin cá nhân của bạn khi sử dụng dịch vụ đặt xe.
+            </p>
+        </section>
+
+        <!-- Information Collection -->
+        <section class="bg-white rounded-2xl p-5 shadow-sm">
+            <h3 class="text-lg font-bold text-gray-900 mb-3">Thông tin chúng tôi thu thập</h3>
+            <div class="space-y-3">
+                <div class="flex gap-3">
+                    <div class="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span class="text-blue-600 text-xs font-bold">1</span>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900 text-sm mb-1">Thông tin cá nhân</h4>
+                        <p class="text-sm text-gray-600">Họ tên, số điện thoại, email, ảnh đại diện</p>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <div class="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span class="text-blue-600 text-xs font-bold">2</span>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900 text-sm mb-1">Thông tin vị trí</h4>
+                        <p class="text-sm text-gray-600">Vị trí hiện tại, điểm đón và điểm đến</p>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <div class="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span class="text-blue-600 text-xs font-bold">3</span>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900 text-sm mb-1">Thông tin thanh toán</h4>
+                        <p class="text-sm text-gray-600">Phương thức thanh toán, lịch sử giao dịch</p>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <div class="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span class="text-blue-600 text-xs font-bold">4</span>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900 text-sm mb-1">Thông tin chuyến đi</h4>
+                        <p class="text-sm text-gray-600">Lịch sử chuyến đi, đánh giá, nhận xét</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How We Use Information -->
+        <section class="bg-white rounded-2xl p-5 shadow-sm">
+            <h3 class="text-lg font-bold text-gray-900 mb-3">Cách chúng tôi sử dụng thông tin</h3>
+            <ul class="space-y-2">
+                <li class="flex items-start gap-2">
+                    <svg class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-sm text-gray-600">Cung cấp và cải thiện dịch vụ đặt xe</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <svg class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-sm text-gray-600">Xử lý thanh toán và giao dịch</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <svg class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-sm text-gray-600">Liên lạc với bạn về chuyến đi</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <svg class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-sm text-gray-600">Đảm bảo an toàn và bảo mật</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <svg class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-sm text-gray-600">Phân tích và cải thiện trải nghiệm người dùng</span>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Data Security -->
+        <section class="bg-white rounded-2xl p-5 shadow-sm">
+            <h3 class="text-lg font-bold text-gray-900 mb-3">Bảo mật dữ liệu</h3>
+            <p class="text-sm text-gray-600 leading-relaxed mb-3">
+                Chúng tôi sử dụng các biện pháp bảo mật tiên tiến để bảo vệ thông tin của bạn:
+            </p>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-blue-50 rounded-lg p-3">
+                    <div class="text-2xl mb-1">🔒</div>
+                    <p class="text-xs font-semibold text-gray-900">Mã hóa SSL/TLS</p>
+                </div>
+                <div class="bg-green-50 rounded-lg p-3">
+                    <div class="text-2xl mb-1">🛡️</div>
+                    <p class="text-xs font-semibold text-gray-900">Xác thực 2 lớp</p>
+                </div>
+                <div class="bg-purple-50 rounded-lg p-3">
+                    <div class="text-2xl mb-1">💾</div>
+                    <p class="text-xs font-semibold text-gray-900">Sao lưu định kỳ</p>
+                </div>
+                <div class="bg-orange-50 rounded-lg p-3">
+                    <div class="text-2xl mb-1">👁️</div>
+                    <p class="text-xs font-semibold text-gray-900">Giám sát 24/7</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Your Rights -->
+        <section class="bg-white rounded-2xl p-5 shadow-sm">
+            <h3 class="text-lg font-bold text-gray-900 mb-3">Quyền của bạn</h3>
+            <div class="space-y-2">
+                <div class="flex items-center gap-2 text-sm text-gray-600">
+                    <span class="text-blue-600">✓</span>
+                    <span>Truy cập và xem thông tin cá nhân</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-gray-600">
+                    <span class="text-blue-600">✓</span>
+                    <span>Chỉnh sửa hoặc cập nhật thông tin</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-gray-600">
+                    <span class="text-blue-600">✓</span>
+                    <span>Yêu cầu xóa dữ liệu cá nhân</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-gray-600">
+                    <span class="text-blue-600">✓</span>
+                    <span>Từ chối nhận thông tin quảng cáo</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-gray-600">
+                    <span class="text-blue-600">✓</span>
+                    <span>Xuất dữ liệu cá nhân</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact -->
+        <section class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-5">
+            <h3 class="text-lg font-bold text-gray-900 mb-2">Liên hệ với chúng tôi</h3>
+            <p class="text-sm text-gray-600 mb-3">
+                Nếu bạn có bất kỳ câu hỏi nào về chính sách quyền riêng tư, vui lòng liên hệ:
+            </p>
+            <div class="space-y-2">
+                <div class="flex items-center gap-2 text-sm">
+                    <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                    </svg>
+                    <span class="text-gray-700 font-medium">support&#64;rideapp.vn</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm">
+                    <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                            d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                    </svg>
+                    <span class="text-gray-700 font-medium">1900 1234</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Last Updated -->
+        <div class="text-center text-xs text-gray-500 py-4">
+            Cập nhật lần cuối: 28/01/2026
+        </div>
+    </div>
+</div>

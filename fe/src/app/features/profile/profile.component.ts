@@ -50,8 +50,6 @@ export class Profile implements OnInit {
       ],
     },
   ];
-  // ------------------------------------
-  // Thêm method này
   onFileSelected(event: any): void {
     const file: File = event.target.files[0];
     const user = this.currentUser();

@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { UserService } from '../../../core/services/user.service';
@@ -20,6 +20,7 @@ export class ProfileEdit implements OnInit {
   private router = inject(Router);
   private toastService = inject(ToastService);
   currentUser = this.authService.currentUser();
+  private location = inject(Location);
 
   editForm: FormGroup;
   userId: string = '';
@@ -112,5 +113,9 @@ export class ProfileEdit implements OnInit {
         this.toastService.show(msg);
       },
     });
+  }
+
+  goBack() {
+    this.location.back();
   }
 }
