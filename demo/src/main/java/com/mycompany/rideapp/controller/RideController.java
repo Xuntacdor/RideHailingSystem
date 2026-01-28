@@ -119,4 +119,17 @@ public class RideController {
             return ResponseEntity.status(500).body(errorResponse);
         }
     }
+
+    @DeleteMapping("/{rideId}/cancel-pending")
+    public ResponseEntity<java.util.Map<String, Object>> cancelPendingRide(@PathVariable String rideId) {
+        try {
+            rideService.cancelPendingRide(rideId);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Error: " + e.getMessage());
+            return ResponseEntity.status(500).body(errorResponse);
+        }
+    }
 }

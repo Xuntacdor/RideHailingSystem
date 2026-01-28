@@ -26,27 +26,27 @@ export interface ReviewResponse {
 export class ReviewService extends ApiService {
   
   createReview(request: ReviewRequest): Observable<ApiResponse<ReviewResponse>> {
-    return this.post<ApiResponse<ReviewResponse>>('/api/review', request);
+    return this.post<ApiResponse<ReviewResponse>>('/review', request);
   }
 
   getReviewById(id: string): Observable<ApiResponse<ReviewResponse>> {
-    return this.get<ApiResponse<ReviewResponse>>(`/api/review/${id}`);
+    return this.get<ApiResponse<ReviewResponse>>(`/review/${id}`);
   }
 
   getReviewsByRideId(rideId: string): Observable<ApiResponse<ReviewResponse[]>> {
-    return this.get<ApiResponse<ReviewResponse[]>>(`/api/review/ride/${rideId}`);
+    return this.get<ApiResponse<ReviewResponse[]>>(`/review/ride/${rideId}`);
   }
 
   getReviewsByReviewerId(reviewerId: string): Observable<ApiResponse<ReviewResponse[]>> {
-    return this.get<ApiResponse<ReviewResponse[]>>(`/api/review/reviewer/${reviewerId}`);
+    return this.get<ApiResponse<ReviewResponse[]>>(`/review/reviewer/${reviewerId}`);
   }
 
   getReviewsByRevieweeId(revieweeId: string): Observable<ApiResponse<ReviewResponse[]>> {
-    return this.get<ApiResponse<ReviewResponse[]>>(`/api/review/reviewee/${revieweeId}`);
+    return this.get<ApiResponse<ReviewResponse[]>>(`/review/reviewee/${revieweeId}`);
   }
 
   getAverageRating(revieweeId: string): Observable<ApiResponse<number>> {
-    return this.get<ApiResponse<number>>(`/api/review/average/${revieweeId}`);
+    return this.get<ApiResponse<number>>(`/review/average/${revieweeId}`);
   }
 
   getReviewCount(revieweeId: string): Observable<ApiResponse<number>> {

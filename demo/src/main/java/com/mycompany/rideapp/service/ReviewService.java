@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.mycompany.rideapp.dto.request.ReviewRequest;
 import com.mycompany.rideapp.dto.response.ReviewResponse;
+import com.mycompany.rideapp.entity.Driver;
 import com.mycompany.rideapp.entity.Review;
 import com.mycompany.rideapp.entity.Ride;
 import com.mycompany.rideapp.entity.User;
@@ -53,7 +54,7 @@ public class ReviewService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
         // Validate reviewee exists
-        User reviewee = userRepository.findById(request.getRevieweeId())
+        Driver reviewee = driverRepository.findById(request.getRevieweeId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
         Review review = reviewMapper.toEntity(request, ride, reviewer, reviewee);

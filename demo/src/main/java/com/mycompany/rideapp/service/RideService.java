@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -28,6 +31,8 @@ import com.mycompany.rideapp.repository.DriverRepository;
 import com.mycompany.rideapp.repository.RideRepository;
 import com.mycompany.rideapp.repository.UserRepository;
 
+import jakarta.annotation.PreDestroy;
+import java.util.concurrent.ScheduledFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -44,46 +49,112 @@ public class RideService {
     private final DriverRepository driverRepository;
 
     private final Map<String, PendingRide> pendingRides = new ConcurrentHashMap<>();
+    private final Map<String, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
 
     public Map<String, Object> createRide(RideRequest request) {
         String rideRequestId = UUID.randomUUID().toString();
+        log.info("[CREATE_RIDE] Starting ride request {} for customer {}", rideRequestId, request.getCustomerId());
+        
         List<DriverResponse> nearestDrivers = driverService.getNearestDrivers(
                 request.getCustomerLatitude(),
                 request.getCustomerLongitude(),
                 10,
                 request.getVehicleType());
 
-        if (nearestDrivers.isEmpty()) {
-            throw new AppException(ErrorCode.NO_DRIVER_AVAILABLE);
-        }
+        log.info("[CREATE_RIDE] Found {} nearest drivers for ride request {}", nearestDrivers.size(), rideRequestId);
+
         List<String> driverIds = nearestDrivers.stream()
                 .map(DriverResponse::getId)
                 .collect(Collectors.toList());
 
-        log.info("Driver IDs: {}", driverIds);
-
         PendingRide pendingRide = PendingRide.builder()
                 .rideRequestId(rideRequestId)
                 .request(request)
-                .driverIds(driverIds)
+                .driverIds(driverIds) // nullable
                 .currentDriverIndex(0)
+                .accepted(new AtomicBoolean(false))
                 .timestamp(System.currentTimeMillis())
                 .build();
 
         pendingRides.put(rideRequestId, pendingRide);
-        log.info("Stored pending ride: {}", rideRequestId);
-
-        log.info("Sending notification to first driver: {}", driverIds.get(0));
-        sendNotificationToCurrentDriver(pendingRide);
+        
+        if (!driverIds.isEmpty()) {
+            sendNotificationToCurrentDriver(pendingRide);
+        }
+        
+        scheduleDriverRetryTask(pendingRide, 120);
 
         Map<String, Object> response = new HashMap<>();
         response.put("rideRequestId", rideRequestId);
-        response.put("status", "PENDING");
-        response.put("message", "Finding driver...");
+        response.put("status", "SEARCHING");
+        response.put("message", nearestDrivers.isEmpty() ? 
+            "No drivers currently available, searching..." : 
+            "Finding driver...");
         response.put("nearestDriversCount", driverIds.size());
 
-        log.info("<<< RideService.createRide() completed successfully");
         return response;
+    }
+
+
+    private void scheduleDriverRetryTask(PendingRide pendingRide, int maxRetries) {
+        AtomicBoolean isCancelled = new AtomicBoolean(false);
+        log.info("[RETRY_TASK] Setting up retry task for ride request {}, maxRetries: {}", 
+                pendingRide.getRideRequestId(), maxRetries);
+
+        Runnable retryTask = new Runnable() {
+            int retryCount = 0;
+
+            @Override
+            public void run() {
+                log.info("[RETRY_TASK] Retry task executing for ride request {}, retry count: {}/{}, current driver index: {}/{}",
+                        pendingRide.getRideRequestId(), retryCount, maxRetries, 
+                        pendingRide.getCurrentDriverIndex(), pendingRide.getDriverIds().size());
+
+                if (isCancelled.get()) {
+                    log.info("[RETRY_TASK] Task already cancelled for ride request {}", pendingRide.getRideRequestId());
+                    cleanupPendingRide(pendingRide.getRideRequestId());
+                    return;
+                }
+
+                if (pendingRide.getAccepted().get()) {
+                    log.info("[RETRY_TASK] Ride request {} already accepted, stopping retry task", pendingRide.getRideRequestId());
+                    cleanupPendingRide(pendingRide.getRideRequestId());
+                    return;
+                }
+
+                retryCount++;
+                log.info("[RETRY_TASK] Moving to next driver for ride request {}, retry: {}", 
+                        pendingRide.getRideRequestId(), retryCount);
+                handleDriverRejection(pendingRide);
+
+                if (pendingRide.getCurrentDriverIndex() >= pendingRide.getDriverIds().size()) {
+                    log.warn("[RETRY_TASK] No more drivers available for ride request {}. Tried {}/{} drivers",
+                            pendingRide.getRideRequestId(), pendingRide.getCurrentDriverIndex(), pendingRide.getDriverIds().size());
+                    notificationService.notifyNoDriverAvailable(
+                            pendingRide.getRequest().getCustomerId(),
+                            pendingRide.getRideRequestId());
+                    cleanupPendingRide(pendingRide.getRideRequestId());
+                    isCancelled.set(true);
+                } else if (retryCount >= maxRetries) {
+                    log.warn("[RETRY_TASK] Max retries ({}) reached for ride request {}. Current driver index: {}/{}",
+                            maxRetries, pendingRide.getRideRequestId(), 
+                            pendingRide.getCurrentDriverIndex(), pendingRide.getDriverIds().size());
+                    notificationService.notifyNoDriverAvailable(
+                            pendingRide.getRequest().getCustomerId(),
+                            pendingRide.getRideRequestId());
+                    cleanupPendingRide(pendingRide.getRideRequestId());
+                    isCancelled.set(true);
+                }
+            }
+        };
+
+        log.info("[RETRY_TASK] Scheduling task with 10s initial delay and 10s period for ride request {}", 
+                pendingRide.getRideRequestId());
+        ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(retryTask, 10, 10,
+                java.util.concurrent.TimeUnit.SECONDS);
+
+        scheduledTasks.put(pendingRide.getRideRequestId(), future);
     }
 
     @Transactional
@@ -92,7 +163,6 @@ public class RideService {
         PendingRide pendingRide = pendingRides.get(rideRequestId);
 
         if (pendingRide == null) {
-            log.warn("Received response for unknown ride request: {}", rideRequestId);
             return;
         }
 
@@ -103,7 +173,27 @@ public class RideService {
         }
     }
 
+    private void cleanupPendingRide(String rideRequestId) {
+        log.info("[CLEANUP] Cleaning up pending ride {}", rideRequestId);
+        pendingRides.remove(rideRequestId);
+        java.util.concurrent.ScheduledFuture<?> task = scheduledTasks.remove(rideRequestId);
+        if (task != null) {
+            task.cancel(false);
+            log.info("[CLEANUP] Cancelled scheduled task for ride request {}", rideRequestId);
+        }
+        log.info("[CLEANUP] Remaining pending rides: {}", pendingRides.size());
+    }
+
     private void handleDriverAcceptance(PendingRide pendingRide, String driverId) {
+        // Mark as accepted to stop retries
+        pendingRide.getAccepted().set(true);
+
+        // Cancel scheduled retry task
+        java.util.concurrent.ScheduledFuture<?> task = scheduledTasks.remove(pendingRide.getRideRequestId());
+        if (task != null) {
+            task.cancel(false);
+        }
+
         log.info("Driver {} accepted ride request {}", driverId, pendingRide.getRideRequestId());
 
         try {
@@ -142,23 +232,62 @@ public class RideService {
 
             log.info("Ride {} created successfully", ride.getId());
         } catch (Exception e) {
-            log.error("Error creating ride: {}", e.getMessage(), e);
-            handleDriverRejection(pendingRide);
+            pendingRide.getAccepted().set(false);
         }
     }
 
     private void handleDriverRejection(PendingRide pendingRide) {
-        log.info("Driver rejected ride request {}", pendingRide.getRideRequestId());
+        // Only proceed if not already accepted (race condition check)
+        if (pendingRide.getAccepted().get()) {
+            return;
+        }
 
+        // Track rejected driver
+        if (pendingRide.getCurrentDriverIndex() < pendingRide.getDriverIds().size()) {
+            String rejectedDriverId = pendingRide.getDriverIds().get(pendingRide.getCurrentDriverIndex());
+            pendingRide.getRejectedDriverIds().add(rejectedDriverId);
+            log.info("Driver {} rejected/timed out for ride request {}. Total rejected: {}", 
+                    rejectedDriverId, pendingRide.getRideRequestId(), pendingRide.getRejectedDriverIds().size());
+        }
+
+        log.info("Driver rejected or timed out for ride request {}", pendingRide.getRideRequestId());
+
+        // Move to next driver
         pendingRide.setCurrentDriverIndex(pendingRide.getCurrentDriverIndex() + 1);
 
-        if (pendingRide.getCurrentDriverIndex() >= pendingRide.getDriverIds().size()) {
-            log.warn("No more drivers available for ride request {}", pendingRide.getRideRequestId());
-            notificationService.notifyNoDriverAvailable(
-                    pendingRide.getRequest().getCustomerId(),
-                    pendingRide.getRideRequestId());
-            pendingRides.remove(pendingRide.getRideRequestId());
+            if (pendingRide.getCurrentDriverIndex() >= pendingRide.getDriverIds().size()) {
+        log.info("[RE_FETCH] Re-fetching drivers for ride request {}. Rejected drivers: {}", 
+                pendingRide.getRideRequestId(), pendingRide.getRejectedDriverIds());
+        
+        List<DriverResponse> newDrivers = driverService.getNearestDrivers(
+            pendingRide.getRequest().getCustomerLatitude(),
+            pendingRide.getRequest().getCustomerLongitude(),
+            10,
+            pendingRide.getRequest().getVehicleType()
+        );
+        
+        log.info("[RE_FETCH] Found {} new drivers before filtering", newDrivers.size());
+        
+        List<String> newDriverIds = newDrivers.stream()
+            .map(DriverResponse::getId)
+            .filter(id -> !pendingRide.getRejectedDriverIds().contains(id))
+            .collect(Collectors.toList());
+        
+        log.info("[RE_FETCH] Found {} new drivers after filtering rejected ones", newDriverIds.size());
+        
+        if (!newDriverIds.isEmpty()) {
+            pendingRide.setDriverIds(newDriverIds);
+            pendingRide.setCurrentDriverIndex(0);
+            log.info("[RE_FETCH] Updated driver list, sending to first new driver");
+            sendNotificationToCurrentDriver(pendingRide);
+            return;
         } else {
+            log.warn("[RE_FETCH] No new drivers available after filtering");
+        }
+    }
+
+        // Send notification to next driver if available
+        if (pendingRide.getCurrentDriverIndex() < pendingRide.getDriverIds().size()) {
             sendNotificationToCurrentDriver(pendingRide);
         }
     }
@@ -251,7 +380,7 @@ public class RideService {
         if (role.equals("DRIVER") && (ride.getDriver() == null || !ride.getDriver().getId().equals(userId))) {
             throw new RuntimeException("Not authorized to cancel this ride");
         }
-        if (role.equals("CUSTOMER") && (ride.getCustomer() == null || !ride.getCustomer().getId().equals(userId))) {
+        if (role.equals("USER") && (ride.getCustomer() == null || !ride.getCustomer().getId().equals(userId))) {
             throw new RuntimeException("Not authorized to cancel this ride");
         }
 
@@ -273,5 +402,33 @@ public class RideService {
 
         log.info("Ride {} cancelled successfully", rideId);
         return response;
+    }
+
+    public void cancelPendingRide(String rideRequestId) {
+        log.info("[CANCEL_PENDING] Cancelling pending ride request {}", rideRequestId);
+        PendingRide removed = pendingRides.remove(rideRequestId);
+        if (removed != null) {
+            log.info("[CANCEL_PENDING] Removed pending ride {} from map. Was at driver index {}/{}",
+                    rideRequestId, removed.getCurrentDriverIndex(), removed.getDriverIds().size());
+        } else {
+            log.warn("[CANCEL_PENDING] Ride request {} not found in pending rides map", rideRequestId);
+        }
+        
+        ScheduledFuture<?> task = scheduledTasks.remove(rideRequestId);
+        if (task != null) {
+            boolean wasCancelled = task.cancel(false);
+            log.info("[CANCEL_PENDING] Cancelled scheduled task for ride request {}, success: {}", 
+                    rideRequestId, wasCancelled);
+        } else {
+            log.warn("[CANCEL_PENDING] No scheduled task found for ride request {}", rideRequestId);
+        }
+        log.info("[CANCEL_PENDING] Remaining pending rides: {}, scheduled tasks: {}", 
+                pendingRides.size(), scheduledTasks.size());
+    }
+
+    @PreDestroy
+    public void cleanup() {
+        scheduledTasks.values().forEach(task -> task.cancel(false));
+        scheduler.shutdown();
     }
 }

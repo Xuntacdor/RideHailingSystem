@@ -68,7 +68,10 @@ export class DriverComponent implements OnInit, OnDestroy {
       this.driverPosUpdateService.startWatchingLocation();
 
       this.driverPosUpdateService.sendDriverLocation(this.driverId!);
-      this.driverService.updateDriverStatus(this.driverId!, 'ACTIVE');
+      
+      this.driverService.updateDriverStatus(this.driverId!, 'ACTIVE').subscribe({});
+      
+      console.log(this.driverId);
 
       this.interval = setInterval(() => {
         this.driverPosUpdateService.sendDriverLocation(this.driverId!);
@@ -76,7 +79,9 @@ export class DriverComponent implements OnInit, OnDestroy {
 
     } else {
       this.unsubscribeFromRideRequests();
-      this.driverService.updateDriverStatus(this.driverId!, 'INACTIVE');
+      
+      this.driverService.updateDriverStatus(this.driverId!, 'INACTIVE').subscribe({});
+      
       this.driverPosUpdateService.stopWatchingLocation();
 
       if (this.interval) {

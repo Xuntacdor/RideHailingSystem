@@ -66,10 +66,10 @@ public class DriverController {
                                 .build();
         }
 
-        @PutMapping("/{id}/status")
+        @PutMapping("/{id}/status/{status}")
         public ApiResponse<DriverResponse> updateDriverStatus(
                         @PathVariable String id,
-                        @RequestParam String status) {
+                        @PathVariable String status) {
                 return ApiResponse.<DriverResponse>builder()
                                 .code(200)
                                 .results(driverService.updateDriverStatus(id, status))
