@@ -1,11 +1,12 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
 import { UserResponse } from '../../core/models/api-response.model';
 import { jwtDecode } from 'jwt-decode';
 import { ToastService } from '../../core/services/toast.service';
+
 
 @Component({
   selector: 'app-profile',
@@ -16,13 +17,14 @@ import { ToastService } from '../../core/services/toast.service';
 })
 export class Profile implements OnInit {
   private router = inject(Router);
-  public authService = inject(AuthService); // Đổi thành public để HTML dùng được
+  public authService = inject(AuthService);
   private userService = inject(UserService);
   private toastService = inject(ToastService);
+  private location = inject(Location);
 
   currentUser = signal<UserResponse | null>(null);
 
-  // --- PHẦN BẠN ĐANG THIẾU DỮ LIỆU ---
+
   menuSections = [
     {
       title: 'Tài khoản của tôi',
@@ -54,9 +56,7 @@ export class Profile implements OnInit {
     const user = this.currentUser();
 
     if (file && user) {
-      // Validate sơ bộ client-side (tùy chọn)
       if (file.size > 5 * 1024 * 1024) {
-        // 5MB
         this.toastService.show('File quá lớn!');
         return;
       }
@@ -123,5 +123,8 @@ export class Profile implements OnInit {
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/welcome']);
+  }
+  goBack(): void {
+    this.location.back();
   }
 }

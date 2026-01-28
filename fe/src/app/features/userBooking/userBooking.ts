@@ -1,6 +1,7 @@
 // userBooking.component.ts
 import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 // Services
@@ -18,6 +19,7 @@ import { LocationSearchComponent } from '../../components/userBooking/location-s
 import { RouteInfoComponent } from '../../components/userBooking/route-info/route-info.component';
 import { CustomerNotificationModalComponent, RideNotification } from '../../components/customer-notification-modal/customer-notification-modal.component';
 import { BookedRideInfoComponent } from '../../components/userBooking/booked-ride-info/booked-ride-info.component';
+import { UserHeaderComponent } from '../../components/userBooking/user-header/user-header.component';
 
 // Models
 import { Coordinate, SearchResult, RouteInfo, VehicleType, Driver } from '../../models/models';
@@ -48,7 +50,8 @@ interface RouteGeometry {
     LocationSearchComponent,
     RouteInfoComponent,
     CustomerNotificationModalComponent,
-    BookedRideInfoComponent
+    BookedRideInfoComponent,
+    UserHeaderComponent
   ],
   templateUrl: './userBooking.html',
   styleUrls: []
@@ -115,7 +118,8 @@ export class UserBookingComponent implements OnInit, OnDestroy {
     private rideService: RideService,
     private rideStatusUpdateService: RideStatusUpdateService,
     private driverPosUpdateService: DriverPosUpdateService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router: Router
   ) {
     this.jwtPayload = this.authService.getUserInfo();
     this.userName = this.jwtPayload?.name || '';
@@ -874,6 +878,11 @@ export class UserBookingComponent implements OnInit, OnDestroy {
 
   private toRadians(degrees: number): number {
     return degrees * (Math.PI / 180);
+  }
+
+  onAvatarClick(): void {
+    console.log('Avatar clicked - user:', this.userName);
+    this.router.navigate(['/profile']);
   }
 
   // ============================================================================
