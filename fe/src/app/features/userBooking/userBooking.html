@@ -88,3 +88,14 @@
 <app-customer-notification-modal [isVisible]="showNotificationModal" [notification]="notificationData"
   (close$)="onCloseNotificationModal()" (retry$)="onRetryBooking()" (cancel$)="onCancelBooking()">
 </app-customer-notification-modal>
+
+<!-- Rate Driver Modal -->
+<app-rate-driver-modal [isVisible]="showRateDriverModal" [rideData]="completionRideData"
+  (reviewSubmitted$)="onReviewSubmitted()" (close$)="onRateDriverModalClosed()">
+</app-rate-driver-modal>
+
+<!-- Pending Booking Modal (Finding Driver) -->
+@if (rideState === RideState.PENDING) {
+  <app-pending-booking (cancelBooking)="onCancelBooking()">
+  </app-pending-booking>
+}

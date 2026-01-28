@@ -76,8 +76,4 @@ public class User {
     @OneToMany(mappedBy = "reviewer")
     @ToString.Exclude
     List<Review> reviewsGiven;
-
-    @OneToMany(mappedBy = "reviewee")
-    @ToString.Exclude
-    List<Review> reviewsReceived;
 }
