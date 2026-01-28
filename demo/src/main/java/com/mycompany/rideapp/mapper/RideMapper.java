@@ -30,6 +30,16 @@ public class RideMapper {
         com.mycompany.rideapp.entity.Driver driver = driverRepository.findById(dto.getDriverId()).orElse(null);
         User customer = userRepository.findById(dto.getCustomerId()).orElse(null);
 
+        java.sql.Date rideDate = null;
+        if (dto.getRideDate() != null && !dto.getRideDate().isEmpty()) {
+            try {
+                rideDate = java.sql.Date.valueOf(dto.getRideDate());
+            } catch (IllegalArgumentException e) {
+                // If parsing fails, use current date
+                rideDate = new java.sql.Date(System.currentTimeMillis());
+            }
+        }
+
         return Ride.builder()
                 .driver(driver)
                 .customer(customer)
@@ -43,6 +53,7 @@ public class RideMapper {
                 .fare(dto.getFare())
                 .status(dto.getStatus())
                 .vehicleType(dto.getVehicleType())
+                .rideDate(rideDate)
                 .build();
     }
 
@@ -55,6 +66,8 @@ public class RideMapper {
         // Get driver's current location
         Double driverLat = entity.getDriver() != null ? entity.getDriver().getLatitude() : null;
         Double driverLng = entity.getDriver() != null ? entity.getDriver().getLongitude() : null;
+
+        String rideDate = entity.getRideDate() != null ? entity.getRideDate().toString() : null;
 
         return RideResponse.builder()
                 .id(entity.getId())
@@ -72,6 +85,7 @@ public class RideMapper {
                 .fare(entity.getFare())
                 .status(entity.getStatus())
                 .vehicleType(entity.getVehicleType())
+                .rideDate(rideDate)
                 .build();
     }
 }

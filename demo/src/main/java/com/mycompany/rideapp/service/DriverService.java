@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.mycompany.rideapp.dto.request.DriverRequest;
@@ -121,7 +122,8 @@ public class DriverService {
                 .map(driverMapper::toResponse)
                 .collect(Collectors.toList());
     }
-
+    
+    @Transactional(readOnly = true)
     public List<DriverResponse> getNearestDrivers(Double lat, Double lng, int limit,
             com.mycompany.rideapp.enums.VehicleType vehicleType) {
         List<Driver> drivers = driverRepository.findNearestDrivers(lat, lng,

@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class ReviewService {
-    
+
     ReviewRepository reviewRepository;
     RideRepository rideRepository;
     UserRepository userRepository;
@@ -106,7 +106,7 @@ public class ReviewService {
 
     public ReviewResponse updateReview(String id, ReviewRequest request) {
         log.info("Updating review with id: {}", id);
-        
+
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.REVIEW_NOT_FOUND));
 
@@ -127,12 +127,12 @@ public class ReviewService {
 
     public void deleteReview(String id) {
         log.info("Deleting review with id: {}", id);
-        
+
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.REVIEW_NOT_FOUND));
-        
+
         String revieweeId = review.getReviewee() != null ? review.getReviewee().getId() : null;
-        
+
         reviewRepository.deleteById(id);
 
         // Update driver rating after deletion

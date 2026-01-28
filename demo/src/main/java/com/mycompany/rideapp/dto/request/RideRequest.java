@@ -54,4 +54,6 @@ public class RideRequest {
 
     @NotNull(message = "VEHICLE_TYPE_NOT_NULL")
     VehicleType vehicleType;
+
+    String rideDate;
 }

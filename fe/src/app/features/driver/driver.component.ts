@@ -108,6 +108,25 @@ export class DriverComponent implements OnInit, OnDestroy {
                 rideId: notification.rideId
               };
             }
+          } else if (notification.type === 'RIDE_CANCELLED') {
+            console.log('Ride cancelled notification received');
+            alert('Chuyến đi đã bị hủy bởi khách hàng.');
+            if (this.showRideRequestModal) {
+              this.showRideRequestModal = false;
+              this.currentRideRequest = null;
+            }
+            // Handle active ride cancellation
+            if (this.showActiveRide) {
+              this.onRideCancelled();
+            }
+          } else if (notification.type === 'RIDE_REQUEST_CANCELLED') {
+            console.log('Ride request already cancelled notification received');
+            alert('Chuyến đi này đã bị khách hàng hủy trước khi bạn chấp nhận.');
+            // Close modal if still showing
+            if (this.showRideRequestModal) {
+              this.showRideRequestModal = false;
+              this.currentRideRequest = null;
+            }
           } else {
             this.showRideRequestNotification(notification);
           }

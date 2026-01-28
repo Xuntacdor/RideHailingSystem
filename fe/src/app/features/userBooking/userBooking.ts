@@ -97,6 +97,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
   // Ride State
   rideState: RideState = RideState.IDLE;
   currentRideId: string | null = null;
+  currentRideRequestId: string | null = null;
   driverLocation: { lat: number; lng: number } | null = null;
   activeDriver: Driver | null = null;
   notificationData: RideNotification | null = null;
@@ -221,13 +222,14 @@ export class UserBookingComponent implements OnInit, OnDestroy {
         fare: Math.round(fare),
         vehicleType: this.mapVehicleTypeToBackend(vehicleType),
         startTime: Date.now(),
+        rideDate: new Date().toISOString().split('T')[0],
       };
+      console.log('Creating ride with request:', rideRequest.rideDate);
 
       const sub = this.rideService.createRide(rideRequest).subscribe({
         next: (response) => {
-          console.log('Ride created successfully:', response);
-
-          this.currentRideId = response.rideRequestId;
+          console.log('Ride request created with ID:', response.rideRequestId);
+          this.currentRideRequestId = response.rideRequestId;
           this.rideState = RideState.PENDING;
           this.subscribeToRideUpdates();
 
@@ -497,6 +499,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
   private handleRideNotification(update: any): void {
     switch (update.type) {
       case 'RIDE_ACCEPTED':
+        this.currentRideId = update.rideId;
         this.showDriverAssignedModal(update);
         break;
       case 'RIDE_STATUS_UPDATE':
@@ -635,18 +638,16 @@ export class UserBookingComponent implements OnInit, OnDestroy {
     }
 
     const previousState = this.rideState;
-    this.currentRideId = update.rideId;
     switch (update.status) {
       case 'PICKINGUP':
         this.rideState = RideState.PICKINGUP;
-        // When driver starts picking up, calculate route from driver to user
+        this.currentRideId = update.rideId;
         if (this.driverLocation) {
           await this.calculateDriverRoute();
         }
         break;
       case 'ONGOING':
         this.rideState = RideState.ONGOING;
-        // When ride starts, clear driver route and show route to destination
         this.driverRouteGeometry = null;
         if (this.origin && this.destination) {
           await this.calculateRouteToDestination();
@@ -735,10 +736,19 @@ export class UserBookingComponent implements OnInit, OnDestroy {
   }
 
   onCancelBooking(): void {
-    if (!this.currentRideId) {
-      console.warn('No ride to cancel');
-      this.resetToIdle();
-      return;
+    // Check if we have something to cancel based on current state
+    if (this.rideState === RideState.PENDING) {
+      if (!this.currentRideRequestId) {
+        console.warn('No ride request to cancel');
+        this.resetToIdle();
+        return;
+      }
+    } else {
+      if (!this.currentRideId) {
+        console.warn('No ride to cancel');
+        this.resetToIdle();
+        return;
+      }
     }
 
     // Only allow cancellation in PENDING, CONFIRMED, or PICKINGUP states
@@ -753,31 +763,39 @@ export class UserBookingComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.jwtPayload?.userId) {
+    if (!this.jwtPayload?.userId && this.rideState !== RideState.PENDING) {
       console.error('User ID not available');
       this.resetToIdle();
+      return;
+    }
+
+    // Prevent multiple cancel requests
+    if (this.loading) {
+      console.log('Cancel already in progress');
       return;
     }
 
     this.loading = true;
     console.log(`Canceling ${this.rideState} ride...`);
 
-    // Use cancelPendingRide for PENDING state, cancelRide for CONFIRMED/PICKINGUP
+    // Use cancelPendingRide for PENDING state (with rideRequestId), cancelRide for CONFIRMED/PICKINGUP (with rideId)
     const cancelRequest$ =
       this.rideState === RideState.PENDING
-        ? this.rideService.cancelPendingRide(this.currentRideId)
-        : this.rideService.cancelRide(this.currentRideId, this.jwtPayload.userId, 'USER');
+        ? this.rideService.cancelPendingRide(this.currentRideRequestId!)
+        : this.rideService.cancelRide(this.currentRideId!, this.jwtPayload!.userId, 'USER');
 
     const sub = cancelRequest$.subscribe({
       next: () => {
         console.log('Ride cancelled successfully');
-        this.resetToIdle();
         this.loading = false;
+        this.resetToIdle();
+        this.cdr.detectChanges(); // Force UI update to hide modal
       },
       error: (err) => {
         console.error('Error canceling ride:', err);
-        this.showErrorNotification('Failed to cancel ride. Please try again.');
         this.loading = false;
+        this.showErrorNotification('Failed to cancel ride. Please try again.');
+        this.cdr.detectChanges();
       },
     });
 
@@ -789,6 +807,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
     this.notificationData = null;
     this.driverInfo = null;
     this.currentRideId = null;
+    this.currentRideRequestId = null;
     this.rideState = RideState.IDLE;
     this.rideStatusSubscription?.unsubscribe();
     this.cleanupDriverTracking();
