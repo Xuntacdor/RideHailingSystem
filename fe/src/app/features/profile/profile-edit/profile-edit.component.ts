@@ -30,8 +30,8 @@ export class ProfileEdit implements OnInit {
     this.editForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
       phoneNumber: ['', [Validators.required, Validators.pattern(/^[0-9]{10,11}$/)]],
-      email: [{ value: '', disabled: true }], // Email không cho sửa
-      cccd: [''], // Chỉ dùng cho Driver
+      email: [{ value: '', disabled: true }],
+      cccd: [''],
     });
   }
 

@@ -6,7 +6,7 @@ import { UserService } from '../../core/services/user.service';
 import { UserResponse } from '../../core/models/api-response.model';
 import { jwtDecode } from 'jwt-decode';
 import { ToastService } from '../../core/services/toast.service';
-
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-profile',
@@ -21,6 +21,7 @@ export class Profile implements OnInit {
   private userService = inject(UserService);
   private toastService = inject(ToastService);
   private location = inject(Location);
+  private readonly BACKEND_URL = environment.apiUrl;
 
   currentUser = signal<UserResponse | null>(null);
 
@@ -42,10 +43,10 @@ export class Profile implements OnInit {
       ],
     },
     {
-      title: 'Khác',
+      title: 'Thông tin & Tiện ích',
       items: [
-        { name: 'Điều khoản & Chính sách', icon: 'document', link: '/terms' },
-        { name: 'Về chúng tôi', icon: 'info', link: '/about-us' },
+        { name: 'Lịch sử chuyến đi', icon: 'document', link: '/profile/travel-history' },
+        { name: 'Chính sách quyền riêng tư', icon: 'info', link: '/profile/privacy-policy' },
       ],
     },
   ];
@@ -65,7 +66,12 @@ export class Profile implements OnInit {
         next: (response) => {
           if (response.results) {
             const updatedUser = { ...response.results };
-            updatedUser.imageUrl = updatedUser.imageUrl + '?t=' + new Date().getTime();
+            let newImageUrl = response.results.imageUrl;
+            if (newImageUrl && !newImageUrl.startsWith('http')) {
+              const path = newImageUrl.startsWith('/') ? newImageUrl : `/${newImageUrl}`;
+              newImageUrl = `${this.BACKEND_URL}${path}`;
+            }
+            updatedUser.imageUrl = newImageUrl + '?t=' + new Date().getTime();
 
             this.currentUser.set(updatedUser);
             this.authService.currentUser.set(updatedUser);
