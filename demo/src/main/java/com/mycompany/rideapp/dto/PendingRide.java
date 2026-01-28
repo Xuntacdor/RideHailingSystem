@@ -1,6 +1,10 @@
 package com.mycompany.rideapp.dto;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.mycompany.rideapp.dto.request.RideRequest;
 
@@ -21,5 +25,10 @@ public class PendingRide {
     RideRequest request;
     List<String> driverIds;
     int currentDriverIndex;
+    @Builder.Default
+    AtomicBoolean accepted = new AtomicBoolean(false);
     Long timestamp;
+    
+    @Builder.Default
+    Set<String> rejectedDriverIds = new HashSet<>();
 }

@@ -6,10 +6,12 @@ import { ReviewService, ReviewRequest } from '../../../core/services/review.serv
 export interface RideCompletionData {
   rideId: string;
   driverId: string;
-  driverName: string;
-  driverAvatar?: string;
   customerId: string;
-  fare: number;
+  rating?: number;
+  comment?: string;
+  // driverName: string;
+  // driverAvatar?: string;
+  // fare: number;
 }
 
 @Component({
@@ -33,7 +35,7 @@ export interface RideCompletionData {
           <p class="text-gray-600">Cảm ơn bạn đã sử dụng dịch vụ</p>
         </div>
 
-        <!-- Driver Info -->
+        <!-- Driver Info 
         <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl mb-6">
           <div class="w-16 h-16 rounded-full overflow-hidden bg-gray-200">
             <img [src]="rideData?.driverAvatar || 'assets/images/default-avatar.png'" 
@@ -48,7 +50,7 @@ export interface RideCompletionData {
             <p class="text-2xl font-bold text-green-600">{{ formatCurrency(rideData?.fare || 0) }}</p>
             <p class="text-xs text-gray-500">Tổng cước phí</p>
           </div>
-        </div>
+        </div> -->
 
         <!-- Rating Section -->
         <div class="mb-6">
@@ -164,13 +166,6 @@ export class RateDriverModalComponent {
     return texts[this.rating()] || '';
   }
 
-  formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(amount);
-  }
-
   submitReview(): void {
     if (!this.rideData || this.rating() === 0 || this.isSubmitting()) {
       return;
@@ -187,16 +182,13 @@ export class RateDriverModalComponent {
     };
 
     this.reviewService.createReview(reviewRequest).subscribe({
-      next: (response) => {
-        console.log('Review submitted successfully:', response);
+      next: () => {
         this.isSubmitting.set(false);
         this.reviewSubmitted$.emit();
         this.close();
       },
       error: (error) => {
-        console.error('Error submitting review:', error);
         this.isSubmitting.set(false);
-        // You might want to show an error message to the user here
         alert('Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại.');
       }
     });

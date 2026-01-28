@@ -25,6 +25,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 
 @Data
@@ -60,5 +61,9 @@ public class Driver {
 
     @OneToMany(mappedBy = "driver")
     List<Ride> ridesAsDriver;
+
+    @OneToMany(mappedBy = "reviewee")
+    @ToString.Exclude
+    List<Review> reviewsReceived;
 
 }

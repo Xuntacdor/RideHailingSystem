@@ -1,4 +1,3 @@
-// userBooking.component.ts
 import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
@@ -18,7 +17,8 @@ import { LocationSearchComponent } from '../../components/userBooking/location-s
 import { RouteInfoComponent } from '../../components/userBooking/route-info/route-info.component';
 import { CustomerNotificationModalComponent, RideNotification } from '../../components/customer-notification-modal/customer-notification-modal.component';
 import { BookedRideInfoComponent } from '../../components/userBooking/booked-ride-info/booked-ride-info.component';
-
+import {RateDriverModalComponent, RideCompletionData} from "../../components/userBooking/rate-driver-modal/rate-driver-modal.component";
+import { PendingBookingComponent } from '../../components/userBooking/pending-booking.component';
 // Models
 import { Coordinate, SearchResult, RouteInfo, VehicleType, Driver } from '../../models/models';
 import { jwtPayload, RideRequest, DriverPositionUpdate } from '../../core/models/api-response.model';
@@ -48,7 +48,9 @@ interface RouteGeometry {
     LocationSearchComponent,
     RouteInfoComponent,
     CustomerNotificationModalComponent,
-    BookedRideInfoComponent
+    BookedRideInfoComponent,
+    RateDriverModalComponent,
+    PendingBookingComponent
   ],
   templateUrl: './userBooking.html',
   styleUrls: []
@@ -87,7 +89,9 @@ export class UserBookingComponent implements OnInit, OnDestroy {
   notificationData: RideNotification | null = null;
   driverInfo: any | null = null;
   showNotificationModal = false;
-
+  showRateDriverModal = false;
+  completionRideData: RideCompletionData | null = null;
+  
   // Driver tracking
   private lastRouteCalculation: { lat: number; lng: number } | null = null;
   private driverRouteDebounceTimer: any;
@@ -169,7 +173,6 @@ export class UserBookingComponent implements OnInit, OnDestroy {
   }
 
   async onBookRide(vehicleType: VehicleType): Promise<void> {
-    // Validation
     const validation = this.validateBookingRequest();
     if (!validation.valid) {
       this.showErrorNotification(validation.error || 'Yêu cầu đặt xe không hợp lệ');
@@ -211,7 +214,6 @@ export class UserBookingComponent implements OnInit, OnDestroy {
         next: (response) => {
           console.log('Ride created successfully:', response);
 
-          // Update state INSIDE subscribe callback
           this.currentRideId = response.rideRequestId;
           this.rideState = RideState.PENDING;
           this.subscribeToRideUpdates();
@@ -223,7 +225,6 @@ export class UserBookingComponent implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error creating ride:', error);
 
-          // Check for NO_DRIVER_AVAILABLE error (code 1052) or basic 404 if code missing
           if (error?.error?.code === 1052) {
             this.showNoDriverModal({
               rideRequestId: `failed-${Date.now()}`,
@@ -333,7 +334,6 @@ export class UserBookingComponent implements OnInit, OnDestroy {
   async onSearchSubmitted(query: string): Promise<void> {
     if (!query.trim()) return;
 
-    // Don't show loading screen during search - it blocks interaction
     try {
       const results = await this.trackAsiaService.search(query, 1);
       if (results[0]) {
@@ -365,7 +365,6 @@ export class UserBookingComponent implements OnInit, OnDestroy {
   private async calculateRoute(): Promise<void> {
     if (!this.origin || !this.destination) return;
 
-    // Don't show loading screen during route calculation - it blocks interaction
     try {
       const routeData = await this.trackAsiaService.getDirections(
         this.origin.lng,
@@ -383,7 +382,6 @@ export class UserBookingComponent implements OnInit, OnDestroy {
         this.routeGeometry = routeData.geometry;
       }
     } catch (error) {
-      console.error('Routing error:', error);
       this.showErrorNotification('Không thể tìm đường. Vui lòng thử lại.');
     }
   }
@@ -439,16 +437,9 @@ export class UserBookingComponent implements OnInit, OnDestroy {
           duration: routeData.duration / 60,
           steps: this.routeInfo?.steps || []
         };
-
-        console.log('Driver route calculated:', {
-          distance: this.routeInfo.distance,
-          duration: this.routeInfo.duration
-        });
-
         this.cdr.detectChanges();
       }
     } catch (error) {
-      console.error('Error calculating driver route:', error);
     }
   }
 
@@ -458,26 +449,20 @@ export class UserBookingComponent implements OnInit, OnDestroy {
     this.destination = null;
   }
 
-  // ============================================================================
-  // WEBSOCKET SUBSCRIPTIONS
-  // ============================================================================
 
   private subscribeToRideUpdates(): void {
     const customerId = this.jwtPayload?.userId;
     if (!customerId) {
-      console.error('No customer ID available for WebSocket subscription');
       return;
     }
 
     // Unsubscribe existing subscription
     this.rideStatusSubscription?.unsubscribe();
 
-    console.log(`Subscribing to ride updates for customer: ${customerId}`);
     this.rideStatusSubscription = this.rideStatusUpdateService
       .subscribeToRideStatusUpdates(customerId)
       .subscribe({
         next: (update) => {
-          console.log('Received WebSocket notification:', update);
           this.handleRideNotification(update);
           this.cdr.detectChanges();
         },
@@ -491,7 +476,6 @@ export class UserBookingComponent implements OnInit, OnDestroy {
   }
 
   private handleRideNotification(update: any): void {
-    console.log('Handling notification:', update);
 
     switch (update.type) {
       case 'RIDE_ACCEPTED':
@@ -520,7 +504,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
 
     const driverDetails = {
       name: update.driverName || 'Driver',
-      avatarUrl: update.driverAvatar || 'assets/default-avatar.png',
+      avatarUrl: update.driverAvatar || 'assets/images/default-avatar.png',
       rating: update.driverRating || 4.5,
       vehicleModel: update.vehicleModel || 'Vehicle',
       vehiclePlate: update.vehiclePlate || 'N/A',
@@ -537,10 +521,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
     };
     this.showNotificationModal = true;
 
-    // Immediately show driver marker if location is available in the update
-    console.log('[MARKER DEBUG] RIDE_ACCEPTED update:', update);
     if (update.driverLat && update.driverLng) {
-      console.log('[MARKER DEBUG] Setting initial driver location from payload:', update.driverLat, update.driverLng);
       this.updateDriverLocation({
         driverId: update.driverId,
         lat: update.driverLat,
@@ -548,8 +529,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
         timestamp: new Date().toISOString()
       });
     } else {
-      console.warn('[MARKER DEBUG] No driver location in ride accepted payload');
-    }
+      console.warn('No initial driver location provided in RIDE_ACCEPTED notification');}
   }
 
   private showStatusUpdateModal(update: any): void {
@@ -591,8 +571,6 @@ export class UserBookingComponent implements OnInit, OnDestroy {
   }
 
   private subscribeToDriverPosition(driverId: string): void {
-    // console.log(`Subscribing to driver position for driver: ${driverId}`);
-
     // Unsubscribe existing subscription
     this.driverPositionSubscription?.unsubscribe();
 
@@ -601,7 +579,6 @@ export class UserBookingComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (message) => {
           const update: DriverPositionUpdate = JSON.parse(message.body);
-          console.log('[MARKER DEBUG] Received driver position update:', update);
           this.updateDriverLocation(update);
           this.cdr.detectChanges();
         },
@@ -624,7 +601,6 @@ export class UserBookingComponent implements OnInit, OnDestroy {
       icon: this.selectedVehicle === VehicleType.CAR ? '🚗' : '🏍️'
     };
 
-    console.log('[MARKER DEBUG] Updated activeDriver state:', this.activeDriver);
 
     if (this.driverLocation) {
       this.calculateDriverRouteDebounced(this.driverLocation);
@@ -632,11 +608,8 @@ export class UserBookingComponent implements OnInit, OnDestroy {
   }
 
   private async handleRideStatusUpdate(update: any): Promise<void> {
-    console.log('Ride status update:', update);
-
-    // Update driver position if included in the status update
+    
     if (update.driverId && update.driverLat && update.driverLng) {
-      console.log('[MARKER DEBUG] Updating driver position from status update:', update.driverLat, update.driverLng);
       await this.updateDriverLocation({
         driverId: update.driverId,
         lat: update.driverLat,
@@ -646,7 +619,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
     }
 
     const previousState = this.rideState;
-
+    this.currentRideId = update.rideId;
     switch (update.status) {
       case 'PICKINGUP':
         this.rideState = RideState.PICKINGUP;
@@ -665,13 +638,13 @@ export class UserBookingComponent implements OnInit, OnDestroy {
         break;
       case 'FINISHED':
         this.rideState = RideState.FINISHED;
+        this.showRateDriverModalForCompletedRide(update);
         break;
       case 'CANCELLED':
         this.rideState = RideState.CANCELLED;
         break;
     }
 
-    // Only recalculate driver route if we're in PICKINGUP or CONFIRMED state
     if ((this.rideState === RideState.PICKINGUP || this.rideState === RideState.CONFIRMED)
       && this.driverLocation && previousState === this.rideState) {
       await this.calculateDriverRoute();
@@ -683,10 +656,12 @@ export class UserBookingComponent implements OnInit, OnDestroy {
       this.destination = null;
       this.routeInfo = null;
 
-      setTimeout(() => {
-        this.rideState = RideState.IDLE;
-        this.cdr.detectChanges();
-      }, 3000);
+      if (update.status === 'CANCELLED') {
+        setTimeout(() => {
+          this.rideState = RideState.IDLE;
+          this.cdr.detectChanges();
+        }, 3000);
+      }
     }
   }
 
@@ -699,6 +674,40 @@ export class UserBookingComponent implements OnInit, OnDestroy {
     this.notificationData = null;
   }
 
+  private showRateDriverModalForCompletedRide(update: any): void {
+    if (!this.currentRideId || !this.jwtPayload?.userId || !update.driverId) {
+      console.warn('Missing required data for rating modal');
+      return;
+    }
+
+    this.completionRideData = {
+      rideId: this.currentRideId,
+      driverId: update.driverId,
+      customerId: this.jwtPayload.userId
+    };
+
+    this.showRateDriverModal = true;
+    this.cdr.detectChanges();
+  }
+
+  onReviewSubmitted(): void {
+    this.showRateDriverModal = false;
+    this.completionRideData = null;
+    
+    setTimeout(() => {
+      this.resetToIdle();
+    }, 1000);
+  }
+
+  onRateDriverModalClosed(): void {
+    this.showRateDriverModal = false;
+    this.completionRideData = null;
+    
+    setTimeout(() => {
+      this.resetToIdle();
+    }, 500);
+  }
+
   onRetryBooking(): void {
     this.onCloseNotificationModal();
     if (this.selectedVehicle) {
@@ -707,24 +716,46 @@ export class UserBookingComponent implements OnInit, OnDestroy {
   }
 
   onCancelBooking(): void {
-    if (!this.currentRideId || !this.jwtPayload?.userId) {
+    if (!this.currentRideId) {
+      console.warn('No ride to cancel');
+      this.resetToIdle();
+      return;
+    }
+
+    // Only allow cancellation in PENDING, CONFIRMED, or PICKINGUP states
+    if (this.rideState === RideState.ONGOING) {
+      alert('Cannot cancel ride that is already ongoing');
+      return;
+    }
+
+    if (this.rideState === RideState.FINISHED || this.rideState === RideState.CANCELLED) {
+      console.warn('Ride already finished or cancelled');
+      this.resetToIdle();
+      return;
+    }
+
+    if (!this.jwtPayload?.userId) {
+      console.error('User ID not available');
       this.resetToIdle();
       return;
     }
 
     this.loading = true;
-    const sub = this.rideService.cancelRide(
-      this.currentRideId,
-      this.jwtPayload.userId,
-      'CUSTOMER'
-    ).subscribe({
+    console.log(`Canceling ${this.rideState} ride...`);
+
+    // Use cancelPendingRide for PENDING state, cancelRide for CONFIRMED/PICKINGUP
+    const cancelRequest$ = this.rideState === RideState.PENDING 
+      ? this.rideService.cancelPendingRide(this.currentRideId)
+      : this.rideService.cancelRide(this.currentRideId, this.jwtPayload.userId, 'USER');
+
+    const sub = cancelRequest$.subscribe({
       next: () => {
         console.log('Ride cancelled successfully');
         this.resetToIdle();
         this.loading = false;
       },
       error: (err) => {
-        console.error('Error cancelling ride:', err);
+        console.error('Error canceling ride:', err);
         this.showErrorNotification('Failed to cancel ride. Please try again.');
         this.loading = false;
       }
@@ -742,7 +773,9 @@ export class UserBookingComponent implements OnInit, OnDestroy {
     this.rideStatusSubscription?.unsubscribe();
     this.cleanupDriverTracking();
 
-    // Keep origin, clear route
+    this.showRateDriverModal = false;
+    this.completionRideData = null;
+
     this.destination = null;
     this.routeInfo = null;
     this.routeGeometry = null;
@@ -759,9 +792,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
     clearTimeout(this.driverRouteDebounceTimer);
   }
 
-  // ============================================================================
   // HELPER METHODS
-  // ============================================================================
 
   getStatusText(): string {
     const statusMap: Record<RideState, string> = {

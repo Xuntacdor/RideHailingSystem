@@ -37,7 +37,7 @@ public class Review {
 
     @ManyToOne
     @JoinColumn(name = "reviewee_id")
-    User reviewee;
+    Driver reviewee;
 
     Long rating;
     

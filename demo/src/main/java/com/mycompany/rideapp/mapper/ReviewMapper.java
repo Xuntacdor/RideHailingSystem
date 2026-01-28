@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 
 import com.mycompany.rideapp.dto.request.ReviewRequest;
 import com.mycompany.rideapp.dto.response.ReviewResponse;
+import com.mycompany.rideapp.entity.Driver;
 import com.mycompany.rideapp.entity.Review;
 import com.mycompany.rideapp.entity.Ride;
 import com.mycompany.rideapp.entity.User;
@@ -15,8 +16,9 @@ import lombok.RequiredArgsConstructor;
 public class ReviewMapper {
     
     private final UserMapper userMapper;
+    private final DriverMapper driverMapper;
 
-    public Review toEntity(ReviewRequest request, Ride ride, User reviewer, User reviewee) {
+    public Review toEntity(ReviewRequest request, Ride ride, User reviewer, Driver reviewee) {
         if (request == null) {
             return null;
         }
@@ -39,7 +41,7 @@ public class ReviewMapper {
                 .id(review.getId())
                 .rideId(review.getRide() != null ? review.getRide().getId() : null)
                 .reviewer(review.getReviewer() != null ? userMapper.toResponse(review.getReviewer()) : null)
-                .reviewee(review.getReviewee() != null ? userMapper.toResponse(review.getReviewee()) : null)
+                .reviewee(review.getReviewee() != null ? driverMapper.toResponse(review.getReviewee()) : null)
                 .rating(review.getRating())
                 .comment(review.getComment())
                 .build();
