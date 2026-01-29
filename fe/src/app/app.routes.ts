@@ -26,7 +26,14 @@ export const routes: Routes = [
   { path: 'driver-wallet', component: DriverWalletComponent },
   { path: 'driver-vehicle', component: DriverVehicleComponent },
 
-  { path: 'admin', component: AdminDashboardComponent },
+  {
+    path: 'admin',
+    component: AdminDashboardComponent,
+    children: [
+      { path: '', loadComponent: () => import('./features/admin/admin-home/admin-home.component').then(m => m.AdminHomeComponent) },
+      { path: 'users', loadComponent: () => import('./features/admin/user-management/user-management.component').then(m => m.UserManagementComponent) }
+    ]
+  },
 
   { path: 'login', component: Login },
   { path: 'welcome', component: Welcome },
