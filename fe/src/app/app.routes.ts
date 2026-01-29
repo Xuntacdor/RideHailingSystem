@@ -45,10 +45,8 @@ export const routes: Routes = [
             (m) => m.UserManagementComponent
           ),
       },
-      {
-        path: 'driver',
-        component: DriverManagementComponent,
-      },
+      { path: 'driver', component: DriverManagementComponent },
+
       {
         path: 'reports',
         loadComponent: () =>
