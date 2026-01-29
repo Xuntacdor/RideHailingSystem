@@ -34,6 +34,8 @@ public class RideResponse {
     Status status;
     VehicleType vehicleType;
     String rideDate;
+    String startLocation;
+    String endLocation;
 
     // List<ReviewResponse> reviews;
     // List<PaymentResponse> payments;

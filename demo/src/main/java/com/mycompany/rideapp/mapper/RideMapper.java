@@ -54,6 +54,8 @@ public class RideMapper {
                 .status(dto.getStatus())
                 .vehicleType(dto.getVehicleType())
                 .rideDate(rideDate)
+                .startAddress(dto.getStartAddress())
+                .endAddress(dto.getEndAddress())
                 .build();
     }
 
@@ -86,6 +88,8 @@ public class RideMapper {
                 .status(entity.getStatus())
                 .vehicleType(entity.getVehicleType())
                 .rideDate(rideDate)
+                .startLocation(entity.getStartAddress())
+                .endLocation(entity.getEndAddress())
                 .build();
     }
 }

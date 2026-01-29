@@ -45,6 +45,17 @@ export interface Driver {
     lat: number;
     rating: number;
     icon: string;
+    user?: {
+        id: string;
+        name: string;
+        phoneNumber: string;
+        email: string;
+        role: string;
+    };
+    driverStatus?: string;
+    licenseNumber?: string;
+    address?: string;
+    avatarUrl?: string;
 }
 
 export interface VehiclePrice {

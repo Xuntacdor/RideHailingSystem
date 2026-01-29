@@ -56,4 +56,7 @@ public class RideRequest {
     VehicleType vehicleType;
 
     String rideDate;
+    
+    String startAddress;
+    String endAddress;
 }

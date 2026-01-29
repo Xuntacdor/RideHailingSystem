@@ -12,6 +12,8 @@ export interface DriverResponse {
   imageUrl?: string;
   createdAt: string;
   updatedAt: string;
+  vehicleModel?: string;
+  vehiclePlate?: string;
 }
 
 export interface DriverRequest {

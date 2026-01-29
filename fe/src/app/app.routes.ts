@@ -17,6 +17,7 @@ import { TravelHistoryComponent } from './features/profile/travel-history/travel
 import { PrivacyPolicyComponent } from './features/profile/privacy-policy/privacy-policy.component';
 import { ReportIssueComponent } from './features/report-issue/report-issue.component';
 import { AdminDashboardComponent } from './features/admin/admin-dashboard/admin-dashboard.component';
+import { DriverManagementComponent } from './features/admin/driver-management/driver-management.component';
 export const routes: Routes = [
   // { path: '', redirectTo: 'driver', pathMatch: 'full' },
 
@@ -32,6 +33,7 @@ export const routes: Routes = [
     children: [
       { path: '', loadComponent: () => import('./features/admin/admin-home/admin-home.component').then(m => m.AdminHomeComponent) },
       { path: 'users', loadComponent: () => import('./features/admin/user-management/user-management.component').then(m => m.UserManagementComponent) },
+
       {
         path: 'reports',
         loadComponent: () => import('./features/admin/reports/ticket-list/ticket-list.component').then(m => m.TicketListComponent)
@@ -40,6 +42,8 @@ export const routes: Routes = [
         path: 'reports/:id',
         loadComponent: () => import('./features/admin/reports/ticket-workspace/ticket-workspace.component').then(m => m.TicketWorkspaceComponent)
       }
+
+      { path: 'driver', component: DriverManagementComponent}
     ]
   },
 

@@ -40,4 +40,8 @@ export class DriverService extends ApiService {
   getDriversByStatus(status: string): Observable<ApiResponse<DriverResponse[]>> {
     return this.get<ApiResponse<DriverResponse[]>>(`/driver/status/${status}`);
   }
+
+  getDriversByLocation(lat: number, lng: number, zoom: number): Observable<ApiResponse<DriverResponse[]>> {
+    return this.get<ApiResponse<DriverResponse[]>>(`/driver/nearby?lat=${lat}&lng=${lng}&zoom=${zoom}`);
+  }
 }

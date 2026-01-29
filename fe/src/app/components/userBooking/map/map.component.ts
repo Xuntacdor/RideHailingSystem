@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, AfterViewInit, OnDestroy, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, ViewChild, ElementRef, AfterViewInit, OnDestroy, Input, Output, EventEmitter, OnChanges, SimpleChanges, DoCheck, IterableDiffer, IterableDiffers } from '@angular/core';
 import { Map as TrackAsiaMap, Marker, NavigationControl, GeolocateControl, Popup, LngLatBounds } from 'trackasia-gl';
 import { TrackAsiaService } from '../../../core/services/trackasia.service';
 import { Coordinate, Driver } from '../../../models/models';
@@ -35,9 +35,17 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
     @Output() userLocationDetected = new EventEmitter<{ lng: number; lat: number }>();
     @Output() mapReady = new EventEmitter<void>();
     @Output() tokenInvalid = new EventEmitter<void>();
+    @Output() boundsChange = new EventEmitter<LngLatBounds>();
+    @Output() mapMove = new EventEmitter<{
+        center: { lat: number; lng: number };
+        zoom: number;
+        bounds: { north: number; south: number; east: number; west: number };
+    }>();
+    @Output() driverClick = new EventEmitter<Driver>();
 
     map: TrackAsiaMap | undefined;
     private originMarker: Marker | null = null;
+    private driversDiffer: IterableDiffer<Driver> | null = null;
     private destinationMarker: Marker | null = null;
     private userMarker: Marker | null = null;
     private driverMarkers: { [driverId: string]: Marker } = {};
@@ -46,11 +54,10 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
     private animationDuration = 1000;
     private markerAnimations = new Map<Marker, number>();
 
-    constructor(private trackAsiaService: TrackAsiaService) { }
+    constructor(private trackAsiaService: TrackAsiaService, private differs: IterableDiffers) { }
     // private userLocation: { lng: number; lat: number } | null = null; // Removed duplicate
 
     private animateMarkerTo(marker: Marker, targetLng: number, targetLat: number, duration: number = this.animationDuration): void {
-        // Cancel any existing animation for this marker
         if (this.markerAnimations.has(marker)) {
             cancelAnimationFrame(this.markerAnimations.get(marker)!);
             this.markerAnimations.delete(marker);
@@ -100,6 +107,16 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
         }, 100);
     }
 
+    ngDoCheck(): void {
+        if (this.driversDiffer && this.drivers && this.map) {
+            const changes = this.driversDiffer.diff(this.drivers);
+            if (changes) {
+                console.log('✅ Drivers changed detected by ngDoCheck');
+                this.updateDriverMarkers();
+            }
+        }
+    }
+
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['origin'] && this.origin && this.map) {
             const prev = changes['origin'].previousValue;
@@ -136,6 +153,10 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
             }
         }
 
+        if (changes['drivers'] && this.drivers && !this.driversDiffer) {
+            this.driversDiffer = this.differs.find(this.drivers).create((index, item) => item.id);
+        }
+
         if (changes['routeGeometry'] && this.map) {
             if (this.routeGeometry) {
                 this.displayRoute(this.routeGeometry);
@@ -145,7 +166,6 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
         }
 
         if (changes['activeDriver'] && this.map) {
-            console.log('[MARKER DEBUG] MapComponent activeDriver changed:', this.activeDriver);
             if (this.activeDriver) {
                 this.updateActiveDriverMarker(this.activeDriver);
             } else {
@@ -173,6 +193,7 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
             }
         }
     }
+    
 
 
 
@@ -206,7 +227,6 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
                     this.userLocation = { lng: 108.2022, lat: 16.0544 };
                     this.initializeMap();
                 },
-                // Options
                 {
                     enableHighAccuracy: true,
                     timeout: 5000,
@@ -254,7 +274,6 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
                 this.mapReady.emit();
                 this.geolocateControl!.trigger();
 
-                // Render existing inputs that might have been set before map load
                 if (this.origin) {
                     this.placeOriginMarker(this.origin.lng, this.origin.lat, this.origin.name || 'Origin');
                 }
@@ -274,6 +293,14 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
                 if (this.drivers.length > 0) {
                     this.updateDriverMarkers();
                 }
+
+                this.map!.on('moveend', () => {
+                    if (this.map) {
+                        this.boundsChange.emit(this.map.getBounds());
+                        this.emitMapState();
+                    }
+                });
+
             });
 
             this.map.on('error', (e: any) => {
@@ -320,6 +347,24 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
         }
     }
 
+    private emitMapState(): void {
+        if (!this.map) return;
+        const center = this.map.getCenter();
+        const zoom = this.map.getZoom();
+        const bounds = this.map.getBounds();
+
+        this.mapMove.emit({
+            center: { lat: center.lat, lng: center.lng },
+            zoom: zoom,
+            bounds: {
+                north: bounds.getNorth(),
+                south: bounds.getSouth(),
+                east: bounds.getEast(),
+                west: bounds.getWest()
+            }
+        });
+    }
+
     private updateDriverMarkers(): void {
         const currentDriverIds = new Set(this.drivers.map(d => d.id));
 
@@ -342,15 +387,12 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
                 el.style.fontSize = '24px';
                 el.style.cursor = 'pointer';
 
+                el.addEventListener('click', () => {
+                    this.driverClick.emit(driver);
+                });
+
                 const marker = new Marker({ element: el })
                     .setLngLat([driver.lng, driver.lat])
-                    .setPopup(new Popup({ offset: 25 }).setHTML(`
-          <div style="text-align: center;">
-            <div style="font-size: 20px;">${driver.icon}</div>
-            <div style="font-weight: bold;">${driver.name}</div>
-            <div style="font-size: 12px;">⭐ ${driver.rating}</div>
-          </div>
-        `))
                     .addTo(this.map!);
 
                 this.driverMarkers[driver.id] = marker;
@@ -525,6 +567,7 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
                 }
             });
         }
+
 
         const coordinates = geometry.coordinates;
         const bounds = new LngLatBounds();
