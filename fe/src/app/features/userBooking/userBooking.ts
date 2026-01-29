@@ -142,6 +142,89 @@ export class UserBookingComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadBookingTypes();
+    this.rideService.getActiveRide(this.jwtPayload!.userId).subscribe({
+      next: (rideData) => {
+        if (rideData) {
+          
+          this.currentRideId = rideData.id;
+          
+          const statusToStateMap: Record<string, RideState> = {
+            'PENDING': RideState.PENDING,
+            'CONFIRMED': RideState.CONFIRMED,
+            'PICKINGUP': RideState.PICKINGUP,
+            'ONGOING': RideState.ONGOING
+          };
+          this.rideState = statusToStateMap[rideData.status] || RideState.IDLE;
+          
+          if (rideData.startLatitude && rideData.startLongitude) {
+            this.origin = {
+              lat: rideData.startLatitude,
+              lng: rideData.startLongitude,
+              name: 'Điểm đón'
+            };
+          }
+          
+          if (rideData.endLatitude && rideData.endLongitude) {
+            this.destination = {
+              lat: rideData.endLatitude,
+              lng: rideData.endLongitude,
+              name: 'Điểm đến'
+            };
+          }
+          
+          if (rideData.driver && (this.rideState === RideState.CONFIRMED || 
+              this.rideState === RideState.PICKINGUP || this.rideState === RideState.ONGOING)) {
+            
+            this.driverInfo = {
+              name: rideData.driver.user?.name || 'Tài xế',
+              avatarUrl: rideData.driver.avatarUrl || 'assets/images/default-avatar.png',
+              rating: rideData.driver.rating || 4.5,
+              vehicleModel: 'Vehicle', 
+              vehiclePlate: 'N/A', 
+              phoneNumber: rideData.driver.user?.phoneNumber || 'N/A'
+            };
+            
+            if (rideData.driverLat && rideData.driverLng) {
+              this.driverLocation = {
+                lat: rideData.driverLat,
+                lng: rideData.driverLng
+              };
+              
+              this.activeDriver = {
+                id: rideData.driver.id || '',
+                name: rideData.driver.user?.name || 'Tài xế',
+                vehicleType: rideData.vehicleType === 'CAR' ? VehicleType.CAR : VehicleType.MOTORBIKE,
+                lng: rideData.driverLng,
+                lat: rideData.driverLat,
+                rating: rideData.driver.rating || 4.5,
+                icon: rideData.vehicleType === 'CAR' ? '🚗' : '🏍️'
+              };
+            }
+            
+            if (rideData.driver.id) {
+              this.subscribeToDriverPosition(rideData.driver.id);
+            }
+          }
+          
+          this.subscribeToRideUpdates();
+          
+          if (this.origin && this.destination) {
+            if (this.rideState === RideState.PICKINGUP || this.rideState === RideState.CONFIRMED) {
+              if (this.driverLocation) {
+                this.calculateDriverRoute();
+              }
+            } else if (this.rideState === RideState.ONGOING) {
+              this.calculateRouteToDestination();
+            }
+          }
+          
+          this.cdr.detectChanges();
+        }
+      },
+      error: (err) => {
+        console.error('Error fetching active ride data:', err);
+      }
+    });
   }
 
   private loadBookingTypes(): void {

@@ -53,4 +53,7 @@ export class RideService extends ApiService {
   cancelPendingRide(rideRequestId: string): Observable<any> {
     return this.delete<any>(`/rides/${rideRequestId}/cancel-pending`);
   }
+  getActiveRide(userId: string): Observable<RideResponse | null> {
+    return this.get<RideResponse | null>(`/rides/active/${userId}`);
+  }
 }
