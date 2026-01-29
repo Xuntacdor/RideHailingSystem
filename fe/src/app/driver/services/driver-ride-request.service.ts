@@ -10,6 +10,8 @@ export interface RideRequestNotification {
     customerName: string;
     startLocation: string;
     endLocation: string;
+    startAddress?: string;
+    endAddress?: string;
     startLatitude: number;
     startLongitude: number;
     endLatitude: number;
