@@ -31,6 +31,16 @@ import {
   Map,
   ChevronRight,
   Star,
+  Plus,
+  MoreHorizontal,
+  X,
+  ArrowUpDown,
+  Filter,
+  Download,
+  Trash2,
+  Edit,
+  Eye,
+  EyeOff,
 } from 'lucide-angular';
 
 export const appConfig: ApplicationConfig = {
@@ -67,6 +77,16 @@ export const appConfig: ApplicationConfig = {
         Map,
         ChevronRight,
         Star,
+        Plus,
+        MoreHorizontal,
+        X,
+        ArrowUpDown,
+        Filter,
+        Download,
+        Trash2,
+        Edit,
+        Eye,
+        EyeOff,
       })
     ),
   ],

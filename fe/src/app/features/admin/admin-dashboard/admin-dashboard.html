@@ -5,18 +5,7 @@
         <app-header />
 
         <main class="p-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                @for (stat of stats(); track stat.title) {
-                <app-stat-card [title]="stat.title" [value]="stat.value" [changePercentage]="stat.changePercentage"
-                    [icon]="stat.icon" [subtitle]="stat.subtitle || ''" />
-                }
-            </div>
-
-            <div class="mb-6">
-                <app-active-ride />
-            </div>
-
-            <app-booking-table />
+            <router-outlet></router-outlet>
         </main>
     </div>
 </div>
