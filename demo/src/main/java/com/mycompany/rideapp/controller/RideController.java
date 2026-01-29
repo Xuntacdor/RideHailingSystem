@@ -133,4 +133,13 @@ public class RideController {
             return ResponseEntity.status(500).body(errorResponse);
         }
     }
+
+    @GetMapping("/active/{userId}")
+    public ResponseEntity<RideResponse> getActiveRide(@PathVariable String userId) {
+        RideResponse activeRide = rideService.getActiveRide(userId);
+        if (activeRide == null) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(activeRide);
+    }
 }
