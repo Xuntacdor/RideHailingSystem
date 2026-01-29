@@ -108,28 +108,20 @@ public class RideService {
             @Override
             public void run() {
                 try {
-                    log.info("[RETRY_TASK] === START Retry {} for ride request {} ===", 
-                        retryCount + 1, pendingRide.getRideRequestId());
                     
                     if (isCancelled.get()) {
-                        log.info("[RETRY_TASK] Task cancelled for ride request {}", 
-                            pendingRide.getRideRequestId());
                         cleanupPendingRide(pendingRide.getRideRequestId());
                         return;
                     }
                     
                     if (pendingRide.getAccepted().get()) {
-                        log.info("[RETRY_TASK] Ride accepted, stopping task for {}", 
-                            pendingRide.getRideRequestId());
+
                         cleanupPendingRide(pendingRide.getRideRequestId());
                         return;
                     }
 
                     retryCount++;
                     
-                    // Fetch fresh drivers
-                    log.info("[RETRY_TASK] Fetching drivers for retry {} of ride {}", 
-                        retryCount, pendingRide.getRideRequestId());
                     
                     List<DriverResponse> freshDrivers = driverService.getNearestDrivers(
                         pendingRide.getRequest().getCustomerLatitude(),
@@ -138,38 +130,26 @@ public class RideService {
                         pendingRide.getRequest().getVehicleType()
                     );
                     
-                    log.info("[RETRY_TASK] Retry {} got {} drivers from database", 
-                        retryCount, freshDrivers.size());
+
 
                     List<String> freshDriverIds = freshDrivers.stream()
                         .map(DriverResponse::getId)
                         .filter(id -> !pendingRide.getRejectedDriverIds().contains(id))
                         .collect(Collectors.toList());
                     
-                    log.info("[RETRY_TASK] After filtering rejected drivers: {} available", 
-                        freshDriverIds.size());
+
                     
                     if (!freshDriverIds.isEmpty()) {
-                        log.info("[RETRY_TASK] Found {} new drivers, resetting driver list", 
-                            freshDriverIds.size());
                         pendingRide.setDriverIds(freshDriverIds);
                         pendingRide.setCurrentDriverIndex(0);
                         sendNotificationToCurrentDriver(pendingRide);
                         return; 
                     }
 
-                    log.info("[RETRY_TASK] No new drivers found, moving to next driver in list");
                     handleDriverRejection(pendingRide);
 
                     if (pendingRide.getCurrentDriverIndex() >= pendingRide.getDriverIds().size() 
                         || retryCount >= maxRetries) {
-                        log.warn("[RETRY_TASK] Exhausted all options for ride request {} " +
-                            "(index: {}/{}, retries: {}/{})", 
-                            pendingRide.getRideRequestId(),
-                            pendingRide.getCurrentDriverIndex(),
-                            pendingRide.getDriverIds().size(),
-                            retryCount,
-                            maxRetries);
                         notificationService.notifyNoDriverAvailable(
                             pendingRide.getRequest().getCustomerId(),
                             pendingRide.getRideRequestId());
@@ -177,19 +157,12 @@ public class RideService {
                         isCancelled.set(true);
                     }
                     
-                    log.info("[RETRY_TASK] === END Retry {} for ride request {} ===", 
-                        retryCount, pendingRide.getRideRequestId());
                         
                 } catch (Exception e) {
-                    log.error("[RETRY_TASK] ERROR in retry task for ride request {}: {}", 
-                        pendingRide.getRideRequestId(), e.getMessage(), e);
-                    // Don't cancel - let it retry again
+                    // Don't cancel - let it retry again 
                 }
             }
         };
-
-        log.info("[RETRY_TASK] Scheduling task for ride request {} with 10s intervals", 
-            pendingRide.getRideRequestId());
         ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(
             retryTask, 10, 10, TimeUnit.SECONDS);
         scheduledTasks.put(pendingRide.getRideRequestId(), future);
@@ -487,12 +460,17 @@ public class RideService {
                 pendingRides.size(), scheduledTasks.size());
     }
 
+    public RideResponse getActiveRide(String userId) {
+        return rideRepository.findActiveRideByUserId(userId)
+                .map(rideMapper::toResponse)
+                .orElse(null);
+    }
+
     @PreDestroy
     public void cleanup() {
         scheduledTasks.values().forEach(task -> task.cancel(false));
         scheduler.shutdown();
     }
-
 
     //DEBUG 
     @PostConstruct
