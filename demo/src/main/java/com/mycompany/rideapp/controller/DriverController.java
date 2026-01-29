@@ -113,4 +113,15 @@ public class DriverController {
                                 .results(driverService.getNearestDrivers(lat, lng, limit, vehicleType))
                                 .build();
         }
+
+        @GetMapping("/nearby")
+        public ApiResponse<List<DriverResponse>> getNearbyDrivers(
+                        @RequestParam Double lat,
+                        @RequestParam Double lng,
+                        @RequestParam(defaultValue = "12") double zoom) {
+                return ApiResponse.<List<DriverResponse>>builder()
+                                .code(200)
+                                .results(driverService.getDriversByLocation(lat, lng, zoom))
+                                .build();
+        }
 }

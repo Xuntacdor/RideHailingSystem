@@ -24,4 +24,11 @@ public interface DriverRepository extends JpaRepository<Driver, String> {
         List<Driver> findNearestDrivers(@Param("lat") Double lat, @Param("lng") Double lng,
                         org.springframework.data.domain.Pageable pageable);
 
+        @Query("SELECT d FROM Driver d WHERE d.driverStatus = com.mycompany.rideapp.enums.AccountStatus.ACTIVE " +
+                        "AND d.latitude IS NOT NULL AND d.longitude IS NOT NULL " +
+                        "AND d.latitude BETWEEN :minLat AND :maxLat " +
+                        "AND d.longitude BETWEEN :minLng AND :maxLng")
+        List<Driver> findDriversByLocationBounds(@Param("minLat") Double minLat, @Param("maxLat") Double maxLat,
+                        @Param("minLng") Double minLng, @Param("maxLng") Double maxLng);
+
 }
