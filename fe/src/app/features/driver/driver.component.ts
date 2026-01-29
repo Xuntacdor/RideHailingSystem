@@ -185,18 +185,27 @@ export class DriverComponent implements OnInit, OnDestroy {
   }
 
   private async showRideRequestNotification(notification: RideRequestNotification): Promise<void> {
-    let startLocation = notification.startLocation;
-    let endLocation = notification.endLocation;
+    // Use startAddress and endAddress from backend if available, otherwise fallback to reverse geocode
+    let startLocation = notification.startAddress || notification.startLocation;
+    let endLocation = notification.endAddress || notification.endLocation;
 
-    try {
-      if (notification.startLatitude && notification.startLongitude) {
+    // Only reverse geocode if address is not provided
+    if (!startLocation && notification.startLatitude && notification.startLongitude) {
+      try {
         startLocation = await this.trackAsiaService.reverseGeocode(notification.startLongitude, notification.startLatitude);
+      } catch (e) {
+        console.error('Error reverse geocoding start location:', e);
+        startLocation = 'Đang cập nhật...';
       }
-      if (notification.endLatitude && notification.endLongitude) {
+    }
+    
+    if (!endLocation && notification.endLatitude && notification.endLongitude) {
+      try {
         endLocation = await this.trackAsiaService.reverseGeocode(notification.endLongitude, notification.endLatitude);
+      } catch (e) {
+        console.error('Error reverse geocoding end location:', e);
+        endLocation = 'Đang cập nhật...';
       }
-    } catch (e) {
-      console.error('Error reverse geocoding:', e);
     }
 
     this.currentRideRequest = {

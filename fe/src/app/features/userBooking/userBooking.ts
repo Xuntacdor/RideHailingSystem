@@ -179,8 +179,8 @@ export class UserBookingComponent implements OnInit, OnDestroy {
               name: rideData.driver.user?.name || 'Tài xế',
               avatarUrl: rideData.driver.avatarUrl || 'assets/images/default-avatar.png',
               rating: rideData.driver.rating || 4.5,
-              vehicleModel: 'Vehicle', 
-              vehiclePlate: 'N/A', 
+              vehicleModel: rideData.driver.vehicleModel || 'Vehicle', 
+              vehiclePlate: rideData.driver.vehiclePlate || 'N/A', 
               phoneNumber: rideData.driver.user?.phoneNumber || 'N/A'
             };
             
@@ -306,6 +306,8 @@ export class UserBookingComponent implements OnInit, OnDestroy {
         vehicleType: this.mapVehicleTypeToBackend(vehicleType),
         startTime: Date.now(),
         rideDate: new Date().toISOString().split('T')[0],
+        startAddress: this.origin!.name,
+        endAddress: this.destination!.name,
       };
       console.log('Creating ride with request:', rideRequest.rideDate);
 

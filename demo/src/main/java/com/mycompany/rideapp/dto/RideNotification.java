@@ -22,6 +22,8 @@ public class RideNotification {
     Double startLongitude;
     Double endLatitude;
     Double endLongitude;
+    String startAddress;
+    String endAddress;
     Long distance;
     Long fare;
     VehicleType vehicleType;

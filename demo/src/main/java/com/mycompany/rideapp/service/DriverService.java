@@ -159,6 +159,29 @@ public class DriverService {
         notificationService.notifyDriverPositionUpdate(id, driver.getLatitude(), driver.getLongitude());
     }
 
+    @Transactional(readOnly = true)
+    public List<DriverResponse> getDriversByLocation(Double lat, Double lng, double zoom) {
+        double radiusInKm = calculateRadiusFromZoom(zoom);
+        
+        double latDelta = radiusInKm / 111.0;
+        double lngDelta = radiusInKm / (111.0 * Math.cos(Math.toRadians(lat)));
+        
+        double minLat = lat - latDelta;
+        double maxLat = lat + latDelta;
+        double minLng = lng - lngDelta;
+        double maxLng = lng + lngDelta;
+        
+        List<Driver> drivers = driverRepository.findDriversByLocationBounds(minLat, maxLat, minLng, maxLng);
+        
+        return drivers.stream()
+                .map(driverMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+    
+    private double calculateRadiusFromZoom(double zoom) {
+        return 40000.0 / Math.pow(2, zoom);
+    }
+
 
 
 }

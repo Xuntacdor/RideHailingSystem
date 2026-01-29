@@ -35,6 +35,24 @@ public class DriverMapper {
     public DriverResponse toResponse(Driver driver) {
         if (driver == null)
             return null;
+        
+        String vehicleType = null;
+        String vehicleModel = null;
+        String vehiclePlate = null;
+        
+        if (driver.getVehicleRegister() != null && !driver.getVehicleRegister().isEmpty()) {
+            var activeVehicle = driver.getVehicleRegister().stream()
+                    .filter(v -> v.getStatus() == com.mycompany.rideapp.enums.VehicleStatus.ACTIVE)
+                    .findFirst();
+            
+            if (activeVehicle.isPresent()) {
+                var vehicle = activeVehicle.get();
+                vehicleType = vehicle.getVehicleType();
+                vehicleModel = vehicle.getVehicleBrand();
+                vehiclePlate = vehicle.getVehicleNumber();
+            }
+        }
+        
         return DriverResponse.builder()
                 .id(driver.getId())
                 .user(driver.getUser() != null ? userMapper.toResponse(driver.getUser()) : null)
@@ -43,6 +61,11 @@ public class DriverMapper {
                 .address(driver.getAddress())
                 .avatarUrl(driver.getAvatarUrl())
                 .rating(driver.getRating())
+                .latitude(driver.getLatitude())
+                .longitude(driver.getLongitude())
+                .vehicleType(vehicleType)
+                .vehicleModel(vehicleModel)
+                .vehiclePlate(vehiclePlate)
                 .vehicleIds(driver.getVehicleRegister() != null
                         ? driver.getVehicleRegister().stream()
                                 .map(vehicle -> vehicle.getId())
