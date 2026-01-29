@@ -85,6 +85,12 @@ export interface DriverResponse {
   imageUrl?: string;
   createdAt: string;
   updatedAt: string;
+  latitude?: number;
+  longitude?: number;
+  vehicleType?: string;
+  vehicleIds?: string[];
+  vehicleModel?: string;
+  vehiclePlate?: string;
 }
 
 export interface DriverRequest {
@@ -104,6 +110,8 @@ export interface RideResponse {
   dropoffLocation?: string; // Backend uses endLocation
   startLocation: string;
   endLocation: string;
+  startAddress?: string;
+  endAddress?: string;
   status: string;
   fare: number;
   distance: number;
@@ -134,6 +142,8 @@ export interface RideRequest {
   status?: string;
   vehicleType: string;
   rideDate?: string;
+  endAddress?:string;
+  startAddress?:string;
 }
 
 export interface CreateRideResponse {

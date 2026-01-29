@@ -131,7 +131,6 @@ export class BookedRideInfoComponent {
   }
 
   canCancelRide(): boolean {
-    // Only allow cancellation for CONFIRMED and PICKINGUP states
     return this.rideStatus === 'CONFIRMED' || this.rideStatus === 'PICKINGUP';
   }
 
