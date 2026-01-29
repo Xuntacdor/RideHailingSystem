@@ -225,8 +225,10 @@ export interface RateRequest {
 export interface SupportTicketResponse {
   id: string;
   userId: string;
+  userName?: string;
   agentId?: string;
-  subject: string;
+  assignedAgentName?: string;
+  title: string;
   description: string;
   status: string;
   priority: string;
