@@ -308,3 +308,12 @@ export interface DriverPositionUpdate {
   timestamp: string;
   bearing?: number;
 }
+
+// Pageable response
+export interface Page<T> {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
+}
