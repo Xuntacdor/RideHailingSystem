@@ -33,6 +33,16 @@ export const routes: Routes = [
     children: [
       { path: '', loadComponent: () => import('./features/admin/admin-home/admin-home.component').then(m => m.AdminHomeComponent) },
       { path: 'users', loadComponent: () => import('./features/admin/user-management/user-management.component').then(m => m.UserManagementComponent) },
+
+      {
+        path: 'reports',
+        loadComponent: () => import('./features/admin/reports/ticket-list/ticket-list.component').then(m => m.TicketListComponent)
+      },
+      {
+        path: 'reports/:id',
+        loadComponent: () => import('./features/admin/reports/ticket-workspace/ticket-workspace.component').then(m => m.TicketWorkspaceComponent)
+      }
+
       { path: 'driver', component: DriverManagementComponent}
     ]
   },

@@ -248,14 +248,21 @@ export class UserManagementComponent implements OnInit {
 
     loadUsers() {
         this.loading.set(true);
-        this.userService.getAllUsers().subscribe({
-            next: (data: any) => {
-                // Handle both standard response or direct array
-                const userList = Array.isArray(data) ? data : (data.results || []);
-                this.users.set(userList);
+        this.userService.getAllUsers(0, 10).subscribe({
+            next: (response: any) => {
+                console.log('Dữ liệu Server trả về:', response);
+
+                // SỬA Ở ĐÂY: Dữ liệu nằm trực tiếp trong response.content
+                // (Không phải response.results.content)
+                if (response && response.content) {
+                    this.users.set(response.content); // <--- Sửa dòng này
+                } else {
+                    this.users.set([]);
+                }
+
                 this.loading.set(false);
             },
-            error: (err: any) => {
+            error: (err) => {
                 console.error('Failed to load users', err);
                 this.loading.set(false);
             }
