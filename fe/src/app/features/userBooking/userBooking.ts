@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 // Services
@@ -15,13 +16,24 @@ import { MapComponent } from '../../components/userBooking/map/map.component';
 import { VehicleSelectionComponent } from '../../components/userBooking/vehicle-selection/vehicle-selection.component';
 import { LocationSearchComponent } from '../../components/userBooking/location-search/location-search.component';
 import { RouteInfoComponent } from '../../components/userBooking/route-info/route-info.component';
-import { CustomerNotificationModalComponent, RideNotification } from '../../components/customer-notification-modal/customer-notification-modal.component';
+import {
+  CustomerNotificationModalComponent,
+  RideNotification,
+} from '../../components/customer-notification-modal/customer-notification-modal.component';
 import { BookedRideInfoComponent } from '../../components/userBooking/booked-ride-info/booked-ride-info.component';
-import { RateDriverModalComponent, RideCompletionData } from "../../components/userBooking/rate-driver-modal/rate-driver-modal.component";
+import {
+  RateDriverModalComponent,
+  RideCompletionData,
+} from '../../components/userBooking/rate-driver-modal/rate-driver-modal.component';
 import { PendingBookingComponent } from '../../components/userBooking/pending-booking.component';
+import { UserHeaderComponent } from '../../components/userBooking/user-header/user-header.component';
 // Models
 import { Coordinate, SearchResult, RouteInfo, VehicleType, Driver } from '../../models/models';
-import { jwtPayload, RideRequest, DriverPositionUpdate } from '../../core/models/api-response.model';
+import {
+  jwtPayload,
+  RideRequest,
+  DriverPositionUpdate,
+} from '../../core/models/api-response.model';
 
 enum RideState {
   IDLE = 'IDLE',
@@ -30,7 +42,7 @@ enum RideState {
   PICKINGUP = 'PICKINGUP',
   ONGOING = 'ONGOING',
   FINISHED = 'FINISHED',
-  CANCELLED = 'CANCELLED'
+  CANCELLED = 'CANCELLED',
 }
 
 interface RouteGeometry {
@@ -50,10 +62,11 @@ interface RouteGeometry {
     CustomerNotificationModalComponent,
     BookedRideInfoComponent,
     RateDriverModalComponent,
-    PendingBookingComponent
+    PendingBookingComponent,
+    UserHeaderComponent,
   ],
   templateUrl: './userBooking.html',
-  styleUrls: []
+  styleUrls: [],
 })
 export class UserBookingComponent implements OnInit, OnDestroy {
   // Constants
@@ -120,7 +133,8 @@ export class UserBookingComponent implements OnInit, OnDestroy {
     private rideService: RideService,
     private rideStatusUpdateService: RideStatusUpdateService,
     private driverPosUpdateService: DriverPosUpdateService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router: Router
   ) {
     this.jwtPayload = this.authService.getUserInfo();
     this.userName = this.jwtPayload?.name || '';
@@ -129,7 +143,6 @@ export class UserBookingComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadBookingTypes();
   }
-
 
   private loadBookingTypes(): void {
     const sub = this.bookingTypeService.getAllBookingTypes().subscribe({
@@ -142,7 +155,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
         console.error('Error loading booking types:', error);
         this.bookingTypes = [];
         this.isBookingTypesLoaded = false;
-      }
+      },
     });
     this.subscriptions.add(sub);
   }
@@ -161,14 +174,14 @@ export class UserBookingComponent implements OnInit, OnDestroy {
       this.origin = {
         lng: event.lng,
         lat: event.lat,
-        name: address || 'Vị trí của bạn'
+        name: address || 'Vị trí của bạn',
       };
     } catch (error) {
       console.error('Error detecting user location:', error);
       this.origin = {
         lng: event.lng,
         lat: event.lat,
-        name: 'Vị trí của bạn'
+        name: 'Vị trí của bạn',
       };
     }
   }
@@ -230,7 +243,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
           if (error?.error?.code === 1052) {
             this.showNoDriverModal({
               rideRequestId: `failed-${Date.now()}`,
-              message: 'Rất tiếc, hiện không có tài xế nào gần đây.'
+              message: 'Rất tiếc, hiện không có tài xế nào gần đây.',
             });
           } else {
             const errorMessage = this.parseErrorMessage(error);
@@ -240,7 +253,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
           this.isBookingInProgress = false;
           this.loading = false;
           this.cdr.detectChanges();
-        }
+        },
       });
 
       this.subscriptions.add(sub);
@@ -266,17 +279,25 @@ export class UserBookingComponent implements OnInit, OnDestroy {
     }
 
     if (!this.routeInfo) {
-      return { valid: false, error: 'Không thể tính toán lộ trình. Vui lòng thử chọn lại địa điểm.' };
+      return {
+        valid: false,
+        error: 'Không thể tính toán lộ trình. Vui lòng thử chọn lại địa điểm.',
+      };
     }
 
-    if (!this.isValidCoordinate(this.origin.lat, this.origin.lng) ||
-      !this.isValidCoordinate(this.destination.lat, this.destination.lng)) {
+    if (
+      !this.isValidCoordinate(this.origin.lat, this.origin.lng) ||
+      !this.isValidCoordinate(this.destination.lat, this.destination.lng)
+    ) {
       return { valid: false, error: 'Tọa độ không hợp lệ. Vui lòng chọn địa điểm hợp lệ.' };
     }
 
     const minDistance = 0.1;
     if (this.routeInfo.distance < minDistance) {
-      return { valid: false, error: 'Điểm đón và điểm đến quá gần nhau. Khoảng cách tối thiểu là 100m.' };
+      return {
+        valid: false,
+        error: 'Điểm đón và điểm đến quá gần nhau. Khoảng cách tối thiểu là 100m.',
+      };
     }
 
     return { valid: true };
@@ -287,12 +308,12 @@ export class UserBookingComponent implements OnInit, OnDestroy {
   }
 
   private calculateFare(vehicleType: VehicleType, distance: number, duration: number): number {
-    const bookingType = this.bookingTypes.find(bt => bt.vehicleType === vehicleType.toString());
+    const bookingType = this.bookingTypes.find((bt) => bt.vehicleType === vehicleType.toString());
 
     if (bookingType) {
       const { baseFare, pricePerKm, pricePerMinute } = bookingType;
       const extraDistance = Math.max(0, distance - 2);
-      const total = baseFare + (extraDistance * pricePerKm) + (duration * pricePerMinute);
+      const total = baseFare + extraDistance * pricePerKm + duration * pricePerMinute;
       return Math.round(total / 1000) * 1000;
     }
 
@@ -302,7 +323,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
     const pricePerMinute = 1000;
     const multiplier = vehicleType === VehicleType.CAR ? 2.5 : 1.0;
     const extraDistance = Math.max(0, distance - 2);
-    const total = (baseFare + (extraDistance * pricePerKm) + (duration * pricePerMinute)) * multiplier;
+    const total = (baseFare + extraDistance * pricePerKm + duration * pricePerMinute) * multiplier;
     return Math.round(total / 1000) * 1000;
   }
 
@@ -356,7 +377,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
     this.destination = {
       lng: result.lng,
       lat: result.lat,
-      name: result.display
+      name: result.display,
     };
 
     if (this.origin && this.destination) {
@@ -379,7 +400,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
         this.routeInfo = {
           distance: routeData.distance / 1000,
           duration: routeData.duration / 60,
-          steps: this.extractRouteSteps(routeData.instructions || [])
+          steps: this.extractRouteSteps(routeData.instructions || []),
         };
         this.routeGeometry = routeData.geometry;
       }
@@ -437,12 +458,11 @@ export class UserBookingComponent implements OnInit, OnDestroy {
         this.routeInfo = {
           distance: routeData.distance / 1000,
           duration: routeData.duration / 60,
-          steps: this.routeInfo?.steps || []
+          steps: this.routeInfo?.steps || [],
         };
         this.cdr.detectChanges();
       }
-    } catch (error) {
-    }
+    } catch (error) { }
   }
 
   onClearRoute(): void {
@@ -450,7 +470,6 @@ export class UserBookingComponent implements OnInit, OnDestroy {
     this.routeGeometry = null;
     this.destination = null;
   }
-
 
   private subscribeToRideUpdates(): void {
     const customerId = this.jwtPayload?.userId;
@@ -473,12 +492,11 @@ export class UserBookingComponent implements OnInit, OnDestroy {
         },
         complete: () => {
           console.log('WebSocket subscription completed');
-        }
+        },
       });
   }
 
   private handleRideNotification(update: any): void {
-
     switch (update.type) {
       case 'RIDE_ACCEPTED':
         this.currentRideId = update.rideId;
@@ -511,7 +529,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
       rating: update.driverRating || 4.5,
       vehicleModel: update.vehicleModel || 'Vehicle',
       vehiclePlate: update.vehiclePlate || 'N/A',
-      phoneNumber: update.driverPhone || 'N/A'
+      phoneNumber: update.driverPhone || 'N/A',
     };
 
     this.driverInfo = driverDetails;
@@ -520,7 +538,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
       type: 'RIDE_ACCEPTED',
       rideId: update.rideId,
       driverId: update.driverId,
-      driverData: driverDetails
+      driverData: driverDetails,
     };
     this.showNotificationModal = true;
 
@@ -529,7 +547,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
         driverId: update.driverId,
         lat: update.driverLat,
         lng: update.driverLng,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     } else {
       console.warn('No initial driver location provided in RIDE_ACCEPTED notification');
@@ -541,7 +559,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
       type: 'RIDE_STATUS_UPDATE',
       rideId: update.rideId,
       status: update.status,
-      timestamp: update.timestamp
+      timestamp: update.timestamp,
     };
     this.showNotificationModal = true;
   }
@@ -551,21 +569,20 @@ export class UserBookingComponent implements OnInit, OnDestroy {
     this.notificationData = {
       type: 'NO_DRIVER_AVAILABLE',
       rideRequestId: update.rideRequestId,
-      message: update.message || 'Không có tài xế nào khả dụng lúc này'
+      message: update.message || 'Không có tài xế nào khả dụng lúc này',
     };
     this.showNotificationModal = true;
   }
 
   private showCancellationModal(update: any): void {
-    const message = update.cancelledBy === 'DRIVER' ?
-      'Tài xế đã hủy chuyến đi' :
-      'Chuyến đi đã bị hủy';
+    const message =
+      update.cancelledBy === 'DRIVER' ? 'Tài xế đã hủy chuyến đi' : 'Chuyến đi đã bị hủy';
 
     this.notificationData = {
       type: 'RIDE_CANCELLED',
       rideId: update.rideId,
       message: message,
-      timestamp: update.timestamp
+      timestamp: update.timestamp,
     };
     this.showNotificationModal = true;
 
@@ -588,7 +605,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error('Driver position subscription error:', err);
-        }
+        },
       });
   }
 
@@ -602,9 +619,8 @@ export class UserBookingComponent implements OnInit, OnDestroy {
       lng: update.lng,
       lat: update.lat,
       rating: this.notificationData?.driverData?.rating || 4.5,
-      icon: this.selectedVehicle === VehicleType.CAR ? '🚗' : '🏍️'
+      icon: this.selectedVehicle === VehicleType.CAR ? '🚗' : '🏍️',
     };
-
 
     if (this.driverLocation) {
       this.calculateDriverRouteDebounced(this.driverLocation);
@@ -612,13 +628,12 @@ export class UserBookingComponent implements OnInit, OnDestroy {
   }
 
   private async handleRideStatusUpdate(update: any): Promise<void> {
-
     if (update.driverId && update.driverLat && update.driverLng) {
       await this.updateDriverLocation({
         driverId: update.driverId,
         lat: update.driverLat,
         lng: update.driverLng,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
 
@@ -647,8 +662,11 @@ export class UserBookingComponent implements OnInit, OnDestroy {
         break;
     }
 
-    if ((this.rideState === RideState.PICKINGUP || this.rideState === RideState.CONFIRMED)
-      && this.driverLocation && previousState === this.rideState) {
+    if (
+      (this.rideState === RideState.PICKINGUP || this.rideState === RideState.CONFIRMED) &&
+      this.driverLocation &&
+      previousState === this.rideState
+    ) {
       await this.calculateDriverRoute();
     }
 
@@ -685,7 +703,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
     this.completionRideData = {
       rideId: this.currentRideId,
       driverId: update.driverId,
-      customerId: this.jwtPayload.userId
+      customerId: this.jwtPayload.userId,
     };
 
     this.showRateDriverModal = true;
@@ -761,9 +779,10 @@ export class UserBookingComponent implements OnInit, OnDestroy {
     console.log(`Canceling ${this.rideState} ride...`);
 
     // Use cancelPendingRide for PENDING state (with rideRequestId), cancelRide for CONFIRMED/PICKINGUP (with rideId)
-    const cancelRequest$ = this.rideState === RideState.PENDING
-      ? this.rideService.cancelPendingRide(this.currentRideRequestId!)
-      : this.rideService.cancelRide(this.currentRideId!, this.jwtPayload!.userId, 'USER');
+    const cancelRequest$ =
+      this.rideState === RideState.PENDING
+        ? this.rideService.cancelPendingRide(this.currentRideRequestId!)
+        : this.rideService.cancelRide(this.currentRideId!, this.jwtPayload!.userId, 'USER');
 
     const sub = cancelRequest$.subscribe({
       next: () => {
@@ -777,7 +796,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
         this.loading = false;
         this.showErrorNotification('Failed to cancel ride. Please try again.');
         this.cdr.detectChanges();
-      }
+      },
     });
 
     this.subscriptions.add(sub);
@@ -822,7 +841,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
       [RideState.PICKINGUP]: 'Tài xế đang đến',
       [RideState.ONGOING]: 'Đang trong chuyến đi',
       [RideState.FINISHED]: 'Chuyến đi hoàn tất',
-      [RideState.CANCELLED]: 'Đã hủy chuyến'
+      [RideState.CANCELLED]: 'Đã hủy chuyến',
     };
     return statusMap[this.rideState] || '';
   }
@@ -875,7 +894,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
         }
         return instruction || `Bước ${index + 1}`;
       })
-      .filter(step => step.length > 0);
+      .filter((step) => step.length > 0);
   }
 
   private async calculateRouteToDestination(): Promise<void> {
@@ -893,13 +912,13 @@ export class UserBookingComponent implements OnInit, OnDestroy {
         this.routeInfo = {
           distance: routeData.distance / 1000,
           duration: routeData.duration / 60,
-          steps: this.extractRouteSteps(routeData.instructions || [])
+          steps: this.extractRouteSteps(routeData.instructions || []),
         };
         this.routeGeometry = routeData.geometry;
 
         console.log('Route to destination calculated:', {
           distance: this.routeInfo.distance,
-          duration: this.routeInfo.duration
+          duration: this.routeInfo.duration,
         });
 
         this.cdr.detectChanges();
@@ -916,8 +935,10 @@ export class UserBookingComponent implements OnInit, OnDestroy {
 
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(this.toRadians(lat1)) * Math.cos(this.toRadians(lat2)) *
-      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      Math.cos(this.toRadians(lat1)) *
+      Math.cos(this.toRadians(lat2)) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
 
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
@@ -925,6 +946,11 @@ export class UserBookingComponent implements OnInit, OnDestroy {
 
   private toRadians(degrees: number): number {
     return degrees * (Math.PI / 180);
+  }
+
+  onAvatarClick(): void {
+    console.log('Avatar clicked - user:', this.userName);
+    this.router.navigate(['/profile']);
   }
 
   // ============================================================================

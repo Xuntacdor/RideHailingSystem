@@ -1,0 +1,147 @@
+<div class="min-h-screen bg-gray-50 pb-6">
+    <!-- Header -->
+    <div class="bg-white shadow-sm sticky top-0 z-10 px-4 py-3 flex items-center gap-3">
+        <button type="button" (click)="goBack()" class="p-2 -ml-2 rounded-full hover:bg-gray-100 text-gray-600">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+        </button>
+        <h2 class="text-lg font-bold text-gray-800">Báo cáo sự cố</h2>
+    </div>
+
+    <!-- Form -->
+    <form [formGroup]="reportForm" (ngSubmit)="onSubmit()" class="px-4 py-6 space-y-5">
+        <!-- Info Banner -->
+        <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex gap-3">
+            <svg class="w-6 h-6 text-blue-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                    clip-rule="evenodd" />
+            </svg>
+            <div>
+                <h3 class="font-semibold text-blue-900 text-sm mb-1">Chúng tôi luôn lắng nghe</h3>
+                <p class="text-xs text-blue-700">Mô tả chi tiết vấn đề để chúng tôi hỗ trợ bạn tốt nhất.</p>
+            </div>
+        </div>
+
+        <!-- Category Selection -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm">
+            <label class="block text-sm font-semibold text-gray-900 mb-3">
+                Loại vấn đề <span class="text-red-500">*</span>
+            </label>
+            <div class="grid grid-cols-2 gap-3">
+                @for (category of issueCategories; track category.value) {
+                <label
+                    class="relative flex items-center gap-3 p-3 border-2 rounded-xl cursor-pointer transition-all hover:border-blue-300"
+                    [class.border-blue-600]="reportForm.get('category')?.value === category.value"
+                    [class.bg-blue-50]="reportForm.get('category')?.value === category.value"
+                    [class.border-gray-200]="reportForm.get('category')?.value !== category.value">
+                    <input type="radio" [value]="category.value" formControlName="category" class="sr-only">
+                    <span class="text-2xl">{{ category.label.split(' ')[0] }}</span>
+                    <span class="text-xs font-medium text-gray-700 flex-1">
+                        {{ category.label.substring(category.label.indexOf(' ') + 1) }}
+                    </span>
+                    @if (reportForm.get('category')?.value === category.value) {
+                    <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    }
+                </label>
+                }
+            </div>
+            @if (reportForm.get('category')?.invalid && reportForm.get('category')?.touched) {
+            <p class="mt-2 text-xs text-red-600">Vui lòng chọn loại vấn đề</p>
+            }
+        </div>
+
+        <!-- Title Input -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm">
+            <label for="title" class="block text-sm font-semibold text-gray-900 mb-2">
+                Tiêu đề <span class="text-red-500">*</span>
+            </label>
+            <input type="text" id="title" formControlName="title"
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                placeholder="Tóm tắt vấn đề của bạn">
+            <div class="mt-2 flex items-center justify-between">
+                <div class="text-xs space-y-1">
+                    @if (reportForm.get('title')?.hasError('required') && reportForm.get('title')?.touched) {
+                    <p class="text-red-600">Vui lòng nhập tiêu đề</p>
+                    }
+                    @if (reportForm.get('title')?.hasError('minlength')) {
+                    <p class="text-red-600">Tiêu đề phải có ít nhất 5 ký tự</p>
+                    }
+                </div>
+                <span class="text-xs text-gray-500">
+                    {{ reportForm.get('title')?.value?.length || 0 }}/200
+                </span>
+            </div>
+        </div>
+
+        <!-- Description Textarea -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm">
+            <label for="description" class="block text-sm font-semibold text-gray-900 mb-2">
+                Mô tả chi tiết <span class="text-red-500">*</span>
+            </label>
+            <textarea id="description" formControlName="description" rows="6"
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
+                placeholder="Mô tả chi tiết vấn đề bạn gặp phải..."></textarea>
+            <div class="mt-2 flex items-center justify-between">
+                <div class="text-xs space-y-1">
+                    @if (reportForm.get('description')?.hasError('required') &&
+                    reportForm.get('description')?.touched) {
+                    <p class="text-red-600">Vui lòng nhập mô tả</p>
+                    }
+                    @if (reportForm.get('description')?.hasError('minlength')) {
+                    <p class="text-red-600">Mô tả phải có ít nhất 20 ký tự</p>
+                    }
+                </div>
+                <span class="text-xs text-gray-500">
+                    {{ reportForm.get('description')?.value?.length || 0 }}/2000
+                </span>
+            </div>
+        </div>
+
+        <!-- Tips -->
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+            <h4 class="font-semibold text-amber-900 text-sm mb-2">💡 Mẹo để được hỗ trợ nhanh hơn:</h4>
+            <ul class="space-y-1 text-xs text-amber-800">
+                <li class="flex items-start gap-2">
+                    <span class="text-amber-600">•</span>
+                    <span>Cung cấp thông tin cụ thể về thời gian và địa điểm</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-amber-600">•</span>
+                    <span>Đính kèm ảnh chụp màn hình nếu có thể</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-amber-600">•</span>
+                    <span>Mô tả các bước dẫn đến vấn đề</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" [disabled]="reportForm.invalid || isSubmitting()"
+            class="w-full bg-blue-600 text-white font-semibold py-4 rounded-xl hover:bg-blue-700 active:scale-[0.98] transition-all disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+            @if (isSubmitting()) {
+            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                </path>
+            </svg>
+            <span>Đang gửi...</span>
+            } @else {
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+            <span>Gửi báo cáo</span>
+            }
+        </button>
+    </form>
+</div>

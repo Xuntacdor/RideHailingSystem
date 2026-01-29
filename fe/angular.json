@@ -74,7 +74,8 @@
           }
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@ngx-env/builder:unit-test",
+          "options": {}
         }
       }
     }
