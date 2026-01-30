@@ -126,5 +126,15 @@ public class UserController {
                         @RequestParam int size) {
                 return userService.getUsers(PageRequest.of(page, size));
         }
+        @GetMapping("/find")
+        public ApiResponse<List<UserResponse>> searchUsers(
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) String keyword) {
+            
+                return ApiResponse.<List<UserResponse>>builder()
+                        .code(200)
+                        .results(userService.searchAndFilterUsers(role, keyword))
+                        .build();
+    }
 
 }

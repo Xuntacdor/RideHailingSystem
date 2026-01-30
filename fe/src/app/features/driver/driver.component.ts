@@ -26,7 +26,6 @@ export class DriverComponent implements OnInit, OnDestroy {
   isOnline = false;
   driverAvatar = 'assets/avatar.png';
   driverId: string | null = null;
-  interval: any;
 
   private rideRequestSubscription?: Subscription;
   showRideRequestModal = false;
@@ -62,8 +61,7 @@ export class DriverComponent implements OnInit, OnDestroy {
     this.rideService.getActiveRide(this.driverId!).subscribe({
       next: (rideData) => {
         if (rideData) {
-          console.log('Found active ride on reload:', rideData);
-          
+          this.driverService.updateDriverStatus(this.driverId!, 'ACTIVE').subscribe({});
           this.activeRide = {
             rideId: rideData.id || '',  
             customerId: rideData.customer?.id || '',
@@ -80,15 +78,16 @@ export class DriverComponent implements OnInit, OnDestroy {
             this.driverPosUpdateService.setDriverStatus('Matching');
             this.isOnline = true;
             this.subscribeToRideRequests();
-            this.driverPosUpdateService.startWatchingLocation();
-            this.driverPosUpdateService.sendDriverLocation(this.driverId!);
-            this.interval = setInterval(() => {
-              this.driverPosUpdateService.sendDriverLocation(this.driverId!);
-            }, 15000);
+            // ✅ Start auto location updates (map sẽ emit location)
+            this.driverPosUpdateService.startAutoLocationUpdate(this.driverId!);
           }
           
           this.showActiveRide = true;
           this.cdr.detectChanges();
+        }
+        else 
+        {
+          this.driverService.updateDriverStatus(this.driverId!, 'INACTIVE').subscribe({});
         }
       },
       error: (err) => {
@@ -103,31 +102,27 @@ export class DriverComponent implements OnInit, OnDestroy {
 
     if (this.isOnline) {
       this.subscribeToRideRequests();
-
-      this.driverPosUpdateService.startWatchingLocation();
-
-      this.driverPosUpdateService.sendDriverLocation(this.driverId!);
       
       this.driverService.updateDriverStatus(this.driverId!, 'ACTIVE').subscribe({});
       
       console.log(this.driverId);
 
-      this.interval = setInterval(() => {
-        this.driverPosUpdateService.sendDriverLocation(this.driverId!);
-      }, 15000);
+      // Start auto location updates (map sẽ emit location → service auto-send)
+      this.driverPosUpdateService.startAutoLocationUpdate(this.driverId!);
 
     } else {
       this.unsubscribeFromRideRequests();
       
       this.driverService.updateDriverStatus(this.driverId!, 'INACTIVE').subscribe({});
       
-      this.driverPosUpdateService.stopWatchingLocation();
-
-      if (this.interval) {
-        clearInterval(this.interval);
-        this.interval = null;
-      }
+      // ✅ Stop auto location updates
+      this.driverPosUpdateService.stopAutoLocationUpdate();
     }
+  }
+
+  onMapLocationDetected(location: { lng: number; lat: number }) {
+    // Map component emit location → service nhận và tự động gửi nếu cần
+    this.driverPosUpdateService.setCurrentLocation({ lat: location.lat, lng: location.lng });
   }
 
   private subscribeToRideRequests(): void {
@@ -378,8 +373,6 @@ export class DriverComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.unsubscribeFromRideRequests();
     this.driverRideRequestService.disconnect();
-    if (this.interval) {
-      clearInterval(this.interval);
-    }
+    // Service tự clean up khi stopAutoLocationUpdate() được gọi
   }
 }
