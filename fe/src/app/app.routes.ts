@@ -41,7 +41,7 @@ export const routes: Routes = [
       {
         path: 'reports/:id',
         loadComponent: () => import('./features/admin/reports/ticket-workspace/ticket-workspace.component').then(m => m.TicketWorkspaceComponent)
-      }
+      },
 
       { path: 'driver', component: DriverManagementComponent}
     ]
