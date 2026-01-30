@@ -1,3 +1,5 @@
+import { VehicleStatus } from './api-response.model';
+
 export interface Vehicle {
   id?: string;
 
@@ -8,6 +10,6 @@ export interface Vehicle {
   vehicleBrand: string;
   vehicleColor?: string;
 
-  status?: 'ACTIVE' | 'INACTIVE' | 'PENDING';
+  status?: VehicleStatus;
   imageUrl?: string;
 }
