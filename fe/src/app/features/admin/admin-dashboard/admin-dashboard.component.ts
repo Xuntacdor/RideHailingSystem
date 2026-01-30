@@ -16,5 +16,5 @@ import { HeaderComponent } from './components/header.component';
   templateUrl: './admin-dashboard.html',
 })
 export class AdminDashboardComponent {
-  // Logic moved to AdminHomeComponent
+
 }

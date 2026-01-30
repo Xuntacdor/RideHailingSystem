@@ -26,6 +26,13 @@ export class UserService extends ApiService {
     return this.get<ApiResponse<Page<UserResponse>>>(`/user?page=${page}&size=${size}`);
   }
 
+  searchUsers(role?: string, keyword?: string): Observable<ApiResponse<UserResponse[]>> {
+    let params = '?';
+    if (role) params += `role=${role}&`;
+    if (keyword) params += `keyword=${keyword}&`;
+    return this.get<ApiResponse<UserResponse[]>>(`/user/find${params}`);
+  }
+
   updateUserProfile(id: string, request: UserRequest): Observable<ApiResponse<UserResponse>> {
     return this.put<ApiResponse<UserResponse>>(`/user/${id}`, request);
   }

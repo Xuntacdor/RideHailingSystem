@@ -52,6 +52,7 @@ import {
     Check,
     Mail,
     Phone,
+    ArrowDown,
 } from 'lucide-angular';
 
 export const appConfig: ApplicationConfig = {
@@ -81,6 +82,7 @@ export const appConfig: ApplicationConfig = {
                 Search,
                 Bell,
                 DollarSign,
+                ArrowDown,
                 TrendingUp,
                 TrendingDown,
                 XCircle,

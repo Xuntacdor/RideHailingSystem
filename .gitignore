@@ -5,3 +5,5 @@ node_modules
 /fe/node_modules
 node_modules
 node_modules
+package-lock.json
+/fe/package-lock.json
