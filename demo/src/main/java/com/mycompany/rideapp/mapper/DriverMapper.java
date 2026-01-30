@@ -49,7 +49,7 @@ public class DriverMapper {
                 var vehicle = activeVehicle.get();
                 vehicleType = vehicle.getVehicleType();
                 vehicleModel = vehicle.getVehicleBrand();
-                vehiclePlate = vehicle.getVehicleNumber();
+                vehiclePlate = vehicle.getLicensePlate();
             }
         }
         
