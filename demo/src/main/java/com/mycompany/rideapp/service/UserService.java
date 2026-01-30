@@ -2,6 +2,7 @@
 package com.mycompany.rideapp.service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.security.core.userdetails.UserDetails;
@@ -159,6 +160,33 @@ public class UserService {
 
         userRepository.deleteById(userId);
         log.info("User deleted: {}", userId);
+    }
+
+    public List<UserResponse> searchAndFilterUsers(String roleName, String keyword) {
+        
+        
+        Role roleEnum = null;
+        if (roleName != null && !roleName.trim().isEmpty()) {
+            try {
+                
+                roleEnum = Role.valueOf(roleName.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                
+                roleEnum = null;
+            }
+        }
+
+        
+        if (keyword != null && keyword.trim().isEmpty()) {
+            keyword = null;
+        }
+        
+        List<User> users = userRepository.filterUsers(roleEnum, keyword);
+
+       
+        return users.stream()
+                .map(userMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
 }

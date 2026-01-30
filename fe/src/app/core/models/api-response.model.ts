@@ -235,8 +235,10 @@ export interface RateRequest {
 export interface SupportTicketResponse {
   id: string;
   userId: string;
+  userName?: string;
   agentId?: string;
-  subject: string;
+  assignedAgentName?: string;
+  title: string;
   description: string;
   status: string;
   priority: string;
@@ -317,4 +319,13 @@ export interface DriverPositionUpdate {
   lng: number;
   timestamp: string;
   bearing?: number;
+}
+
+// Pageable response
+export interface Page<T> {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
 }
