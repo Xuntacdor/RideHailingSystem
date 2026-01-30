@@ -62,8 +62,7 @@ export class DriverComponent implements OnInit, OnDestroy {
     this.rideService.getActiveRide(this.driverId!).subscribe({
       next: (rideData) => {
         if (rideData) {
-          console.log('Found active ride on reload:', rideData);
-          
+          this.driverService.updateDriverStatus(this.driverId!, 'ACTIVE').subscribe({});
           this.activeRide = {
             rideId: rideData.id || '',  
             customerId: rideData.customer?.id || '',
@@ -89,6 +88,10 @@ export class DriverComponent implements OnInit, OnDestroy {
           
           this.showActiveRide = true;
           this.cdr.detectChanges();
+        }
+        else 
+        {
+          this.driverService.updateDriverStatus(this.driverId!, 'INACTIVE').subscribe({});
         }
       },
       error: (err) => {
