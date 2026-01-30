@@ -11,7 +11,7 @@
     (rideCancelled)="onRideCancelled()" (mapUpdate)="onMapUpdate($event)">
   </app-driver-active-ride>
 
-  <!-- <div class="top-bar relative z-10" *ngIf="!showActiveRide">
+  <div class="top-bar relative z-10" *ngIf="!showActiveRide">
     <div class="wallet">
       <span>VND</span>
       <strong>900.000</strong>
@@ -19,7 +19,7 @@
     <div class="driver-avatar" (click)="goToProfile()">
       <img [src]="driverAvatar" alt="Driver Avatar" />
     </div>
-  </div> -->
+  </div>
 
   <!-- CENTER MESSAGE -->
   <div class="status-message relative z-10" *ngIf="!isOnline && !showActiveRide">

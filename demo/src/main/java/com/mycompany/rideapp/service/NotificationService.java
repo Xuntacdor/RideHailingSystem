@@ -46,7 +46,7 @@ public class NotificationService {
         if (!driver.getVehicleRegister().isEmpty()) {
             var vehicle = driver.getVehicleRegister().get(0);
             payload.put("vehicleModel", vehicle.getVehicleBrand() + " " + vehicle.getVehicleType());
-            payload.put("vehiclePlate", vehicle.getVehicleNumber());
+            payload.put("vehiclePlate", vehicle.getLicensePlate());
         }
 
         messagingTemplate.convertAndSend("/topic/customer/" + customerId, (Object) payload);

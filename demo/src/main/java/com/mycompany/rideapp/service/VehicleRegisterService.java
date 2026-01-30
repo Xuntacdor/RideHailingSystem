@@ -30,17 +30,19 @@ public class VehicleRegisterService {
     VehicleRegisterRepository vehicleRegisterRepository;
     DriverRepository driverRepository;
 
-    public VehicleRegisterResponse registerVehicle(VehicleRegisterRequest request) {
+    public VehicleRegisterResponse registerVehicle(String driverId, VehicleRegisterRequest request) {
         // Check if driver exists
-        Driver driver = driverRepository.findById(request.getDriverId())
+        Driver driver = driverRepository.findById(driverId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
         // Check if vehicle number already exists
-        if (vehicleRegisterRepository.findByVehicleNumber(request.getVehicleNumber()).isPresent()) {
+        if (vehicleRegisterRepository.findByLicensePlate(request.getLicensePlate()).isPresent()) {
             throw new AppException(ErrorCode.USER_EXISTED);
         }
 
         VehicleRegister vehicle = VehicleRegisterMapper.toEntity(request, driver);
+        
+        vehicle.setStatus(VehicleStatus.ACTIVE);
         vehicleRegisterRepository.save(vehicle);
 
         log.info("Vehicle registered successfully with ID: {}", vehicle.getId());
@@ -69,9 +71,9 @@ public class VehicleRegisterService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
         // If vehicle number is being changed, check if it already exists
-        if (request.getVehicleNumber() != null &&
-                !request.getVehicleNumber().equals(vehicle.getVehicleNumber())) {
-            if (vehicleRegisterRepository.findByVehicleNumber(request.getVehicleNumber()).isPresent()) {
+        if (request.getLicensePlate() != null &&
+                !request.getLicensePlate().equals(vehicle.getLicensePlate())) {
+            if (vehicleRegisterRepository.findByLicensePlate(request.getLicensePlate()).isPresent()) {
                 throw new AppException(ErrorCode.USER_EXISTED);
             }
         }

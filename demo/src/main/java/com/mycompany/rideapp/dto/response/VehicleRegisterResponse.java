@@ -19,7 +19,7 @@ public class VehicleRegisterResponse {
     String id;
     String driverId;
     String vehicleType;
-    String vehicleNumber;
+    String licensePlate;
     String vehicleBrand;
     String vehicleColor;
     String licenseNumber;

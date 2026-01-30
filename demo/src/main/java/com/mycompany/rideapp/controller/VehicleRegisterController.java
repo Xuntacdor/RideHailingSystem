@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
 
 import com.mycompany.rideapp.dto.request.VehicleRegisterRequest;
 import com.mycompany.rideapp.dto.response.ApiResponse;
@@ -34,10 +35,11 @@ public class VehicleRegisterController {
 
     @PostMapping
     public ApiResponse<VehicleRegisterResponse> registerVehicle(
-            @RequestBody @Validated VehicleRegisterRequest request) {
+            @RequestBody @Validated VehicleRegisterRequest request, Authentication auth) {
+                String driverId = auth.getName();
         return ApiResponse.<VehicleRegisterResponse>builder()
                 .code(200)
-                .results(vehicleRegisterService.registerVehicle(request))
+                .results(vehicleRegisterService.registerVehicle(driverId, request))
                 .build();
     }
 
@@ -92,5 +94,14 @@ public class VehicleRegisterController {
                 .code(200)
                 .results(vehicleRegisterService.getVehiclesByStatus(status))
                 .build();
-    }
+    }      
+    @GetMapping("/my")
+        public ApiResponse<List<VehicleRegisterResponse>> getMyVehicles(Authentication auth) {
+        String driverId = auth.getName(); // hoặc từ JWT claim
+        return ApiResponse.<List<VehicleRegisterResponse>>builder()
+                .code(200)
+                .results(vehicleRegisterService.getVehiclesByDriverId(driverId))
+                .build();
+}
+
 }

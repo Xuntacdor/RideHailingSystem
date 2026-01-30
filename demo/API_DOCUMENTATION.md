@@ -333,7 +333,7 @@ Authorization: Bearer {token}
   "userId": "user-uuid",
   "licenseNumber": "ABC123456",
   "vehicleType": "MOTORBIKE",
-  "vehicleNumber": "59A-12345"
+  "licensePlate": "59A-12345"
 }
 ```
 

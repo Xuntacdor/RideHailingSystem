@@ -1,43 +1,46 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
-import {
-  ApiResponse,
-  VehicleRegisterResponse,
-  VehicleRegisterRequest,
-  VehicleStatus,
-} from '../models/api-response.model';
+import { ApiResponse } from '../models/api-response.model';
+import { Vehicle } from '../../models/vehicle.model';
+import { VehicleStatus } from '../models/api-response.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class VehicleService extends ApiService {
-  registerVehicle(
-    request: VehicleRegisterRequest
-  ): Observable<ApiResponse<VehicleRegisterResponse>> {
-    return this.post<ApiResponse<VehicleRegisterResponse>>('/vehicle', request);
+
+
+  getVehiclesByDriverId(driverId: string): Observable<ApiResponse<Vehicle[]>> {
+    return this.get<ApiResponse<Vehicle[]>>(`/vehicle/driver/${driverId}`);
   }
 
-  getVehicleById(id: string): Observable<ApiResponse<VehicleRegisterResponse>> {
-    return this.get<ApiResponse<VehicleRegisterResponse>>(`/vehicle/${id}`);
+  getVehiclesByDriverIdHardcode(driverId: string): Observable<ApiResponse<Vehicle[]>> {
+    const url = `http://localhost:8080/api/vehicle/driver/${driverId}`;
+
+    return this.http.get<ApiResponse<Vehicle[]>>(url, {
+      headers: this.getHeaders(),
+    });
   }
 
-  getVehiclesByDriverId(driverId: string): Observable<ApiResponse<VehicleRegisterResponse[]>> {
-    return this.get<ApiResponse<VehicleRegisterResponse[]>>(`/vehicle/driver/${driverId}`);
+
+  registerVehicle(request: Partial<Vehicle>): Observable<ApiResponse<Vehicle>> {
+    return this.post<ApiResponse<Vehicle>>('/vehicle', request);
   }
+
 
   updateVehicle(
     id: string,
-    request: VehicleRegisterRequest
-  ): Observable<ApiResponse<VehicleRegisterResponse>> {
-    return this.put<ApiResponse<VehicleRegisterResponse>>(`/vehicle/${id}`, request);
+    payload: Partial<Vehicle>
+  ): Observable<ApiResponse<Vehicle>> {
+    return this.put<ApiResponse<Vehicle>>(`/vehicle/${id}`, payload);
   }
 
   updateVehicleStatus(
     id: string,
     status: VehicleStatus
-  ): Observable<ApiResponse<VehicleRegisterResponse>> {
-    return this.put<ApiResponse<VehicleRegisterResponse>>(
+  ): Observable<ApiResponse<Vehicle>> {
+    return this.put<ApiResponse<Vehicle>>(
       `/vehicle/${id}/status?status=${status}`,
       {}
     );
@@ -47,7 +50,9 @@ export class VehicleService extends ApiService {
     return this.delete<ApiResponse<string>>(`/vehicle/${id}`);
   }
 
-  getVehiclesByStatus(status: VehicleStatus): Observable<ApiResponse<VehicleRegisterResponse[]>> {
-    return this.get<ApiResponse<VehicleRegisterResponse[]>>(`/vehicle/status/${status}`);
+  getVehiclesByStatus(
+    status: VehicleStatus
+  ): Observable<ApiResponse<Vehicle[]>> {
+    return this.get<ApiResponse<Vehicle[]>>(`/vehicle/status/${status}`);
   }
 }

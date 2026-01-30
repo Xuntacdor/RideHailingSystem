@@ -68,6 +68,7 @@
           },
           "defaultConfiguration": "development",
           "options": {
+            "proxyConfig": "proxy.conf.json",
             "allowedHosts": [
               "tied-lavone-nonubiquitously.ngrok-free.dev"
             ]
@@ -78,5 +79,6 @@
         }
       }
     }
+    
   }
 }

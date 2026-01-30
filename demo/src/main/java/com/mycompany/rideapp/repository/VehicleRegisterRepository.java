@@ -15,7 +15,7 @@ public interface VehicleRegisterRepository extends JpaRepository<VehicleRegister
     @Query("SELECT v FROM VehicleRegister v WHERE v.driver.id = :driverId")
     List<VehicleRegister> findByDriverId(@Param("driverId") String driverId);
 
-    Optional<VehicleRegister> findByVehicleNumber(String vehicleNumber);
+    Optional<VehicleRegister> findByLicensePlate(String licensePlate);
 
     List<VehicleRegister> findByStatus(VehicleStatus status);
 }

@@ -18,11 +18,9 @@ public class VehicleRegisterMapper {
         return VehicleRegister.builder()
                 .driver(driver)
                 .vehicleType(request.getVehicleType())
-                .vehicleNumber(request.getVehicleNumber())
+                .licensePlate(request.getLicensePlate())
                 .vehicleBrand(request.getVehicleBrand())
                 .vehicleColor(request.getVehicleColor())
-                .licenseNumber(request.getLicenseNumber())
-                .status(request.getStatus() != null ? request.getStatus() : VehicleStatus.ACTIVE)
                 .imageUrl(request.getImageUrl())
                 .build();
     }
@@ -34,10 +32,9 @@ public class VehicleRegisterMapper {
                 .id(vehicle.getId())
                 .driverId(vehicle.getDriver() != null ? vehicle.getDriver().getId() : null)
                 .vehicleType(vehicle.getVehicleType())
-                .vehicleNumber(vehicle.getVehicleNumber())
+                .licensePlate(vehicle.getLicensePlate())
                 .vehicleBrand(vehicle.getVehicleBrand())
                 .vehicleColor(vehicle.getVehicleColor())
-                .licenseNumber(vehicle.getLicenseNumber())
                 .status(vehicle.getStatus())
                 .imageUrl(vehicle.getImageUrl())
                 .build();
@@ -49,20 +46,14 @@ public class VehicleRegisterMapper {
         if (request.getVehicleType() != null) {
             vehicle.setVehicleType(request.getVehicleType());
         }
-        if (request.getVehicleNumber() != null) {
-            vehicle.setVehicleNumber(request.getVehicleNumber());
+        if (request.getLicensePlate() != null) {
+            vehicle.setLicensePlate(request.getLicensePlate());
         }
         if (request.getVehicleBrand() != null) {
             vehicle.setVehicleBrand(request.getVehicleBrand());
         }
         if (request.getVehicleColor() != null) {
             vehicle.setVehicleColor(request.getVehicleColor());
-        }
-        if (request.getLicenseNumber() != null) {
-            vehicle.setLicenseNumber(request.getLicenseNumber());
-        }
-        if (request.getStatus() != null) {
-            vehicle.setStatus(request.getStatus());
         }
         if (request.getImageUrl() != null) {
             vehicle.setImageUrl(request.getImageUrl());

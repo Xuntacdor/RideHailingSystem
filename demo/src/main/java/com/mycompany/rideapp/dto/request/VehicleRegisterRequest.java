@@ -18,25 +18,17 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class VehicleRegisterRequest {
-    @NotNull(message = "DRIVER_ID_NOT_NULL")
-    String driverId;
-
     @NotNull(message = "VEHICLE_TYPE_NOT_NULL")
     String vehicleType;
 
     @NotNull(message = "VEHICLE_NUMBER_NOT_NULL")
-    @Size(min = 6, message = "VEHICLE_NUMBER_INVALID")
-    String vehicleNumber;
+    @Size(min = 6, message = "LICENSE_PLATE_INVALID")
+    String licensePlate;
 
     @NotNull(message = "VEHICLE_BRAND_NOT_NULL")
     String vehicleBrand;
 
     String vehicleColor;
-
-    @NotNull(message = "LICENSE_NUMBER_NOT_NULL")
-    String licenseNumber;
-
-    VehicleStatus status;
 
     String imageUrl;
 }

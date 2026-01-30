@@ -1,52 +1,120 @@
 <div class="vehicle-container">
 
-  <!-- HEADER -->
+  <!-- TOP BAR -->
   <div class="vehicle-topbar">
     <button class="back-btn" (click)="goBack()">←</button>
-    <span class="page-title">Phương tiện của tôi</span>
+    <span class="page-title">Phương tiện</span>
   </div>
 
+  <!-- HEADER -->
   <div class="vehicle-header">
     <h3>Phương tiện của tôi</h3>
-    <p>Quản lý phương tiện đã đăng ký</p>
+    <p>Quản lý các phương tiện đã đăng ký</p>
   </div>
+  <div style="padding: 10px; background: #f5f5f5; margin-bottom: 10px;">
+  <strong>Driver ID:</strong>
+  <span *ngIf="driverId; else noId">{{ driverId }}</span>
 
-  <!-- VEHICLE CARD -->
-  <div class="vehicle-card">
+  <ng-template #noId>
+    <span style="color: red;">❌ Chưa lấy được ID</span>
+  </ng-template>
+</div>
 
-    <div class="vehicle-row">
-      <span class="label">Loại xe</span>
-      <span class="value">Xe máy</span>
+  <!-- VEHICLE LIST -->
+  <div class="vehicle-list">
+
+    <!-- VEHICLE CARD -->
+    <div class="vehicle-card" *ngFor="let v of vehicles">
+
+      <div class="vehicle-row">
+        <span class="label">Loại xe</span>
+        <span class="value">{{ getVehicleTypeLabel(v.vehicleType) }}</span>
+      </div>
+
+      <div class="vehicle-row">
+        <span class="label">Biển số</span>
+        <span class="value">{{ v.licensePlate }}</span>
+      </div>
+
+      <div class="vehicle-row">
+        <span class="label">Hãng xe</span>
+        <span class="value">{{ v.vehicleBrand }}</span>
+      </div>
+
+      <div class="vehicle-row">
+        <span class="label">Màu xe</span>
+        <span class="value">{{ v.vehicleColor }}</span>
+      </div>
+
+      <div class="vehicle-status"
+           [ngClass]="{
+             'status-approved': v.status === 'APPROVED',
+             'status-pending': v.status === 'PENDING',
+             'status-rejected': v.status === 'REJECTED'
+           }">
+        {{ v.status === 'APPROVED' ? '✔ Đã xác minh' :
+           v.status === 'PENDING' ? '⏳ Chờ duyệt' : '❌ Bị từ chối' }}
+      </div>
+
+      <button class="btn-primary">
+        Cập nhật phương tiện
+      </button>
+
     </div>
 
-    <div class="vehicle-row">
-      <span class="label">Biển số</span>
-      <span class="value">59X1-123.45</span>
-    </div>
-
-    <div class="vehicle-row">
-      <span class="label">Hãng xe</span>
-      <span class="value">Honda</span>
-    </div>
-
-    <div class="vehicle-row">
-      <span class="label">Màu xe</span>
-      <span class="value">Đen</span>
-    </div>
-
-    <div class="vehicle-row">
-      <span class="label">Năm sản xuất</span>
-      <span class="value">2021</span>
-    </div>
-
-    <div class="vehicle-status approved">
-      ✔ Đã xác minh
-    </div>
-
-    <button class="btn-primary">
-      Cập nhật phương tiện
+    <!-- ADD VEHICLE BUTTON -->
+    <button class="btn-primary" (click)="toggleAddForm()">
+      {{ showAddForm ? '✖ Đóng' : '+ Thêm phương tiện' }}
     </button>
 
-  </div>
+    <!-- ADD VEHICLE FORM -->
+    <div class="vehicle-card" *ngIf="showAddForm">
 
+      <h4>Thêm phương tiện</h4>
+
+      <!-- VEHICLE TYPE -->
+      <label class="label">Loại xe</label>
+
+      <div class="dropdown-box" (click)="toggleVehicleType()">
+        {{
+          newVehicle.vehicleType === 'CAR'
+            ? '🚗 Ô tô'
+            : newVehicle.vehicleType === 'MOTORBIKE'
+            ? '🏍️ Xe máy'
+            : 'Chọn loại xe'
+        }}
+        <span>▾</span>
+      </div>
+
+      <div class="dropdown-list" *ngIf="showVehicleType">
+        <div (click)="selectVehicleType('MOTORBIKE'); $event.stopPropagation()">
+          🏍️ Xe máy
+        </div>
+        <div (click)="selectVehicleType('CAR'); $event.stopPropagation()">
+          🚗 Ô tô
+        </div>
+      </div>
+
+      <input placeholder="Biển số"
+             [(ngModel)]="newVehicle.licensePlate">
+
+      <input placeholder="Hãng xe"
+             [(ngModel)]="newVehicle.vehicleBrand">
+
+      <input placeholder="Màu xe"
+             [(ngModel)]="newVehicle.vehicleColor">
+
+      <button class="btn-primary"
+              (click)="addVehicle()"
+              [disabled]="
+                !newVehicle.vehicleType ||
+                !newVehicle.licensePlate ||
+                !newVehicle.vehicleBrand
+              ">
+        Lưu phương tiện
+      </button>
+
+    </div>
+
+  </div>
 </div>

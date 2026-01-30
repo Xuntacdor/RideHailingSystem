@@ -42,14 +42,13 @@ public class VehicleRegister {
     Driver driver;
 
     String vehicleType;
-    String vehicleNumber;
+    String licensePlate;
     
     @Nationalized
     String vehicleBrand;
     
     @Nationalized
     String vehicleColor;
-    String licenseNumber;
 
     @Enumerated(EnumType.STRING)
     VehicleStatus status;
