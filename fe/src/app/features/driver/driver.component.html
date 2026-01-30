@@ -2,6 +2,7 @@
   <app-map class="map absolute inset-0 z-0" [origin]="mapOrigin" [destination]="mapDestination"
     [routeGeometry]="mapRouteGeometry"
     [userLocation]="activeRide ? {lat: activeRide.pickupLat, lng: activeRide.pickupLng} : null"
+    (userLocationDetected)="onMapLocationDetected($event)"
     [showUserMarker]="!!activeRide">
   </app-map>
 
