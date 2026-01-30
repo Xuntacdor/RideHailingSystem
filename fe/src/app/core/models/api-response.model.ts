@@ -260,25 +260,24 @@ export interface SupportTicketRequest {
 export interface VehicleRegisterResponse {
   id: string;
   driverId: string;
-  make: string;
-  model: string;
-  year: number;
-  color: string;
-  licensePlate: string;
-  vehicleType: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
+  vehicleType: 'CAR' | 'MOTORBIKE';
+  vehicleNumber: string;
+  vehicleBrand: string;
+  vehicleColor?: string;
+  licenseNumber: string;
+  status: VehicleStatus;
+  imageUrl?: string;
 }
 
 export interface VehicleRegisterRequest {
   driverId: string;
-  make: string;
-  model: string;
-  year: number;
-  color: string;
-  licensePlate: string;
-  vehicleType: string;
+  vehicleType: 'CAR' | 'MOTORBIKE';
+  vehicleNumber: string;
+  vehicleBrand: string;
+  vehicleColor?: string;
+  licenseNumber: string;
+  status?: VehicleStatus;
+  imageUrl?: string | null;
 }
 
 /**
@@ -305,6 +304,7 @@ export enum TicketStatus {
 }
 
 export enum VehicleStatus {
+  PENDING = 'PENDING',
   ACTIVE = 'ACTIVE',
   INACTIVE = 'INACTIVE',
   MAINTENANCE = 'MAINTENANCE',

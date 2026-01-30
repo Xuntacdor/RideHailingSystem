@@ -680,21 +680,36 @@ export class UserBookingComponent implements OnInit, OnDestroy {
     // Unsubscribe existing subscription
     this.driverPositionSubscription?.unsubscribe();
 
+    console.log(`🔔 [USER] Subscribing to driver position updates for driverId: ${driverId}`);
+
     this.driverPositionSubscription = this.driverPosUpdateService
       .subscribeToDriverPositionUpdates(driverId)
       .subscribe({
         next: (message) => {
+          const timestamp = new Date().toLocaleTimeString();
           const update: DriverPositionUpdate = JSON.parse(message.body);
+          
+          console.log(`[${timestamp}] 📍 [USER] Received driver position update:`, {
+            driverId: update.driverId,
+            position: `${update.lat.toFixed(6)}, ${update.lng.toFixed(6)}`,
+            timestamp: update.timestamp || 'N/A'
+          });
+          
           this.updateDriverLocation(update);
           this.cdr.detectChanges();
         },
         error: (err) => {
-          console.error('Driver position subscription error:', err);
+          console.error('❌ [USER] Driver position subscription error:', err);
         },
       });
   }
 
   private async updateDriverLocation(update: DriverPositionUpdate): Promise<void> {
+    console.log('🚗 [USER] Updating driver location on map:', {
+      from: this.driverLocation ? `${this.driverLocation.lat.toFixed(6)}, ${this.driverLocation.lng.toFixed(6)}` : 'null',
+      to: `${update.lat.toFixed(6)}, ${update.lng.toFixed(6)}`
+    });
+
     this.driverLocation = { lat: update.lat, lng: update.lng };
 
     this.activeDriver = {
