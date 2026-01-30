@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.mycompany.rideapp.dto.request.ReviewRequest;
 import com.mycompany.rideapp.dto.response.ReviewResponse;
+import com.mycompany.rideapp.entity.Driver;
 import com.mycompany.rideapp.entity.Review;
 import com.mycompany.rideapp.entity.Ride;
 import com.mycompany.rideapp.entity.User;
@@ -28,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class ReviewService {
-    
+
     ReviewRepository reviewRepository;
     RideRepository rideRepository;
     UserRepository userRepository;
@@ -53,7 +54,7 @@ public class ReviewService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
         // Validate reviewee exists
-        User reviewee = userRepository.findById(request.getRevieweeId())
+        Driver reviewee = driverRepository.findById(request.getRevieweeId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
         Review review = reviewMapper.toEntity(request, ride, reviewer, reviewee);
@@ -105,7 +106,7 @@ public class ReviewService {
 
     public ReviewResponse updateReview(String id, ReviewRequest request) {
         log.info("Updating review with id: {}", id);
-        
+
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.REVIEW_NOT_FOUND));
 
@@ -126,12 +127,12 @@ public class ReviewService {
 
     public void deleteReview(String id) {
         log.info("Deleting review with id: {}", id);
-        
+
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.REVIEW_NOT_FOUND));
-        
+
         String revieweeId = review.getReviewee() != null ? review.getReviewee().getId() : null;
-        
+
         reviewRepository.deleteById(id);
 
         // Update driver rating after deletion

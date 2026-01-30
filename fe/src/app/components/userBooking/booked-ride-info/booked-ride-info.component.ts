@@ -62,8 +62,9 @@ export interface DriverData {
 
       <!-- Actions -->
       <div class="flex items-center border-l border-gray-100 pl-3 ml-1">
-        <!-- Cancel Button (Mini) -->
-        <button (click)="onCancelRide()" 
+        <!-- Cancel Button (Mini) - Only show for CONFIRMED and PICKINGUP -->
+        <button *ngIf="canCancelRide()" 
+                (click)="onCancelRide()" 
                 class="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
                 title="Hủy chuyến">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
@@ -129,6 +130,9 @@ export class BookedRideInfoComponent {
     }
   }
 
+  canCancelRide(): boolean {
+    return this.rideStatus === 'CONFIRMED' || this.rideStatus === 'PICKINGUP';
+  }
 
   onCancelRide(): void {
     if (confirm('Bạn có chắc chắn muốn hủy chuyến đi này không?')) {

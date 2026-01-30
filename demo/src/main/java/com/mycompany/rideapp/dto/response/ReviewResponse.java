@@ -16,7 +16,7 @@ public class ReviewResponse {
     String id;
     String rideId;
     UserResponse reviewer;
-    UserResponse reviewee;
+    DriverResponse reviewee;
     Long rating;
     String comment;
 }

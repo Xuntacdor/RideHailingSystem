@@ -5,6 +5,9 @@
     (userLocationDetected)="onUserLocationDetected($event)" class="absolute inset-0 z-0">
   </app-map>
 
+  <!-- User Header -->
+  <app-user-header [userName]="userName" (avatarClick)="onAvatarClick()" class="absolute top-0 left-0 z-20">
+  </app-user-header>
   <!-- API Token Invalid Error -->
   @if (!isTokenValid) {
   <div class="absolute top-20 left-5 right-5 z-20 p-4 bg-red-500 text-white rounded-2xl shadow-lg">
@@ -85,3 +88,14 @@
 <app-customer-notification-modal [isVisible]="showNotificationModal" [notification]="notificationData"
   (close$)="onCloseNotificationModal()" (retry$)="onRetryBooking()" (cancel$)="onCancelBooking()">
 </app-customer-notification-modal>
+
+<!-- Rate Driver Modal -->
+<app-rate-driver-modal [isVisible]="showRateDriverModal" [rideData]="completionRideData"
+  (reviewSubmitted$)="onReviewSubmitted()" (close$)="onRateDriverModalClosed()">
+</app-rate-driver-modal>
+
+<!-- Pending Booking Modal (Finding Driver) -->
+@if (rideState === RideState.PENDING) {
+  <app-pending-booking (cancelBooking)="onCancelBooking()">
+  </app-pending-booking>
+}

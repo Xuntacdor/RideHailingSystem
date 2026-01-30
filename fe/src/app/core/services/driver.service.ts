@@ -24,7 +24,7 @@ export class DriverService extends ApiService {
   }
 
   updateDriverStatus(id: string, status: string): Observable<ApiResponse<DriverResponse>> {
-    return this.put<ApiResponse<DriverResponse>>(`/driver/${id}/status?status=${status}`, {});
+    return this.put<ApiResponse<DriverResponse>>(`/driver/${id}/status/${status}`, {});
   }
 
   uploadDriverAvatar(id: string, file: File): Observable<ApiResponse<DriverResponse>> {
@@ -39,5 +39,9 @@ export class DriverService extends ApiService {
 
   getDriversByStatus(status: string): Observable<ApiResponse<DriverResponse[]>> {
     return this.get<ApiResponse<DriverResponse[]>>(`/driver/status/${status}`);
+  }
+
+  getDriversByLocation(lat: number, lng: number, zoom: number): Observable<ApiResponse<DriverResponse[]>> {
+    return this.get<ApiResponse<DriverResponse[]>>(`/driver/nearby?lat=${lat}&lng=${lng}&zoom=${zoom}`);
   }
 }

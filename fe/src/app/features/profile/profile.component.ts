@@ -1,11 +1,12 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
 import { UserResponse } from '../../core/models/api-response.model';
 import { jwtDecode } from 'jwt-decode';
 import { ToastService } from '../../core/services/toast.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-profile',
@@ -16,13 +17,15 @@ import { ToastService } from '../../core/services/toast.service';
 })
 export class Profile implements OnInit {
   private router = inject(Router);
-  public authService = inject(AuthService); // Đổi thành public để HTML dùng được
+  public authService = inject(AuthService);
   private userService = inject(UserService);
   private toastService = inject(ToastService);
+  private location = inject(Location);
+  private readonly BACKEND_URL = environment.apiUrl;
 
   currentUser = signal<UserResponse | null>(null);
 
-  // --- PHẦN BẠN ĐANG THIẾU DỮ LIỆU ---
+
   menuSections = [
     {
       title: 'Tài khoản của tôi',
@@ -40,23 +43,19 @@ export class Profile implements OnInit {
       ],
     },
     {
-      title: 'Khác',
+      title: 'Thông tin & Tiện ích',
       items: [
-        { name: 'Điều khoản & Chính sách', icon: 'document', link: '/terms' },
-        { name: 'Về chúng tôi', icon: 'info', link: '/about-us' },
+        { name: 'Lịch sử chuyến đi', icon: 'document', link: '/profile/travel-history' },
+        { name: 'Chính sách quyền riêng tư', icon: 'info', link: '/profile/privacy-policy' },
       ],
     },
   ];
-  // ------------------------------------
-  // Thêm method này
   onFileSelected(event: any): void {
     const file: File = event.target.files[0];
     const user = this.currentUser();
 
     if (file && user) {
-      // Validate sơ bộ client-side (tùy chọn)
       if (file.size > 5 * 1024 * 1024) {
-        // 5MB
         this.toastService.show('File quá lớn!');
         return;
       }
@@ -65,7 +64,12 @@ export class Profile implements OnInit {
         next: (response) => {
           if (response.results) {
             const updatedUser = { ...response.results };
-            updatedUser.imageUrl = updatedUser.imageUrl + '?t=' + new Date().getTime();
+            let newImageUrl = response.results.imageUrl;
+            if (newImageUrl && !newImageUrl.startsWith('http')) {
+              const path = newImageUrl.startsWith('/') ? newImageUrl : `/${newImageUrl}`;
+              newImageUrl = `${this.BACKEND_URL}${path}`;
+            }
+            updatedUser.imageUrl = newImageUrl + '?t=' + new Date().getTime();
 
             this.currentUser.set(updatedUser);
             this.authService.currentUser.set(updatedUser);
@@ -123,5 +127,8 @@ export class Profile implements OnInit {
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/welcome']);
+  }
+  goBack(): void {
+    this.location.back();
   }
 }

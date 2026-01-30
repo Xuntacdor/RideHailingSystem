@@ -10,6 +10,8 @@ export interface RideRequestNotification {
     customerName: string;
     startLocation: string;
     endLocation: string;
+    startAddress?: string;
+    endAddress?: string;
     startLatitude: number;
     startLongitude: number;
     endLatitude: number;
@@ -53,7 +55,7 @@ export class DriverRideRequestService {
         this.stompClient.deactivate();
     }
 
-    subscribeToRideRequests(driverId: string): Observable<RideRequestNotification> {
+    subscribeToRideRequests(driverId: string): Observable<any> {
 
         return this.stompClient
             .watch(`/topic/driver/${driverId}`)

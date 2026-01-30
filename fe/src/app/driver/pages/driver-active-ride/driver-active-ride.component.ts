@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Coordinate } from '../../../models/models';
 import { RideService } from '../../../core/services/ride.service';
 import { TrackAsiaService } from '../../../core/services/trackasia.service';
-import { DriverPosUpdateService } from '../../services/driverPosUpdate.service'; // Check path
+import { DriverPosUpdateService } from '../../services/driverPosUpdate.service';
+import { DriverRideRequestService } from '../../services/driver-ride-request.service';
 import { Subscription } from 'rxjs';
 
 export interface MapUpdate {
@@ -119,11 +120,13 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
     private pickupCoordinate: Coordinate | null = null;
     private destinationCoordinate: Coordinate | null = null;
     private locationSubscription?: Subscription;
+    private notificationSubscription?: Subscription;
 
     constructor(
         private rideService: RideService,
         private trackAsiaService: TrackAsiaService,
         private driverPosUpdateService: DriverPosUpdateService,
+        private driverRideRequestService: DriverRideRequestService,
         private cdr: ChangeDetectorRef
     ) { }
 
@@ -136,9 +139,27 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['activeRide'] && changes['activeRide'].currentValue && !changes['activeRide'].firstChange) {
-            console.log('Active ride changed, reinitializing map and route');
             this.initializeRide();
         }
+    }
+
+    private subscribeToNotifications(): void {
+        if (!this.driverId) return;
+
+        this.notificationSubscription = this.driverRideRequestService
+            .subscribeToRideRequests(this.driverId)
+            .subscribe({
+                next: (notification: any) => {
+                    if (notification.type === 'RIDE_CANCELLED') {
+                        console.log('Ride cancelled notification received:', notification);
+                        if (notification.rideId === this.activeRide?.rideId) {
+                            alert('Chuyến đi đã bị hủy bởi khách hàng');
+                            this.rideCancelled.emit();
+                        }
+                    }
+                },
+                error: (err) => console.error('Notification subscription error:', err)
+            });
     }
 
     private subscribeToLocationUpdates(): void {
@@ -159,12 +180,9 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
                     this.destinationCoordinate.lng
                 );
 
-                // If within 50 meters, confirm arrival
-                if (distance < 0.05) { // 0.05 km = 50m
+
+                if (distance < 0.05) { 
                     console.log('Arrived at destination (auto-detected)');
-                    // Consider auto-completing? 
-                    // The user requested: "hien luon modal chu k phai bam 1 nut"
-                    // So yes, we should complete ride.
                     this.completeRide();
                 }
             }
@@ -191,10 +209,23 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
     private initializeRide(): void {
         if (!this.activeRide) return;
 
-        this.navigationState = 'TO_PICKUP';
-        this.arrivedAtPickupPoint = false;
+        console.log('Initializing ride with status:', this.activeRide.status);
+
+        // Reset flags
         this.arrivedAtDestinationPoint = false;
         this.isCompletingRide = false;
+
+        // Set navigation state based on ride status
+        if (this.activeRide.status === 'ONGOING') {
+            this.navigationState = 'TO_DESTINATION';
+            this.arrivedAtPickupPoint = false;
+        } else if (this.activeRide.status === 'PICKINGUP') {
+            this.navigationState = 'TO_PICKUP';
+            this.arrivedAtPickupPoint = true; 
+        } else {
+            this.navigationState = 'TO_PICKUP';
+            this.arrivedAtPickupPoint = false;
+        }
 
         this.pickupCoordinate = {
             lat: this.activeRide.pickupLat,
@@ -210,9 +241,12 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
             };
         }
 
-        // this.emitMapUpdate(null);
-
-        this.calculateRouteToPickup();
+        // Calculate appropriate route based on current state
+        if (this.navigationState === 'TO_DESTINATION') {
+            this.calculateRouteToDestination();
+        } else {
+            this.calculateRouteToPickup();
+        }
     }
 
     private async calculateRouteToPickup(): Promise<void> {
@@ -373,5 +407,6 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
 
     ngOnDestroy(): void {
         this.locationSubscription?.unsubscribe();
+        this.notificationSubscription?.unsubscribe();
     }
 }

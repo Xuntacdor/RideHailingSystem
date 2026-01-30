@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -6,37 +6,54 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="flex items-center justify-between px-5 py-4 bg-white z-0 ">
-      <div class="flex items-center gap-3">
+    <div class="inline-flex items-center p-1.5 bg-white/95 backdrop-blur-md rounded-full shadow-lg border border-gray-100 transition-all duration-500 ease-in-out">
+      
+      <div class="flex items-center">
         <button 
           type="button"
           (click)="onAvatarClick()"
-          class="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xl font-bold shadow-lg 
-                 hover:shadow-xl hover:scale-105 transition-all duration-200 active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+          class="w-11 h-11 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex-shrink-0 flex items-center justify-center text-white text-lg font-bold shadow-sm active:scale-95 transition-transform cursor-pointer focus:outline-none">
           {{ getInitials() }}
         </button>
-        <div>
-          <div class="text-sm text-gray-600 flex items-center gap-1">
+
+        <div 
+          [class.max-w-0]="!isExpanded"
+          [class.max-w-[200px]]="isExpanded"
+          [class.opacity-0]="!isExpanded"
+          [class.ml-0]="!isExpanded"
+          [class.ml-3]="isExpanded"
+          [class.mr-4]="isExpanded"
+          class="transition-all duration-700 ease-in-out overflow-hidden whitespace-nowrap"
+        >
+          <div class="text-[10px] uppercase tracking-wider text-gray-500 flex items-center gap-1">
             <span>👋</span>
             <span>{{ greeting }}</span>
           </div>
-          <div class="font-bold text-gray-900">{{ userName }}</div>
+          <div class="font-bold text-gray-900 text-sm leading-tight">{{ userName }}</div>
         </div>
       </div>
-      <div class="flex items-center gap-3">
-      </div>
+
     </div>
   `,
   styles: [`
     :host {
-      display: block;
+      display: inline-block; /* Quan trọng: để component không chiếm hết chiều ngang */
+      margin: 16px; /* Khoảng cách với mép màn hình */
     }
   `]
 })
-export class UserHeaderComponent {
+export class UserHeaderComponent implements OnInit, OnDestroy {
   @Input() userName: string = '';
   @Output() gridToggle = new EventEmitter<void>();
   @Output() avatarClick = new EventEmitter<void>();
+
+  isExpanded: boolean = true;
+  private collapseTimer?: number;
+
+  ngOnInit() {
+    this.scheduleCollapse(3000);
+  }
+
   get greeting(): string {
     const hour = new Date().getHours();
     if (hour < 12) return 'Hello there';
@@ -56,8 +73,33 @@ export class UserHeaderComponent {
   onGridToggle(): void {
     this.gridToggle.emit();
   }
+
   onAvatarClick(): void {
+    this.clearCollapseTimer();
+    if (!this.isExpanded) {
+      this.isExpanded = true;
+      this.scheduleCollapse(3000);
+    }
+
     console.log('Avatar clicked!');
     this.avatarClick.emit();
+  }
+
+  private scheduleCollapse(delay: number): void {
+    this.clearCollapseTimer();
+    this.collapseTimer = window.setTimeout(() => {
+      this.isExpanded = false;
+    }, delay);
+  }
+
+  private clearCollapseTimer(): void {
+    if (this.collapseTimer) {
+      clearTimeout(this.collapseTimer);
+      this.collapseTimer = undefined;
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.clearCollapseTimer();
   }
 }

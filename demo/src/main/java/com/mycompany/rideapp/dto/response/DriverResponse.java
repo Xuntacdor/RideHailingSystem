@@ -26,4 +26,9 @@ public class DriverResponse {
     String avatarUrl;
     Double rating;
     List<String> vehicleIds;
+    Double latitude;
+    Double longitude;
+    String vehicleType;
+    String vehicleModel;
+    String vehiclePlate;
 }

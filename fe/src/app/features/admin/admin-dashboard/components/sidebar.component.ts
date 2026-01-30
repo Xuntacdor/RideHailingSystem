@@ -53,7 +53,7 @@ export class SidebarComponent {
         { label: 'Dashboard', icon: 'layout-dashboard', route: '/admin' },
         { label: 'Booking', icon: 'calendar-check', route: '/admin/booking' },
         { label: 'Schedule', icon: 'calendar-clock', route: '/admin/schedule' },
-        { label: 'Car Management', icon: 'car', route: '/admin/cars' },
+        { label: 'Driver Management', icon: 'car', route: '/admin/driver' },
         { label: 'User Management', icon: 'users', route: '/admin/users' },
         { label: 'Reports', icon: 'file-text', route: '/admin/reports' },
         { label: 'Settings', icon: 'settings', route: '/admin/settings' },

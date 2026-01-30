@@ -42,6 +42,7 @@ export class DriverComponent implements OnInit, OnDestroy {
   mapOrigin: Coordinate | null = null;
   mapDestination: Coordinate | null = null;
   mapRouteGeometry: any = null;
+  checkRide: any | null = null;
 
   constructor(
     private router: Router,
@@ -57,6 +58,44 @@ export class DriverComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const userInfo = this.authService.getUserInfo();
     this.driverId = userInfo?.driverId || userInfo?.userId || null;
+    //check if driver has an active ride
+    this.rideService.getActiveRide(this.driverId!).subscribe({
+      next: (rideData) => {
+        if (rideData) {
+          console.log('Found active ride on reload:', rideData);
+          
+          this.activeRide = {
+            rideId: rideData.id || '',  
+            customerId: rideData.customer?.id || '',
+            pickupLat: rideData.startLatitude || 0,
+            pickupLng: rideData.startLongitude || 0,
+            destinationLat: rideData.endLatitude || 0,
+            destinationLng: rideData.endLongitude || 0,
+            status: rideData.status || ''
+          };
+          
+          if (rideData.status === 'CONFIRMED' || rideData.status === 'PICKINGUP' || rideData.status === 'ONGOING') {
+            this.driverStatus = 'Matching';
+            console.log(rideData.status);
+            this.driverPosUpdateService.setDriverStatus('Matching');
+            this.isOnline = true;
+            this.subscribeToRideRequests();
+            this.driverPosUpdateService.startWatchingLocation();
+            this.driverPosUpdateService.sendDriverLocation(this.driverId!);
+            this.interval = setInterval(() => {
+              this.driverPosUpdateService.sendDriverLocation(this.driverId!);
+            }, 15000);
+          }
+          
+          this.showActiveRide = true;
+          this.cdr.detectChanges();
+        }
+      },
+      error: (err) => {
+        console.error('Error fetching active ride data:', err);
+      }
+    });
+
   }
 
   toggleOnline(): void {
@@ -68,7 +107,10 @@ export class DriverComponent implements OnInit, OnDestroy {
       this.driverPosUpdateService.startWatchingLocation();
 
       this.driverPosUpdateService.sendDriverLocation(this.driverId!);
-      this.driverService.updateDriverStatus(this.driverId!, 'ACTIVE');
+      
+      this.driverService.updateDriverStatus(this.driverId!, 'ACTIVE').subscribe({});
+      
+      console.log(this.driverId);
 
       this.interval = setInterval(() => {
         this.driverPosUpdateService.sendDriverLocation(this.driverId!);
@@ -76,7 +118,9 @@ export class DriverComponent implements OnInit, OnDestroy {
 
     } else {
       this.unsubscribeFromRideRequests();
-      this.driverService.updateDriverStatus(this.driverId!, 'INACTIVE');
+      
+      this.driverService.updateDriverStatus(this.driverId!, 'INACTIVE').subscribe({});
+      
       this.driverPosUpdateService.stopWatchingLocation();
 
       if (this.interval) {
@@ -91,17 +135,35 @@ export class DriverComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.rideRequestSubscription) {
+      return;
+    }
+
     this.rideRequestSubscription = this.driverRideRequestService
       .subscribeToRideRequests(this.driverId)
       .subscribe({
         next: (notification: any) => {
           if (notification.type === 'RIDE_CREATED') {
             if (this.activeRide) {
-              console.log('Updating activeRide with actual ride ID:', notification.rideId);
               this.activeRide = {
                 ...this.activeRide,
                 rideId: notification.rideId
               };
+            }
+          } else if (notification.type === 'RIDE_CANCELLED') {
+            alert('Chuyến đi đã bị hủy bởi khách hàng.');
+            if (this.showRideRequestModal) {
+              this.showRideRequestModal = false;
+              this.currentRideRequest = null;
+            }
+            if (this.showActiveRide) {
+              this.onRideCancelled();
+            }
+          } else if (notification.type === 'RIDE_REQUEST_CANCELLED') {
+            alert('Chuyến đi này đã bị khách hàng hủy trước khi bạn chấp nhận.');
+            if (this.showRideRequestModal) {
+              this.showRideRequestModal = false;
+              this.currentRideRequest = null;
             }
           } else {
             this.showRideRequestNotification(notification);
@@ -123,21 +185,27 @@ export class DriverComponent implements OnInit, OnDestroy {
   }
 
   private async showRideRequestNotification(notification: RideRequestNotification): Promise<void> {
-    console.log('showRideRequestNotification called');
-    console.log('Creating ride request object...');
+    // Use startAddress and endAddress from backend if available, otherwise fallback to reverse geocode
+    let startLocation = notification.startAddress || notification.startLocation;
+    let endLocation = notification.endAddress || notification.endLocation;
 
-    let startLocation = notification.startLocation;
-    let endLocation = notification.endLocation;
-
-    try {
-      if (notification.startLatitude && notification.startLongitude) {
+    // Only reverse geocode if address is not provided
+    if (!startLocation && notification.startLatitude && notification.startLongitude) {
+      try {
         startLocation = await this.trackAsiaService.reverseGeocode(notification.startLongitude, notification.startLatitude);
+      } catch (e) {
+        console.error('Error reverse geocoding start location:', e);
+        startLocation = 'Đang cập nhật...';
       }
-      if (notification.endLatitude && notification.endLongitude) {
+    }
+    
+    if (!endLocation && notification.endLatitude && notification.endLongitude) {
+      try {
         endLocation = await this.trackAsiaService.reverseGeocode(notification.endLongitude, notification.endLatitude);
+      } catch (e) {
+        console.error('Error reverse geocoding end location:', e);
+        endLocation = 'Đang cập nhật...';
       }
-    } catch (e) {
-      console.error('Error reverse geocoding:', e);
     }
 
     this.currentRideRequest = {
@@ -163,7 +231,6 @@ export class DriverComponent implements OnInit, OnDestroy {
 
   onAcceptRide(rideRequest: DriverRideRequest): void {
     if (this.driverId) {
-      console.log('Driver accepting ride:', rideRequest.rideRequestId);
       this.driverRideRequestService.sendDriverResponse(
         rideRequest.rideRequestId,
         this.driverId,
@@ -192,7 +259,6 @@ export class DriverComponent implements OnInit, OnDestroy {
 
   onRejectRide(rideRequest: DriverRideRequest): void {
     if (this.driverId) {
-      console.log('Driver rejecting ride:', rideRequest.rideRequestId);
       this.driverRideRequestService.sendDriverResponse(
         rideRequest.rideRequestId,
         this.driverId,
@@ -236,7 +302,6 @@ export class DriverComponent implements OnInit, OnDestroy {
 
     const rideId = this.activeRide.rideId;
 
-    // Immediately hide active ride and reset driver status
     this.showActiveRide = false;
     this.activeRide = null;
     this.driverStatus = 'Resting';

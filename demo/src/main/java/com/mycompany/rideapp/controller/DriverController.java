@@ -66,10 +66,10 @@ public class DriverController {
                                 .build();
         }
 
-        @PutMapping("/{id}/status")
+        @PutMapping("/{id}/status/{status}")
         public ApiResponse<DriverResponse> updateDriverStatus(
                         @PathVariable String id,
-                        @RequestParam String status) {
+                        @PathVariable String status) {
                 return ApiResponse.<DriverResponse>builder()
                                 .code(200)
                                 .results(driverService.updateDriverStatus(id, status))
@@ -111,6 +111,17 @@ public class DriverController {
                 return ApiResponse.<List<DriverResponse>>builder()
                                 .code(200)
                                 .results(driverService.getNearestDrivers(lat, lng, limit, vehicleType))
+                                .build();
+        }
+
+        @GetMapping("/nearby")
+        public ApiResponse<List<DriverResponse>> getNearbyDrivers(
+                        @RequestParam Double lat,
+                        @RequestParam Double lng,
+                        @RequestParam(defaultValue = "12") double zoom) {
+                return ApiResponse.<List<DriverResponse>>builder()
+                                .code(200)
+                                .results(driverService.getDriversByLocation(lat, lng, zoom))
                                 .build();
         }
 }

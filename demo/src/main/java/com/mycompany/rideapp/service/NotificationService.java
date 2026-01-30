@@ -124,4 +124,14 @@ public class NotificationService {
         messagingTemplate.convertAndSend("/topic/driver/" + driverId, (Object) payload);
     }
 
+    public void notifyDriverRideRequestCancelled(String driverId, String rideRequestId) {
+        log.info("Notifying driver {} that ride request {} was already cancelled", driverId, rideRequestId);
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("type", "RIDE_REQUEST_CANCELLED");
+        payload.put("rideRequestId", rideRequestId);
+        payload.put("message", "This ride request has been cancelled by the customer");
+        payload.put("timestamp", System.currentTimeMillis());
+        messagingTemplate.convertAndSend("/topic/driver/" + driverId, (Object) payload);
+    }
+
 }

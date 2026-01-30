@@ -1,0 +1,151 @@
+<div class="min-h-screen bg-gradient-to-b from-gray-50 to-white pb-safe">
+    <!-- Header -->
+    <header class="bg-white/95 backdrop-blur-md shadow-sm sticky top-0 z-50 pt-safe">
+        <div class="px-5 py-4 flex items-center gap-3">
+            <button (click)="goBack()" class="p-2 -ml-2 rounded-full hover:bg-gray-100 active:scale-95 transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <div class="flex-1">
+                <h1 class="text-xl font-bold text-gray-900">Lịch sử chuyến đi</h1>
+                <p class="text-xs text-gray-500 mt-0.5">{{ filteredRides().length }} chuyến đi</p>
+            </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="px-5 pb-3 flex gap-2">
+            <button (click)="setFilter('all')" [class.bg-blue-600]="selectedFilter() === 'all'"
+                [class.text-white]="selectedFilter() === 'all'" [class.bg-gray-100]="selectedFilter() !== 'all'"
+                [class.text-gray-700]="selectedFilter() !== 'all'"
+                class="flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all active:scale-95">
+                Tất cả
+            </button>
+            <button (click)="setFilter('completed')" [class.bg-green-600]="selectedFilter() === 'completed'"
+                [class.text-white]="selectedFilter() === 'completed'"
+                [class.bg-gray-100]="selectedFilter() !== 'completed'"
+                [class.text-gray-700]="selectedFilter() !== 'completed'"
+                class="flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all active:scale-95">
+                Hoàn thành
+            </button>
+            <button (click)="setFilter('cancelled')" [class.bg-red-600]="selectedFilter() === 'cancelled'"
+                [class.text-white]="selectedFilter() === 'cancelled'"
+                [class.bg-gray-100]="selectedFilter() !== 'cancelled'"
+                [class.text-gray-700]="selectedFilter() !== 'cancelled'"
+                class="flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all active:scale-95">
+                Đã hủy
+            </button>
+        </div>
+    </header>
+
+    <!-- Loading State -->
+    @if (isLoading()) {
+    <div class="flex flex-col items-center justify-center py-20">
+        <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p class="mt-4 text-gray-500 font-medium">Đang tải...</p>
+    </div>
+    }
+
+    <!-- Empty State -->
+    @else if (filteredRides().length === 0) {
+    <div class="flex flex-col items-center justify-center py-20 px-6">
+        <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+        </div>
+        <h3 class="text-lg font-bold text-gray-900 mb-2">Chưa có chuyến đi nào</h3>
+        <p class="text-sm text-gray-500 text-center">
+            @if (selectedFilter() === 'all') {
+            Bạn chưa có chuyến đi nào. Hãy đặt chuyến đi đầu tiên của bạn!
+            } @else if (selectedFilter() === 'completed') {
+            Bạn chưa có chuyến đi hoàn thành nào.
+            } @else {
+            Bạn chưa hủy chuyến đi nào.
+            }
+        </p>
+    </div>
+    }
+
+    <!-- Ride List -->
+    @else {
+    <div class="px-4 py-4 space-y-3">
+        @for (ride of filteredRides(); track ride.id) {
+        <div
+            class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden active:scale-[0.98] transition-transform">
+            <!-- Ride Header -->
+            <div class="p-4 border-b border-gray-100">
+                <div class="flex items-start justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl">{{ getVehicleIcon(ride.vehicleType) }}</span>
+                        <div>
+                            <p class="font-bold text-gray-900">{{ getVehicleName(ride.vehicleType) }}</p>
+                            <p class="text-xs text-gray-500">{{ formatDate(ride.startTime) }}</p>
+                        </div>
+                    </div>
+                    <span [class]="'px-3 py-1 rounded-full text-xs font-semibold ' + getStatusBadgeClass(ride.status)">
+                        {{ getStatusText(ride.status) }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Route -->
+            <div class="p-4 space-y-3">
+                <!-- Start Location -->
+                <div class="flex gap-3">
+                    <div class="flex flex-col items-center">
+                        <div class="w-3 h-3 rounded-full bg-blue-600"></div>
+                        <div class="w-0.5 h-full bg-gray-200 my-1"></div>
+                    </div>
+                    <div class="flex-1 pb-2">
+                        <p class="text-xs text-gray-500 mb-0.5">Điểm đón</p>
+                        <p class="text-sm font-semibold text-gray-900">{{ ride.startAddress || 'Đang tải...' }}</p>
+                    </div>
+                </div>
+
+                <!-- End Location -->
+                <div class="flex gap-3">
+                    <div class="flex flex-col items-center">
+                        <div class="w-3 h-3 rounded-full bg-red-600"></div>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-xs text-gray-500 mb-0.5">Điểm đến</p>
+                        <p class="text-sm font-semibold text-gray-900">{{ ride.endAddress || 'Đang tải...' }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ride Details -->
+            <div class="px-4 pb-4 flex items-center justify-between">
+                <div class="flex items-center gap-4 text-sm text-gray-600">
+                    <div class="flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span>{{ formatDistance(ride.distance) }}</span>
+                    </div>
+                    @if (ride.driver) {
+                    <div class="flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <span>{{ ride.driver.user.name }}</span>
+                    </div>
+                    }
+                </div>
+                <p class="text-lg font-bold text-blue-600">{{ formatFare(ride.fare) }}</p>
+            </div>
+        </div>
+        }
+    </div>
+    }
+</div>

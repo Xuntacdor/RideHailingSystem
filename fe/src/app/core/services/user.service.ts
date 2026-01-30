@@ -7,6 +7,7 @@ import {
   UserRequest,
   AccountStatus,
   Role,
+  Page,
 } from '../models/api-response.model';
 
 @Injectable({
@@ -21,8 +22,8 @@ export class UserService extends ApiService {
     return this.get<ApiResponse<UserResponse>>(`/user/email/${email}`);
   }
 
-  getAllUsers(): Observable<ApiResponse<UserResponse[]>> {
-    return this.get<ApiResponse<UserResponse[]>>('/user');
+  getAllUsers(page: number = 0, size: number = 10): Observable<ApiResponse<Page<UserResponse>>> {
+    return this.get<ApiResponse<Page<UserResponse>>>(`/user?page=${page}&size=${size}`);
   }
 
   updateUserProfile(id: string, request: UserRequest): Observable<ApiResponse<UserResponse>> {

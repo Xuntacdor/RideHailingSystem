@@ -85,6 +85,12 @@ export interface DriverResponse {
   imageUrl?: string;
   createdAt: string;
   updatedAt: string;
+  latitude?: number;
+  longitude?: number;
+  vehicleType?: string;
+  vehicleIds?: string[];
+  vehicleModel?: string;
+  vehiclePlate?: string;
 }
 
 export interface DriverRequest {
@@ -104,6 +110,8 @@ export interface RideResponse {
   dropoffLocation?: string; // Backend uses endLocation
   startLocation: string;
   endLocation: string;
+  startAddress?: string;
+  endAddress?: string;
   status: string;
   fare: number;
   distance: number;
@@ -133,6 +141,9 @@ export interface RideRequest {
   fare: number;
   status?: string;
   vehicleType: string;
+  rideDate?: string;
+  endAddress?:string;
+  startAddress?:string;
 }
 
 export interface CreateRideResponse {
@@ -224,8 +235,10 @@ export interface RateRequest {
 export interface SupportTicketResponse {
   id: string;
   userId: string;
+  userName?: string;
   agentId?: string;
-  subject: string;
+  assignedAgentName?: string;
+  title: string;
   description: string;
   status: string;
   priority: string;
@@ -236,7 +249,7 @@ export interface SupportTicketResponse {
 
 export interface SupportTicketRequest {
   userId: string;
-  subject: string;
+  title: string;
   description: string;
   priority?: string;
 }
@@ -306,4 +319,13 @@ export interface DriverPositionUpdate {
   lng: number;
   timestamp: string;
   bearing?: number;
+}
+
+// Pageable response
+export interface Page<T> {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
 }
