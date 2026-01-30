@@ -24,7 +24,7 @@
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="w-full space-y-4">
       <div>
         <input type="email" formControlName="email" placeholder="Email"
-          class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 mb-2"
+          class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 mb-2 border-white text-white"
           [class.border-yellow-500]="hasError('email', 'requiyellow') || hasError('email', 'email')" />
         @if (getErrorMessage('email')) {
         <p class="text-yellow-500 text-base mt-1">{{ getErrorMessage('email') }}</p>
@@ -32,7 +32,7 @@
       </div>
       <div>
         <input type="password" formControlName="password" placeholder="Mật khẩu"
-          class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+          class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 text-white border-white "
           [class.border-yellow-500]="hasError('password', 'requiyellow') || hasError('password', 'minlength')" />
         @if (getErrorMessage('password')) {
         <p class="text-yellow-500 text-base mt-1">{{ getErrorMessage('password') }}</p>
