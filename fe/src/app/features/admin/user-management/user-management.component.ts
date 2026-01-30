@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -11,7 +11,7 @@ interface User {
     name: string;
     email: string;
     role: string;
-    status?: string; // Made optional to match usage
+    status?: string;
     phoneNumber: string;
     avatar?: string;
 }
@@ -19,7 +19,7 @@ interface User {
 @Component({
     selector: 'app-user-management',
     standalone: true,
-    imports: [CommonModule, LucideAngularModule, ReactiveFormsModule],
+    imports: [CommonModule, LucideAngularModule, ReactiveFormsModule, FormsModule],
     template: `
     <div class="bg-white rounded-[20px] p-6 shadow-sm">
       <div class="flex items-center justify-between mb-6">
@@ -37,7 +37,42 @@ interface User {
         </button>
       </div>
 
-      <!-- Filters/Search could go here -->
+      <!-- Search & Filter -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="relative">
+          <lucide-icon name="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" [size]="20"></lucide-icon>
+          <input 
+            type="text" 
+            [(ngModel)]="searchKeyword" 
+            (keyup.enter)="onSearch()"
+            placeholder="Search by name or email..." 
+            class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+          >
+        </div>
+        
+        <div>
+           <select 
+            [(ngModel)]="selectedRole" 
+            (change)="onSearch()"
+            class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none appearance-none bg-white"
+          >
+            <option value="">All Roles</option>
+            <option value="ADMIN">Admin</option>
+            <option value="DRIVER">Driver</option>
+            <option value="USER">User</option>
+            <option value="SUPPORTER">Supporter</option>
+          </select>
+        </div>
+
+        <div>
+          <button 
+            (click)="onSearch()"
+            class="w-full md:w-auto px-6 py-2.5 bg-gray-900 text-white rounded-xl font-semibold hover:bg-gray-800 transition-all shadow-lg shadow-gray-200"
+          >
+            Search
+          </button>
+        </div>
+      </div>
 
       <div class="overflow-x-auto">
         <table class="w-full">
@@ -232,6 +267,10 @@ export class UserManagementComponent implements OnInit {
     submitting = signal(false);
     showPassword = false;
 
+    // Search properties
+    searchKeyword = '';
+    selectedRole = '';
+
     supporterForm: FormGroup = this.fb.group({
         name: ['', Validators.required],
         userName: ['', [Validators.required, Validators.minLength(6)]],
@@ -248,25 +287,44 @@ export class UserManagementComponent implements OnInit {
 
     loadUsers() {
         this.loading.set(true);
-        this.userService.getAllUsers(0, 10).subscribe({
-            next: (response: any) => {
-                console.log('Dữ liệu Server trả về:', response);
 
-                // SỬA Ở ĐÂY: Dữ liệu nằm trực tiếp trong response.content
-                // (Không phải response.results.content)
-                if (response && response.content) {
-                    this.users.set(response.content); // <--- Sửa dòng này
-                } else {
-                    this.users.set([]);
+        // Check if we are searching
+        if (this.searchKeyword.trim() || this.selectedRole) {
+            this.userService.searchUsers(this.selectedRole, this.searchKeyword).subscribe({
+                next: (response: any) => {
+                    // API returns ApiResponse<List<UserResponse>>
+                    const results = response.results || [];
+                    this.users.set(results);
+                    this.loading.set(false);
+                },
+                error: (err) => {
+                    console.error('Search failed', err);
+                    this.toastService.show('Failed to search users');
+                    this.loading.set(false);
                 }
+            });
+        } else {
+            // Default pagination
+            this.userService.getAllUsers(0, 10).subscribe({
+                next: (response: any) => {
+                    console.log('Dữ liệu Server trả về:', response);
+                    if (response && response.content) {
+                        this.users.set(response.content);
+                    } else {
+                        this.users.set([]);
+                    }
+                    this.loading.set(false);
+                },
+                error: (err) => {
+                    console.error('Failed to load users', err);
+                    this.loading.set(false);
+                }
+            });
+        }
+    }
 
-                this.loading.set(false);
-            },
-            error: (err) => {
-                console.error('Failed to load users', err);
-                this.loading.set(false);
-            }
-        });
+    onSearch() {
+        this.loadUsers();
     }
 
     getInitials(name: string): string {
