@@ -3,6 +3,7 @@ import { RxStomp, RxStompState } from '@stomp/rx-stomp';
 import SockJS from 'sockjs-client';
 import { Observable, BehaviorSubject, filter, firstValueFrom, Subscription } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 interface LocationData {
     lat: number;
@@ -16,8 +17,10 @@ interface LocationData {
 })
 export class DriverPosUpdateService implements OnDestroy {
     private stompClient: RxStomp;
+
+    protected wsUrl : string = environment.wsUrl!;
     
-    // ✅ Location CHỈ được set từ map component (KHÔNG tự lấy GPS)
+    // Location CHỈ được set từ map component (KHÔNG tự lấy GPS)
     private currentLocation: LocationData | null = null;
     private locationSubject = new BehaviorSubject<{ lat: number; lng: number } | null>(null);
     public location$ = this.locationSubject.asObservable();
@@ -34,7 +37,7 @@ export class DriverPosUpdateService implements OnDestroy {
     constructor() {
         this.stompClient = new RxStomp();
         this.stompClient.configure({
-            webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+            webSocketFactory: () => new SockJS(this.wsUrl),
             heartbeatIncoming: 0,
             heartbeatOutgoing: 3000,
             reconnectDelay: 5000,
@@ -48,7 +51,7 @@ export class DriverPosUpdateService implements OnDestroy {
     }
 
     /**
-     * ✅ Set location từ map component
+     * Set location từ map component
      * Service KHÔNG tự lấy GPS để tránh conflict
      * CHỈ nhận location từ map.component emit
      */

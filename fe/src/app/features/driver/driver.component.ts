@@ -107,7 +107,7 @@ export class DriverComponent implements OnInit, OnDestroy {
       
       console.log(this.driverId);
 
-      // ✅ Start auto location updates (map sẽ emit location → service auto-send)
+      // Start auto location updates (map sẽ emit location → service auto-send)
       this.driverPosUpdateService.startAutoLocationUpdate(this.driverId!);
 
     } else {
@@ -121,7 +121,7 @@ export class DriverComponent implements OnInit, OnDestroy {
   }
 
   onMapLocationDetected(location: { lng: number; lat: number }) {
-    // ✅ Map component emit location → service nhận và tự động gửi nếu cần
+    // Map component emit location → service nhận và tự động gửi nếu cần
     this.driverPosUpdateService.setCurrentLocation({ lat: location.lat, lng: location.lng });
   }
 
@@ -373,6 +373,6 @@ export class DriverComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.unsubscribeFromRideRequests();
     this.driverRideRequestService.disconnect();
-    // ✅ Service tự clean up khi stopAutoLocationUpdate() được gọi
+    // Service tự clean up khi stopAutoLocationUpdate() được gọi
   }
 }
