@@ -32,4 +32,7 @@ public class DriverRequest {
     String address;
 
     String avatarUrl;
+
+    Double prefferedLatitude;
+    Double prefferedLongitude;
 }

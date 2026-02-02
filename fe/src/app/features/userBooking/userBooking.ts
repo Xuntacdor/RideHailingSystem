@@ -569,8 +569,11 @@ export class UserBookingComponent implements OnInit, OnDestroy {
       .subscribeToRideStatusUpdates(customerId)
       .subscribe({
         next: (update) => {
-          this.handleRideNotification(update);
-          this.cdr.detectChanges();
+          // Defer handling to next cycle to avoid ExpressionChangedAfterItHasBeenCheckedError
+          setTimeout(() => {
+            this.handleRideNotification(update);
+            this.cdr.detectChanges();
+          }, 0);
         },
         error: (err) => {
           console.error('WebSocket subscription error:', err);
@@ -761,6 +764,9 @@ export class UserBookingComponent implements OnInit, OnDestroy {
         this.rideState = RideState.CANCELLED;
         break;
     }
+
+    // Trigger change detection after state updates
+    this.cdr.markForCheck();
 
     if (
       (this.rideState === RideState.PICKINGUP || this.rideState === RideState.CONFIRMED) &&

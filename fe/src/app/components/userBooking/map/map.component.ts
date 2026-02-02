@@ -172,7 +172,7 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
                 icon: this.activeDriver?.icon,
                 id: this.activeDriver?.id
             });
-            
+
             if (this.activeDriver) {
                 this.updateActiveDriverMarker(this.activeDriver);
             } else {
@@ -200,7 +200,7 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
             }
         }
     }
-    
+
 
 
 
@@ -514,7 +514,7 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
 
     private updateActiveDriverMarker(driver: Driver): void {
         const timestamp = new Date().toLocaleTimeString();
-        
+
         if (this.activeDriverMarker) {
             console.log(`[${timestamp}] 🚗 [MAP] Animating driver marker to:`, {
                 from: this.activeDriverMarker.getLngLat(),
@@ -527,7 +527,7 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
                 position: `${driver.lat.toFixed(6)}, ${driver.lng.toFixed(6)}`,
                 icon: driver.icon
             });
-            
+
             const el = document.createElement('div');
             el.className = 'active-driver-marker';
             el.innerHTML = driver.icon;

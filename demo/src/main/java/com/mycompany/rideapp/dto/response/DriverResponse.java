@@ -31,4 +31,7 @@ public class DriverResponse {
     String vehicleType;
     String vehicleModel;
     String vehiclePlate;
+
+    Double prefferedLatitude;
+    Double prefferedLongitude;
 }
