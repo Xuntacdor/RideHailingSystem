@@ -131,10 +131,12 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
     ) { }
 
     ngOnInit(): void {
-        if (this.activeRide) {
-            this.initializeRide();
-        }
         this.subscribeToLocationUpdates();
+        
+        if (this.activeRide) {
+            // Wait for location to be available before calculating routes
+            this.waitForLocationThenInitialize();
+        }
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -163,10 +165,53 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     private subscribeToLocationUpdates(): void {
+        let isFirstLocation = true;
         this.locationSubscription = this.driverPosUpdateService.location$.subscribe(location => {
             if (location) {
+                // On first location after reload, recalculate route if needed
+                if (isFirstLocation && this.activeRide) {
+                    isFirstLocation = false;
+                    console.log('📍 First location received after reload, recalculating route');
+                    if (this.navigationState === 'TO_DESTINATION') {
+                        this.calculateRouteToDestination();
+                    } else {
+                        this.calculateRouteToPickup();
+                    }
+                }
                 this.checkArrival(location);
             }
+        });
+    }
+
+    private async waitForLocationThenInitialize(): Promise<void> {
+        try {
+            const location = await this.waitForLocation(10000);
+            console.log('✅ Location available, initializing ride:', location);
+            this.initializeRide();
+        } catch (error) {
+            console.warn('⚠️ Timeout waiting for location, will recalculate when available');
+            this.initializeRideWithoutRoutes();
+        }
+    }
+
+    private waitForLocation(timeout: number = 10000): Promise<{ lat: number; lng: number }> {
+        return new Promise((resolve, reject) => {
+            let subscription: any;
+            
+            const timeoutId = setTimeout(() => {
+                if (subscription) {
+                    subscription.unsubscribe();
+                }
+                reject(new Error('Timeout waiting for location'));
+            }, timeout);
+
+            subscription = this.driverPosUpdateService.location$.subscribe(location => {
+                if (location) {
+                    clearTimeout(timeoutId);
+                    subscription.unsubscribe();
+                    resolve(location);
+                }
+            });
         });
     }
 
@@ -190,7 +235,7 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-        const R = 6371; // Radius of the earth in km
+        const R = 6371; 
         const dLat = this.deg2rad(lat2 - lat1);
         const dLon = this.deg2rad(lon2 - lon1);
         const a =
@@ -198,7 +243,7 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
             Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) *
             Math.sin(dLon / 2) * Math.sin(dLon / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        const d = R * c; // Distance in km
+        const d = R * c; 
         return d;
     }
 
@@ -249,6 +294,42 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
         }
     }
 
+    private initializeRideWithoutRoutes(): void {
+        if (!this.activeRide) return;
+
+        console.log('Initializing ride without routes (will calculate when location available):', this.activeRide.status);
+
+        // Reset flags
+        this.arrivedAtDestinationPoint = false;
+        this.isCompletingRide = false;
+
+        // Set navigation state based on ride status
+        if (this.activeRide.status === 'ONGOING') {
+            this.navigationState = 'TO_DESTINATION';
+            this.arrivedAtPickupPoint = false;
+        } else if (this.activeRide.status === 'PICKINGUP') {
+            this.navigationState = 'TO_PICKUP';
+            this.arrivedAtPickupPoint = true; 
+        } else {
+            this.navigationState = 'TO_PICKUP';
+            this.arrivedAtPickupPoint = false;
+        }
+
+        this.pickupCoordinate = {
+            lat: this.activeRide.pickupLat,
+            lng: this.activeRide.pickupLng,
+        };
+
+        if (this.activeRide.destinationLat && this.activeRide.destinationLng) {
+            this.destinationCoordinate = {
+                lat: this.activeRide.destinationLat,
+                lng: this.activeRide.destinationLng,
+            };
+        }
+
+        // Routes will be calculated when first location is received
+    }
+
     private async calculateRouteToPickup(): Promise<void> {
         if (!this.pickupCoordinate) return;
 
@@ -273,7 +354,9 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
                 this.cdr.detectChanges();
             }
         } catch (error) {
-            console.error('Error calculating route:', error);
+            console.warn('⚠️ Error calculating route to pickup:', error);
+            console.log('Will retry when location becomes available');
+            // Route will be calculated when location subscription receives update
         }
     }
 
@@ -347,7 +430,9 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
                 this.cdr.detectChanges();
             }
         } catch (error) {
-            console.error('Error calculating route to destination:', error);
+            console.error('⚠️ Error calculating route to destination:', error);
+            console.log('Will retry when location becomes available');
+            // Route will be calculated when location subscription receives update
         }
     }
 

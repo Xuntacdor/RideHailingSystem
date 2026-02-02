@@ -28,6 +28,8 @@ public class DriverMapper {
                 .driverStatus(request.getDriverStatus())
                 .address(request.getAddress())
                 .avatarUrl(request.getAvatarUrl())
+                .prefferedLatitude(request.getPrefferedLatitude())
+                .prefferedLongitude(request.getPrefferedLongitude())
                 .rating(0.0)
                 .build();
     }
@@ -35,16 +37,16 @@ public class DriverMapper {
     public DriverResponse toResponse(Driver driver) {
         if (driver == null)
             return null;
-        
+
         String vehicleType = null;
         String vehicleModel = null;
         String vehiclePlate = null;
-        
+
         if (driver.getVehicleRegister() != null && !driver.getVehicleRegister().isEmpty()) {
             var activeVehicle = driver.getVehicleRegister().stream()
                     .filter(v -> v.getStatus() == com.mycompany.rideapp.enums.VehicleStatus.ACTIVE)
                     .findFirst();
-            
+
             if (activeVehicle.isPresent()) {
                 var vehicle = activeVehicle.get();
                 vehicleType = vehicle.getVehicleType();
@@ -52,7 +54,7 @@ public class DriverMapper {
                 vehiclePlate = vehicle.getVehicleNumber();
             }
         }
-        
+
         return DriverResponse.builder()
                 .id(driver.getId())
                 .user(driver.getUser() != null ? userMapper.toResponse(driver.getUser()) : null)
@@ -71,6 +73,8 @@ public class DriverMapper {
                                 .map(vehicle -> vehicle.getId())
                                 .collect(Collectors.toList())
                         : null)
+                .prefferedLatitude(driver.getPrefferedLatitude())
+                .prefferedLongitude(driver.getPrefferedLongitude())
                 .build();
     }
 
@@ -88,6 +92,12 @@ public class DriverMapper {
         }
         if (request.getAvatarUrl() != null) {
             driver.setAvatarUrl(request.getAvatarUrl());
+        }
+        if (request.getPrefferedLatitude() != null) {
+            driver.setPrefferedLatitude(request.getPrefferedLatitude());
+        }
+        if (request.getPrefferedLongitude() != null) {
+            driver.setPrefferedLongitude(request.getPrefferedLongitude());
         }
     }
 }

@@ -54,7 +54,8 @@ public class RideService {
 
     private final Map<String, PendingRide> pendingRides = new ConcurrentHashMap<>();
     private final Map<String, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
-    private final ScheduledThreadPoolExecutor scheduler = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(10);
+    private final ScheduledThreadPoolExecutor scheduler = (ScheduledThreadPoolExecutor) Executors
+            .newScheduledThreadPool(10);
 
     public Map<String, Object> createRide(RideRequest request) {
         String rideRequestId = UUID.randomUUID().toString();
@@ -101,19 +102,19 @@ public class RideService {
 
     private void scheduleDriverRetryTask(PendingRide pendingRide, int maxRetries) {
         AtomicBoolean isCancelled = new AtomicBoolean(false);
-        
+
         Runnable retryTask = new Runnable() {
             int retryCount = 0;
 
             @Override
             public void run() {
                 try {
-                    
+
                     if (isCancelled.get()) {
                         cleanupPendingRide(pendingRide.getRideRequestId());
                         return;
                     }
-                    
+
                     if (pendingRide.getAccepted().get()) {
 
                         cleanupPendingRide(pendingRide.getRideRequestId());
@@ -121,52 +122,44 @@ public class RideService {
                     }
 
                     retryCount++;
-                    
-                    
-                    List<DriverResponse> freshDrivers = driverService.getNearestDrivers(
-                        pendingRide.getRequest().getCustomerLatitude(),
-                        pendingRide.getRequest().getCustomerLongitude(),
-                        10,
-                        pendingRide.getRequest().getVehicleType()
-                    );
-                    
 
+                    List<DriverResponse> freshDrivers = driverService.getNearestDrivers(
+                            pendingRide.getRequest().getCustomerLatitude(),
+                            pendingRide.getRequest().getCustomerLongitude(),
+                            10,
+                            pendingRide.getRequest().getVehicleType());
 
                     List<String> freshDriverIds = freshDrivers.stream()
-                        .map(DriverResponse::getId)
-                        .filter(id -> !pendingRide.getRejectedDriverIds().contains(id))
-                        .collect(Collectors.toList());
-                    
+                            .map(DriverResponse::getId)
+                            .filter(id -> !pendingRide.getRejectedDriverIds().contains(id))
+                            .collect(Collectors.toList());
 
-                    
                     if (!freshDriverIds.isEmpty()) {
                         pendingRide.setDriverIds(freshDriverIds);
                         pendingRide.setCurrentDriverIndex(0);
                         sendNotificationToCurrentDriver(pendingRide);
-                        return; 
+                        return;
                     }
 
                     handleDriverRejection(pendingRide);
 
-                    if (pendingRide.getCurrentDriverIndex() >= pendingRide.getDriverIds().size() 
-                        || retryCount >= maxRetries) {
+                    if (pendingRide.getCurrentDriverIndex() >= pendingRide.getDriverIds().size()
+                            || retryCount >= maxRetries) {
                         notificationService.notifyNoDriverAvailable(
-                            pendingRide.getRequest().getCustomerId(),
-                            pendingRide.getRideRequestId());
+                                pendingRide.getRequest().getCustomerId(),
+                                pendingRide.getRideRequestId());
                         cleanupPendingRide(pendingRide.getRideRequestId());
                         isCancelled.set(true);
                     }
-                    
-                        
+
                 } catch (Exception e) {
-                    // Don't cancel - let it retry again 
                 }
             }
         };
         ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(
-            retryTask, 10, 10, TimeUnit.SECONDS);
+                retryTask, 10, 10, TimeUnit.SECONDS);
         scheduledTasks.put(pendingRide.getRideRequestId(), future);
-    }  
+    }
 
     @Transactional
     public void handleDriverResponse(DriverResponseRequest response) {
@@ -436,11 +429,11 @@ public class RideService {
         if (removed != null) {
             log.info("[CANCEL_PENDING] Removed pending ride {} from map. Was at driver index {}/{}",
                     rideRequestId, removed.getCurrentDriverIndex(), removed.getDriverIds().size());
-            
+
             // Notify all drivers who were sent this ride request
             if (removed.getCurrentDriverIndex() < removed.getDriverIds().size()) {
                 String currentDriverId = removed.getDriverIds().get(removed.getCurrentDriverIndex());
-                log.info("[CANCEL_PENDING] Notifying current driver {} that ride request was cancelled", 
+                log.info("[CANCEL_PENDING] Notifying current driver {} that ride request was cancelled",
                         currentDriverId);
                 notificationService.notifyDriverRideRequestCancelled(currentDriverId, rideRequestId);
             }
@@ -472,13 +465,13 @@ public class RideService {
         scheduler.shutdown();
     }
 
-    //DEBUG 
+    // DEBUG
     @PostConstruct
     public void init() {
-        scheduler.setRemoveOnCancelPolicy(true); 
+        scheduler.setRemoveOnCancelPolicy(true);
         logSchedulerStatus();
     }
-    
+
     private void logSchedulerStatus() {
         log.info("Active threads: {}", scheduler.getActiveCount());
         log.info("Pool size: {}", scheduler.getPoolSize());

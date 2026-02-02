@@ -47,13 +47,16 @@ public class Driver {
     String licenseNumber;
     @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
     AccountStatus driverStatus;
-    
+
     @Nationalized
     String address;
     String avatarUrl;
     Double rating;
     Double latitude;
     Double longitude;
+
+    Double prefferedLatitude;
+    Double prefferedLongitude;
 
     @Builder.Default
     @OneToMany(mappedBy = "driver", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

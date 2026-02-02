@@ -3,6 +3,7 @@ package com.mycompany.rideapp.controller;
 import java.util.List;
 
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -122,6 +123,25 @@ public class DriverController {
                 return ApiResponse.<List<DriverResponse>>builder()
                                 .code(200)
                                 .results(driverService.getDriversByLocation(lat, lng, zoom))
+                                .build();
+        }
+
+        @PutMapping("/{id}/preffered-position")
+        public ApiResponse<DriverResponse> updateDriverPrefferedPosition(
+                        @PathVariable String id,
+                        @RequestParam Double lat,
+                        @RequestParam Double lng) {
+                return ApiResponse.<DriverResponse>builder()
+                                .code(200)
+                                .results(driverService.updateDriverPrefferedPosition(id, lat, lng))
+                                .build();
+        }
+
+        @DeleteMapping("/{id}/preffered-position")
+        public ApiResponse<Boolean> deleteDriverPrefferedPosition(@PathVariable String id) {
+                return ApiResponse.<Boolean>builder()
+                                .code(200)
+                                .results(driverService.deleteDriverPrefferedPosition(id))
                                 .build();
         }
 }

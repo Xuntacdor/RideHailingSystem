@@ -36,7 +36,6 @@ public class DriverService {
     DriverMapper driverMapper;
     NotificationService notificationService;
 
-    
     public DriverResponse createDriver(DriverRequest request) {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
@@ -52,21 +51,18 @@ public class DriverService {
         Driver driver = driverMapper.toEntity(request, user);
         driverRepository.save(driver);
 
-        log.info("Driver created successfully with ID: {}", driver.getId());
         return driverMapper.toResponse(driver);
     }
 
     public DriverResponse getDriverById(String id) {
         Driver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        log.info("Getting driver by ID: {}", id);
         return driverMapper.toResponse(driver);
     }
 
     public DriverResponse getDriverByUserId(String userId) {
         Driver driver = driverRepository.findByUserId(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        log.info("Getting driver by user ID: {}", userId);
         return driverMapper.toResponse(driver);
     }
 
@@ -84,7 +80,6 @@ public class DriverService {
         DriverMapper.updateEntity(driver, request);
         driverRepository.save(driver);
 
-        log.info("Driver updated successfully with ID: {}", driver.getId());
         return driverMapper.toResponse(driver);
     }
 
@@ -95,7 +90,6 @@ public class DriverService {
         driver.setDriverStatus(AccountStatus.valueOf(status));
         driverRepository.save(driver);
 
-        log.info("Driver status updated to {} for ID: {}", status, driver.getId());
         return driverMapper.toResponse(driver);
     }
 
@@ -107,7 +101,6 @@ public class DriverService {
         driver.setAvatarUrl(path);
         driverRepository.save(driver);
 
-        log.info("Driver avatar uploaded successfully for ID: {}", driver.getId());
         return driverMapper.toResponse(driver);
     }
 
@@ -122,7 +115,7 @@ public class DriverService {
                 .map(driverMapper::toResponse)
                 .collect(Collectors.toList());
     }
-    
+
     @Transactional(readOnly = true)
     public List<DriverResponse> getNearestDrivers(Double lat, Double lng, int limit,
             com.mycompany.rideapp.enums.VehicleType vehicleType) {
@@ -144,7 +137,6 @@ public class DriverService {
                         vehicle.getStatus() == com.mycompany.rideapp.enums.VehicleStatus.ACTIVE);
     }
 
-    
     public void updateDriverPosition(String id, Double lat, Double lng) {
         Driver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
@@ -153,35 +145,45 @@ public class DriverService {
         driverRepository.save(driver);
     }
 
-    public void getDriverPosition(String id) {
+    public DriverResponse updateDriverPrefferedPosition(String id, Double lat, Double lng) {
         Driver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        notificationService.notifyDriverPositionUpdate(id, driver.getLatitude(), driver.getLongitude());
+        driver.setPrefferedLatitude(lat);
+        driver.setPrefferedLongitude(lng);
+        driverRepository.save(driver);
+        return driverMapper.toResponse(driver);
+    }
+
+    public boolean deleteDriverPrefferedPosition(String id) {
+        Driver driver = driverRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        driver.setPrefferedLatitude(null);
+        driver.setPrefferedLongitude(null);
+        driverRepository.save(driver);
+        return true;
     }
 
     @Transactional(readOnly = true)
     public List<DriverResponse> getDriversByLocation(Double lat, Double lng, double zoom) {
         double radiusInKm = calculateRadiusFromZoom(zoom);
-        
+
         double latDelta = radiusInKm / 111.0;
         double lngDelta = radiusInKm / (111.0 * Math.cos(Math.toRadians(lat)));
-        
+
         double minLat = lat - latDelta;
         double maxLat = lat + latDelta;
         double minLng = lng - lngDelta;
         double maxLng = lng + lngDelta;
-        
+
         List<Driver> drivers = driverRepository.findDriversByLocationBounds(minLat, maxLat, minLng, maxLng);
-        
+
         return drivers.stream()
                 .map(driverMapper::toResponse)
                 .collect(Collectors.toList());
     }
-    
+
     private double calculateRadiusFromZoom(double zoom) {
         return 40000.0 / Math.pow(2, zoom);
     }
-
-
 
 }

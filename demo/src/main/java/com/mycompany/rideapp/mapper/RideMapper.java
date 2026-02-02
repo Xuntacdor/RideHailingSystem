@@ -23,7 +23,7 @@ public class RideMapper {
     private final DriverMapper driverMapper;
     @Autowired
     private final UserMapper userMapper;
-    // private final ReviewMapper reviewMapper;
+    private final ReviewMapper reviewMapper;
     // private final PaymentMapper paymentMapper;
 
     public Ride toEntity(RideRequest dto) {

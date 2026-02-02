@@ -118,12 +118,6 @@ export class DriverPosUpdateService implements OnDestroy {
         };
     }
 
-    /**
-     * ✅ Auto-send location khi map update vị trí
-     * - Subscribe vào location$ (nhận từ map component)
-     * - Chỉ gửi nếu di chuyển > MIN_DISTANCE_METERS (cho location$ stream)
-     * - Heartbeat định kỳ 10s: LUÔN gửi để update pos liên tục
-     */
     startAutoLocationUpdate(driverId: string): void {
         console.log('🚀 Starting auto location updates for driver:', driverId);
         
