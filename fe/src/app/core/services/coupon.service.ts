@@ -51,4 +51,12 @@ export class CouponService extends ApiService {
   getActiveCoupons(): Observable<ApiResponse<CouponResponse[]>> {
     return this.get<ApiResponse<CouponResponse[]>>('/coupon/active');
   }
+
+  getUserAvailableCoupons(userId: string): Observable<ApiResponse<CouponResponse[]>> {
+    return this.get<ApiResponse<CouponResponse[]>>(`/coupon/user/${userId}/available`);
+  }
+
+  assignCouponToUser(userId: string, couponId: string): Observable<ApiResponse<string>> {
+    return this.post<ApiResponse<string>>(`/coupon/admin/assign?userId=${userId}&couponId=${couponId}`, {});
+  }
 }

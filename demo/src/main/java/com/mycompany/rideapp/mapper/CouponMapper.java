@@ -22,8 +22,9 @@ public class CouponMapper {
                 .discountAmount(request.getDiscountAmount())
                 .maxUsageLimit(request.getMaxUsageLimit())
                 .usagePerUser(request.getUsagePerUser())
-                .currentUsageCount(0L)
                 .expirationDate(request.getExpirationDate())
+                .couponType(request.getCouponType())
+                .achievementType(request.getAchievementType())
                 .isActive(true)
                 .build();
     }
@@ -31,11 +32,6 @@ public class CouponMapper {
     public static CouponResponse toResponse(Coupon coupon) {
         if (coupon == null)
             return null;
-
-        Long remainingUsage = null;
-        if (coupon.getMaxUsageLimit() != null && coupon.getCurrentUsageCount() != null) {
-            remainingUsage = coupon.getMaxUsageLimit() - coupon.getCurrentUsageCount();
-        }
 
         boolean isExpired = coupon.getExpirationDate() != null &&
                 LocalDateTime.now().isAfter(coupon.getExpirationDate());
@@ -48,11 +44,11 @@ public class CouponMapper {
                 .discountAmount(coupon.getDiscountAmount())
                 .maxUsageLimit(coupon.getMaxUsageLimit())
                 .usagePerUser(coupon.getUsagePerUser())
-                .currentUsageCount(coupon.getCurrentUsageCount())
-                .remainingUsage(remainingUsage)
                 .expirationDate(coupon.getExpirationDate())
                 .isActive(coupon.getIsActive())
                 .isExpired(isExpired)
+                .couponType(coupon.getCouponType())
+                .achievementType(coupon.getAchievementType())
                 .build();
     }
 

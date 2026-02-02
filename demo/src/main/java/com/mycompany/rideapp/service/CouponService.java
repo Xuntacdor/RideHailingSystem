@@ -1,4 +1,3 @@
-
 package com.mycompany.rideapp.service;
 
 import java.time.LocalDateTime;
@@ -13,11 +12,14 @@ import com.mycompany.rideapp.dto.response.CouponResponse;
 import com.mycompany.rideapp.entity.Coupon;
 import com.mycompany.rideapp.entity.CouponUsage;
 import com.mycompany.rideapp.entity.User;
+import com.mycompany.rideapp.entity.UserCoupon;
+import com.mycompany.rideapp.enums.CouponType;
 import com.mycompany.rideapp.exception.AppException;
 import com.mycompany.rideapp.exception.ErrorCode;
 import com.mycompany.rideapp.mapper.CouponMapper;
 import com.mycompany.rideapp.repository.CouponRepository;
 import com.mycompany.rideapp.repository.CouponUsageRepository;
+import com.mycompany.rideapp.repository.UserCouponRepository;
 import com.mycompany.rideapp.repository.UserRepository;
 
 import lombok.AccessLevel;
@@ -32,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 public class CouponService {
     CouponRepository couponRepository;
     CouponUsageRepository couponUsageRepository;
+    UserCouponRepository userCouponRepository;
     UserRepository userRepository;
 
     public CouponResponse createCoupon(CouponRequest request) {
@@ -40,6 +43,12 @@ public class CouponService {
         }
 
         Coupon coupon = CouponMapper.toEntity(request);
+
+        // Set default coupon type if not provided
+        if (coupon.getCouponType() == null) {
+            coupon.setCouponType(CouponType.ADMIN_CREATED);
+        }
+
         couponRepository.save(coupon);
 
         log.info("Coupon created with code: {}", coupon.getCode());
@@ -92,9 +101,6 @@ public class CouponService {
 
         couponUsageRepository.save(usage);
 
-        coupon.setCurrentUsageCount(coupon.getCurrentUsageCount() + 1);
-        couponRepository.save(coupon);
-
         log.info("Coupon {} applied successfully for user {}", request.getCouponCode(), request.getUserId());
         return CouponMapper.toResponse(coupon);
     }
@@ -108,11 +114,24 @@ public class CouponService {
             throw new AppException(ErrorCode.USER_EXISTED);
         }
 
-        if (coupon.getMaxUsageLimit() != null &&
-                coupon.getCurrentUsageCount() >= coupon.getMaxUsageLimit()) {
-            throw new AppException(ErrorCode.USER_EXISTED);
+        // Check if user has this coupon assigned to them
+        UserCoupon userCoupon = userCouponRepository.findByUserIdAndCouponId(userId, coupon.getId())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND)); // User doesn't have this coupon
+
+        // Check if user already used this coupon
+        if (userCoupon.getIsUsed()) {
+            throw new AppException(ErrorCode.USER_EXISTED); // Coupon already used
         }
 
+        // Check global usage limit
+        if (coupon.getMaxUsageLimit() != null) {
+            Long totalUsageCount = couponUsageRepository.countByCouponIdAndUserId(coupon.getId(), userId);
+            if (totalUsageCount >= coupon.getMaxUsageLimit()) {
+                throw new AppException(ErrorCode.USER_EXISTED);
+            }
+        }
+
+        // Check per-user usage limit
         Long userUsageCount = couponUsageRepository.countByCouponIdAndUserId(coupon.getId(), userId);
         if (coupon.getUsagePerUser() != null && userUsageCount >= coupon.getUsagePerUser()) {
             throw new AppException(ErrorCode.USER_EXISTED);
@@ -127,6 +146,17 @@ public class CouponService {
         log.info("Getting coupon usage for user: {}", userId);
         return couponUsageRepository.findByUserId(userId).stream()
                 .map(usage -> CouponMapper.toResponse(usage.getCoupon()))
+                .collect(Collectors.toList());
+    }
+
+    public List<CouponResponse> getUserAvailableCoupons(String userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        log.info("Getting available coupons for user: {}", userId);
+        return userCouponRepository.findByUserIdAndIsUsedFalse(userId).stream()
+                .map(userCoupon -> CouponMapper.toResponse(userCoupon.getCoupon()))
                 .collect(Collectors.toList());
     }
 

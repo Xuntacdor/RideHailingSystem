@@ -28,8 +28,8 @@ export interface RideRequestNotification {
 })
 export class DriverRideRequestService {
     private stompClient: RxStomp;
-        protected wsUrl : string = environment.wsUrl!;
-    
+    protected wsUrl: string = environment.wsUrl!;
+
     constructor() {
 
         this.stompClient = new RxStomp();
@@ -42,14 +42,12 @@ export class DriverRideRequestService {
             reconnectDelay: 5000,
         });
 
-        // Add connection status listeners
         this.stompClient.connected$.subscribe(() => {
         });
 
         this.stompClient.connectionState$.subscribe((state) => {
         });
 
-        // IMPORTANT: Activate immediately like customer service
         this.stompClient.activate();
     }
 

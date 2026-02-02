@@ -16,6 +16,7 @@ import com.mycompany.rideapp.dto.request.ApplyCouponRequest;
 import com.mycompany.rideapp.dto.request.CouponRequest;
 import com.mycompany.rideapp.dto.response.ApiResponse;
 import com.mycompany.rideapp.dto.response.CouponResponse;
+import com.mycompany.rideapp.service.AchievementService;
 import com.mycompany.rideapp.service.CouponService;
 
 import lombok.AccessLevel;
@@ -30,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CouponController {
     CouponService couponService;
+    AchievementService achievementService;
 
     @PostMapping
     public ApiResponse<CouponResponse> createCoupon(@RequestBody @Validated CouponRequest request) {
@@ -81,6 +83,14 @@ public class CouponController {
                 .build();
     }
 
+    @GetMapping("/user/{userId}/available")
+    public ApiResponse<List<CouponResponse>> getUserAvailableCoupons(@PathVariable String userId) {
+        return ApiResponse.<List<CouponResponse>>builder()
+                .code(200)
+                .results(couponService.getUserAvailableCoupons(userId))
+                .build();
+    }
+
     @PutMapping("/{id}")
     public ApiResponse<CouponResponse> updateCoupon(
             @PathVariable String id,
@@ -92,6 +102,7 @@ public class CouponController {
     }
 
     @PutMapping("/{id}/deactivate")
+
     public ApiResponse<CouponResponse> deactivateCoupon(@PathVariable String id) {
         return ApiResponse.<CouponResponse>builder()
                 .code(200)
@@ -104,6 +115,17 @@ public class CouponController {
         return ApiResponse.<List<CouponResponse>>builder()
                 .code(200)
                 .results(couponService.getActiveCoupons())
+                .build();
+    }
+
+    @PostMapping("/admin/assign")
+    public ApiResponse<String> assignCouponToUser(
+            @RequestParam String userId,
+            @RequestParam String couponId) {
+        achievementService.assignCouponToUser(userId, couponId);
+        return ApiResponse.<String>builder()
+                .code(200)
+                .message("Coupon assigned successfully")
                 .build();
     }
 }

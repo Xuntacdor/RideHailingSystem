@@ -1,4 +1,3 @@
-
 package com.mycompany.rideapp.dto.response;
 
 import java.time.LocalDateTime;
@@ -18,16 +17,18 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class CouponResponse {
+public class UserCouponResponse {
     String id;
+    String userId;
+    String couponId;
     String code;
     String content;
     Double discountPercentage;
     Double discountAmount;
-    Long maxUsageLimit;
-    Long usagePerUser;
+    LocalDateTime assignedAt;
+    Boolean isUsed;
+    LocalDateTime usedAt;
     LocalDateTime expirationDate;
-    Boolean isActive;
     Boolean isExpired;
     CouponType couponType;
     AchievementType achievementType;

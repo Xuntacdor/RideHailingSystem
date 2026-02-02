@@ -3,6 +3,9 @@ package com.mycompany.rideapp.dto.request;
 
 import java.time.LocalDateTime;
 
+import com.mycompany.rideapp.enums.AchievementType;
+import com.mycompany.rideapp.enums.CouponType;
+
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -40,4 +43,8 @@ public class CouponRequest {
     Long usagePerUser;
 
     LocalDateTime expirationDate;
+
+    CouponType couponType;
+
+    AchievementType achievementType;
 }

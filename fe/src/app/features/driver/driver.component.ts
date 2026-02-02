@@ -63,7 +63,7 @@ export class DriverComponent implements OnInit, OnDestroy {
         if (rideData) {
           this.driverService.updateDriverStatus(this.driverId!, 'ACTIVE').subscribe({});
           this.activeRide = {
-            rideId: rideData.id || '',  
+            rideId: rideData.id || '',
             customerId: rideData.customer?.id || '',
             pickupLat: rideData.startLatitude || 0,
             pickupLng: rideData.startLongitude || 0,
@@ -71,7 +71,7 @@ export class DriverComponent implements OnInit, OnDestroy {
             destinationLng: rideData.endLongitude || 0,
             status: rideData.status || ''
           };
-          
+
           if (rideData.status === 'CONFIRMED' || rideData.status === 'PICKINGUP' || rideData.status === 'ONGOING') {
             this.driverStatus = 'Matching';
             console.log(rideData.status);
@@ -81,12 +81,11 @@ export class DriverComponent implements OnInit, OnDestroy {
             // ✅ Start auto location updates (map sẽ emit location)
             this.driverPosUpdateService.startAutoLocationUpdate(this.driverId!);
           }
-          
+
           this.showActiveRide = true;
           this.cdr.detectChanges();
         }
-        else 
-        {
+        else {
           this.driverService.updateDriverStatus(this.driverId!, 'INACTIVE').subscribe({});
         }
       },
@@ -102,9 +101,9 @@ export class DriverComponent implements OnInit, OnDestroy {
 
     if (this.isOnline) {
       this.subscribeToRideRequests();
-      
+
       this.driverService.updateDriverStatus(this.driverId!, 'ACTIVE').subscribe({});
-      
+
       console.log(this.driverId);
 
       // Start auto location updates (map sẽ emit location → service auto-send)
@@ -112,16 +111,13 @@ export class DriverComponent implements OnInit, OnDestroy {
 
     } else {
       this.unsubscribeFromRideRequests();
-      
+
       this.driverService.updateDriverStatus(this.driverId!, 'INACTIVE').subscribe({});
-      
-      // ✅ Stop auto location updates
       this.driverPosUpdateService.stopAutoLocationUpdate();
     }
   }
 
   onMapLocationDetected(location: { lng: number; lat: number }) {
-    // Map component emit location → service nhận và tự động gửi nếu cần
     this.driverPosUpdateService.setCurrentLocation({ lat: location.lat, lng: location.lng });
   }
 
@@ -138,6 +134,8 @@ export class DriverComponent implements OnInit, OnDestroy {
       .subscribeToRideRequests(this.driverId)
       .subscribe({
         next: (notification: any) => {
+
+
           if (notification.type === 'RIDE_CREATED') {
             if (this.activeRide) {
               this.activeRide = {
@@ -177,9 +175,11 @@ export class DriverComponent implements OnInit, OnDestroy {
 
   private unsubscribeFromRideRequests(): void {
     this.rideRequestSubscription?.unsubscribe();
+    this.rideRequestSubscription = undefined; // ← Fix: Set to undefined to allow re-subscription
   }
 
   private async showRideRequestNotification(notification: RideRequestNotification): Promise<void> {
+
     // Use startAddress and endAddress from backend if available, otherwise fallback to reverse geocode
     let startLocation = notification.startAddress || notification.startLocation;
     let endLocation = notification.endAddress || notification.endLocation;
@@ -193,12 +193,11 @@ export class DriverComponent implements OnInit, OnDestroy {
         startLocation = 'Đang cập nhật...';
       }
     }
-    
+
     if (!endLocation && notification.endLatitude && notification.endLongitude) {
       try {
         endLocation = await this.trackAsiaService.reverseGeocode(notification.endLongitude, notification.endLatitude);
       } catch (e) {
-        console.error('Error reverse geocoding end location:', e);
         endLocation = 'Đang cập nhật...';
       }
     }
@@ -222,6 +221,7 @@ export class DriverComponent implements OnInit, OnDestroy {
     this.showRideRequestModal = true;
 
     this.cdr.detectChanges();
+
   }
 
   onAcceptRide(rideRequest: DriverRideRequest): void {

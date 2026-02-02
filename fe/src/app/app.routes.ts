@@ -61,6 +61,13 @@ export const routes: Routes = [
             (m) => m.TicketWorkspaceComponent
           ),
       },
+      {
+        path: 'coupons',
+        loadComponent: () =>
+          import('./features/admin/coupon-management/coupon-management').then(
+            (m) => m.CouponManagementComponent
+          ),
+      },
     ],
   },
 

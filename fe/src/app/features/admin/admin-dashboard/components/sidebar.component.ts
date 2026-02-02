@@ -3,16 +3,16 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 
 interface MenuItem {
-    label: string;
-    icon: string;
-    route: string;
+  label: string;
+  icon: string;
+  route: string;
 }
 
 @Component({
-    selector: 'app-sidebar',
-    standalone: true,
-    imports: [RouterLink, RouterLinkActive, LucideAngularModule],
-    template: `
+  selector: 'app-sidebar',
+  standalone: true,
+  imports: [RouterLink, RouterLinkActive, LucideAngularModule],
+  template: `
     <aside class="w-64 bg-white h-screen fixed left-0 top-0 border-r border-gray-100 flex flex-col">
       <!-- Logo -->
       <div class="p-6 border-b border-gray-100">
@@ -49,13 +49,14 @@ interface MenuItem {
   `,
 })
 export class SidebarComponent {
-    menuItems = signal<MenuItem[]>([
-        { label: 'Dashboard', icon: 'layout-dashboard', route: '/admin' },
-        { label: 'Booking', icon: 'calendar-check', route: '/admin/booking' },
-        { label: 'Schedule', icon: 'calendar-clock', route: '/admin/schedule' },
-        { label: 'Driver Management', icon: 'car', route: '/admin/driver' },
-        { label: 'User Management', icon: 'users', route: '/admin/users' },
-        { label: 'Reports', icon: 'file-text', route: '/admin/reports' },
-        { label: 'Settings', icon: 'settings', route: '/admin/settings' },
-    ]);
+  menuItems = signal<MenuItem[]>([
+    { label: 'Dashboard', icon: 'layout-dashboard', route: '/admin' },
+    { label: 'Booking', icon: 'calendar-check', route: '/admin/booking' },
+    { label: 'Schedule', icon: 'calendar-clock', route: '/admin/schedule' },
+    { label: 'Driver Management', icon: 'car', route: '/admin/driver' },
+    { label: 'User Management', icon: 'users', route: '/admin/users' },
+    { label: 'Coupons', icon: 'tag', route: '/admin/coupons' },
+    { label: 'Reports', icon: 'file-text', route: '/admin/reports' },
+    { label: 'Settings', icon: 'settings', route: '/admin/settings' },
+  ]);
 }

@@ -142,8 +142,8 @@ export interface RideRequest {
   status?: string;
   vehicleType: string;
   rideDate?: string;
-  endAddress?:string;
-  startAddress?:string;
+  endAddress?: string;
+  startAddress?: string;
 }
 
 export interface CreateRideResponse {
@@ -180,25 +180,27 @@ export enum RideStatus {
 export interface CouponResponse {
   id: string;
   code: string;
-  description: string;
-  discountType: string;
-  discountValue: number;
-  maxUsage: number;
-  currentUsage: number;
-  validFrom: string;
-  validTo: string;
+  content?: string;
+  discountPercentage?: number;
+  discountAmount?: number;
+  maxUsageLimit?: number;
+  usagePerUser?: number;
+  expirationDate?: string;
   isActive: boolean;
-  createdAt: string;
+  couponType: 'DEFAULT' | 'ACHIEVEMENT' | 'ADMIN_CREATED' | 'PROMOTIONAL';
+  achievementType?: 'NEW_USER' | 'FIRST_RIDE' | 'RIDES_5' | 'RIDES_10' | 'RIDES_25' | 'RIDES_50';
 }
 
 export interface CouponRequest {
   code: string;
-  description: string;
-  discountType: string;
-  discountValue: number;
-  maxUsage: number;
-  validFrom: string;
-  validTo: string;
+  content?: string;
+  discountPercentage?: number;
+  discountAmount?: number;
+  maxUsageLimit?: number;
+  usagePerUser?: number;
+  expirationDate?: string;
+  couponType: 'DEFAULT' | 'ACHIEVEMENT' | 'ADMIN_CREATED' | 'PROMOTIONAL';
+  achievementType?: 'NEW_USER' | 'FIRST_RIDE' | 'RIDES_5' | 'RIDES_10' | 'RIDES_25' | 'RIDES_50';
 }
 
 export interface ApplyCouponRequest {

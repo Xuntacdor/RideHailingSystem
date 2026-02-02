@@ -84,11 +84,17 @@ public class DriverService {
     }
 
     public DriverResponse updateDriverStatus(String id, String status) {
+        log.info("📝 [STATUS] Updating driver {} status to {}", id, status);
+
         Driver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
+        AccountStatus oldStatus = driver.getDriverStatus();
         driver.setDriverStatus(AccountStatus.valueOf(status));
         driverRepository.save(driver);
+
+        log.info("📝 [STATUS] Driver {} status changed from {} to {}", id, oldStatus, status);
+        log.info("📝 [STATUS] Driver location: lat={}, lng={}", driver.getLatitude(), driver.getLongitude());
 
         return driverMapper.toResponse(driver);
     }
@@ -111,7 +117,7 @@ public class DriverService {
     }
 
     public List<DriverResponse> getDriversByStatus(String status) {
-        return driverRepository.findByDriverStatus(status).stream()
+        return driverRepository.findByDriverStatus(AccountStatus.valueOf(status)).stream()
                 .map(driverMapper::toResponse)
                 .collect(Collectors.toList());
     }
@@ -119,13 +125,33 @@ public class DriverService {
     @Transactional(readOnly = true)
     public List<DriverResponse> getNearestDrivers(Double lat, Double lng, int limit,
             com.mycompany.rideapp.enums.VehicleType vehicleType) {
+        log.info("🔍 [SEARCH] Searching for nearest drivers at ({}, {}) with vehicle type: {}", lat, lng, vehicleType);
+
+        // Debug: Check total drivers
+        long totalDrivers = driverRepository.count();
+        long activeDrivers = driverRepository.findByDriverStatus(AccountStatus.ACTIVE).size();
+        log.info("🔍 [SEARCH] Total drivers in DB: {}, Active drivers: {}", totalDrivers, activeDrivers);
+
         List<Driver> drivers = driverRepository.findNearestDrivers(lat, lng,
                 org.springframework.data.domain.PageRequest.of(0, limit * 3));
-        return drivers.stream()
-                .filter(driver -> hasVehicleType(driver, vehicleType))
+
+        log.info("🔍 [SEARCH] Found {} drivers from query (before vehicle type filter)", drivers.size());
+
+        List<DriverResponse> result = drivers.stream()
+                .filter(driver -> {
+                    boolean hasVehicle = hasVehicleType(driver, vehicleType);
+                    if (!hasVehicle) {
+                        log.debug("Driver {} filtered out - no matching vehicle type", driver.getId());
+                    }
+                    return hasVehicle;
+                })
                 .limit(limit)
                 .map(driverMapper::toResponse)
                 .collect(Collectors.toList());
+
+        log.info("🔍 [SEARCH] Returning {} drivers after vehicle type filter", result.size());
+
+        return result;
     }
 
     private boolean hasVehicleType(Driver driver, com.mycompany.rideapp.enums.VehicleType vehicleType) {

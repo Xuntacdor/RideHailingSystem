@@ -51,6 +51,7 @@ public class RideService {
     private final NotificationService notificationService;
     private final UserRepository userRepository;
     private final DriverRepository driverRepository;
+    private final AchievementService achievementService;
 
     private final Map<String, PendingRide> pendingRides = new ConcurrentHashMap<>();
     private final Map<String, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
@@ -186,14 +187,11 @@ public class RideService {
     }
 
     private void cleanupPendingRide(String rideRequestId) {
-        log.info("[CLEANUP] Cleaning up pending ride {}", rideRequestId);
         pendingRides.remove(rideRequestId);
         java.util.concurrent.ScheduledFuture<?> task = scheduledTasks.remove(rideRequestId);
         if (task != null) {
             task.cancel(false);
-            log.info("[CLEANUP] Cancelled scheduled task for ride request {}", rideRequestId);
         }
-        log.info("[CLEANUP] Remaining pending rides: {}", pendingRides.size());
     }
 
     private void handleDriverAcceptance(PendingRide pendingRide, String driverId) {
@@ -203,8 +201,6 @@ public class RideService {
         if (task != null) {
             task.cancel(false);
         }
-
-        log.info("Driver {} accepted ride request {}", driverId, pendingRide.getRideRequestId());
 
         try {
             Driver driver = driverRepository.findById(driverId)
@@ -252,7 +248,6 @@ public class RideService {
                     pendingRide.getRequest().getCustomerId());
             pendingRides.remove(pendingRide.getRideRequestId());
 
-            log.info("Ride {} created successfully", ride.getId());
         } catch (Exception e) {
             pendingRide.getAccepted().set(false);
         }
@@ -268,46 +263,32 @@ public class RideService {
         if (pendingRide.getCurrentDriverIndex() < pendingRide.getDriverIds().size()) {
             String rejectedDriverId = pendingRide.getDriverIds().get(pendingRide.getCurrentDriverIndex());
             pendingRide.getRejectedDriverIds().add(rejectedDriverId);
-            log.info("Driver {} rejected/timed out for ride request {}. Total rejected: {}",
-                    rejectedDriverId, pendingRide.getRideRequestId(), pendingRide.getRejectedDriverIds().size());
         }
-
-        log.info("Driver rejected or timed out for ride request {}", pendingRide.getRideRequestId());
 
         // Move to next driver
         pendingRide.setCurrentDriverIndex(pendingRide.getCurrentDriverIndex() + 1);
 
         if (pendingRide.getCurrentDriverIndex() >= pendingRide.getDriverIds().size()) {
-            log.info("[RE_FETCH] Re-fetching drivers for ride request {}. Rejected drivers: {}",
-                    pendingRide.getRideRequestId(), pendingRide.getRejectedDriverIds());
-
             List<DriverResponse> newDrivers = driverService.getNearestDrivers(
                     pendingRide.getRequest().getCustomerLatitude(),
                     pendingRide.getRequest().getCustomerLongitude(),
                     10,
                     pendingRide.getRequest().getVehicleType());
 
-            log.info("[RE_FETCH] Found {} new drivers before filtering", newDrivers.size());
-
             List<String> newDriverIds = newDrivers.stream()
                     .map(DriverResponse::getId)
                     .filter(id -> !pendingRide.getRejectedDriverIds().contains(id))
                     .collect(Collectors.toList());
 
-            log.info("[RE_FETCH] Found {} new drivers after filtering rejected ones", newDriverIds.size());
-
             if (!newDriverIds.isEmpty()) {
                 pendingRide.setDriverIds(newDriverIds);
                 pendingRide.setCurrentDriverIndex(0);
-                log.info("[RE_FETCH] Updated driver list, sending to first new driver");
                 sendNotificationToCurrentDriver(pendingRide);
                 return;
             } else {
-                log.warn("[RE_FETCH] No new drivers available after filtering");
             }
         }
 
-        // Send notification to next driver if available
         if (pendingRide.getCurrentDriverIndex() < pendingRide.getDriverIds().size()) {
             sendNotificationToCurrentDriver(pendingRide);
         }
@@ -316,9 +297,22 @@ public class RideService {
     private void sendNotificationToCurrentDriver(PendingRide pendingRide) {
         String currentDriverId = pendingRide.getDriverIds().get(pendingRide.getCurrentDriverIndex());
 
+        // Fetch customer name
+        String customerName = "Khách hàng";
+        try {
+            User customer = userRepository.findById(pendingRide.getRequest().getCustomerId())
+                    .orElse(null);
+            if (customer != null && customer.getName() != null) {
+                customerName = customer.getName();
+            }
+        } catch (Exception e) {
+            log.warn("Could not fetch customer name for notification", e);
+        }
+
         RideNotification notification = RideNotification.builder()
                 .rideRequestId(pendingRide.getRideRequestId())
                 .customerId(pendingRide.getRequest().getCustomerId())
+                .customerName(customerName)
                 .startLatitude(pendingRide.getRequest().getStartLatitude())
                 .startLongitude(pendingRide.getRequest().getStartLongitude())
                 .endLatitude(pendingRide.getRequest().getEndLatitude())
@@ -331,6 +325,7 @@ public class RideService {
                 .timestamp(System.currentTimeMillis())
                 .build();
 
+        log.info("Sending notification to driver {} with customer name: {}", currentDriverId, customerName);
         notificationService.sendRideRequestToDriver(currentDriverId, notification);
     }
 
@@ -385,6 +380,16 @@ public class RideService {
                     rideId,
                     status,
                     ride.getDriver());
+        }
+
+        // Check and award achievement coupons when ride is finished
+        if (status == Status.FINISHED && ride.getCustomer() != null) {
+            try {
+                achievementService.checkAndAwardCoupons(ride.getCustomer().getId());
+            } catch (Exception e) {
+                log.error("Failed to check achievements for user {}: {}",
+                        ride.getCustomer().getId(), e.getMessage());
+            }
         }
 
         return rideMapper.toResponse(ride);

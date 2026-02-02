@@ -53,6 +53,7 @@ import {
     Mail,
     Phone,
     ArrowDown,
+    Tag,
 } from 'lucide-angular';
 
 export const appConfig: ApplicationConfig = {
@@ -111,6 +112,7 @@ export const appConfig: ApplicationConfig = {
                 Check,
                 Mail,
                 Phone,
+                Tag,
             })
         ),
     ],

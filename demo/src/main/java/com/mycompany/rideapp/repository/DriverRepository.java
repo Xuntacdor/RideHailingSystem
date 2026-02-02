@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.mycompany.rideapp.entity.Driver;
+import com.mycompany.rideapp.enums.AccountStatus;
 
 public interface DriverRepository extends JpaRepository<Driver, String> {
         @Query("SELECT d FROM Driver d WHERE d.user.id = :userId")
@@ -18,7 +19,7 @@ public interface DriverRepository extends JpaRepository<Driver, String> {
 
         Optional<Driver> findByLicenseNumber(String licenseNumber);
 
-        List<Driver> findByDriverStatus(String driverStatus);
+        List<Driver> findByDriverStatus(AccountStatus driverStatus);
 
         @Query("SELECT d FROM Driver d WHERE d.driverStatus = com.mycompany.rideapp.enums.AccountStatus.ACTIVE ORDER BY "
                         + "((d.latitude - :lat) * (d.latitude - :lat) + (d.longitude - :lng) * (d.longitude - :lng)) ASC")

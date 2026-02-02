@@ -39,6 +39,7 @@ public class UserService {
     MailService mailService;
     ImageStorageService imageStorageService;
     UserMapper userMapper;
+    AchievementService achievementService;
 
     public UserResponse userRegister(UserRequest userRqDto) {
         User user = userMapper.toEntity(userRqDto);
@@ -51,6 +52,14 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(userRqDto.getPassword()));
 
         userRepository.save(user);
+
+        // Award default coupons to new user
+        try {
+            achievementService.awardDefaultCoupons(user.getId());
+        } catch (Exception e) {
+            log.error("Failed to award default coupons to user {}: {}", user.getId(), e.getMessage());
+        }
+
         return userMapper.toResponse(user);
     }
 
@@ -163,27 +172,24 @@ public class UserService {
     }
 
     public List<UserResponse> searchAndFilterUsers(String roleName, String keyword) {
-        
-        
+
         Role roleEnum = null;
         if (roleName != null && !roleName.trim().isEmpty()) {
             try {
-                
+
                 roleEnum = Role.valueOf(roleName.toUpperCase());
             } catch (IllegalArgumentException e) {
-                
+
                 roleEnum = null;
             }
         }
 
-        
         if (keyword != null && keyword.trim().isEmpty()) {
             keyword = null;
         }
-        
+
         List<User> users = userRepository.filterUsers(roleEnum, keyword);
 
-       
         return users.stream()
                 .map(userMapper::toResponse)
                 .collect(Collectors.toList());
