@@ -37,8 +37,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "1000kB",
+                  "maximumError": "5MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -69,7 +69,8 @@
           "defaultConfiguration": "development",
           "options": {
             "allowedHosts": [
-              "tied-lavone-nonubiquitously.ngrok-free.dev"
+              "tied-lavone-nonubiquitously.ngrok-free.dev",
+              "providence-progressive-whose-cleared.trycloudflare.com"
             ]
           }
         },

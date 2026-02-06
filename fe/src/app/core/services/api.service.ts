@@ -10,13 +10,13 @@ export class ApiService {
 
   constructor(protected http: HttpClient) { }
 
-  protected getHeaders(): HttpHeaders {
+  protected getHeaders(skipAuth: boolean = false): HttpHeaders {
     const token = localStorage.getItem('auth_token');
     let headers = new HttpHeaders({
       'Content-Type': 'application/json',
     });
 
-    if (token) {
+    if (token && !skipAuth) {
       headers = headers.set('Authorization', `Bearer ${token}`);
     }
 
@@ -31,9 +31,9 @@ export class ApiService {
     return this.http.get<T>(`${this.apiUrl}${endpoint}`, options);
   }
 
-  protected post<T>(endpoint: string, body: any): Observable<T> {
+  protected post<T>(endpoint: string, body: any, skipAuth: boolean = false): Observable<T> {
     return this.http.post<T>(`${this.apiUrl}${endpoint}`, body, {
-      headers: this.getHeaders(),
+      headers: this.getHeaders(skipAuth),
     });
   }
 

@@ -18,7 +18,7 @@ interface RouteResult {
     providedIn: 'root'
 })
 export class TrackAsiaService {
-    private apiKey = '9304ed0af35602777a71768789308f6f9e';
+    private apiKey = '5cd4177027596210d9119a9bea1e7edf68';
 
     // API endpoints - using official TrackAsia API domains
     private readonly AUTOCOMPLETE_URL = 'https://maps.track-asia.com/api/v1/autocomplete';

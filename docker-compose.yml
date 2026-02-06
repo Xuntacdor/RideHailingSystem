@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  # SQL Server Database
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: ridehailing-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=123Abc@123
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    networks:
+      - ridehailing-network
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "123Abc@123" -C -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: ridehailing-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - ridehailing-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Spring Boot Backend
+  backend:
+    build:
+      context: ./demo
+      dockerfile: Dockerfile
+    container_name: ridehailing-backend
+    environment:
+      # App Configuration
+      - APP_NAME=demo
+      - SERVER_PORT=8080
+      
+      # Database Configuration
+      - DB_URL=jdbc:sqlserver://sqlserver:1433;databaseName=zzzz;encrypt=false;trustServerCertificate=true
+      - DB_USERNAME=sa
+      - DB_PASSWORD=123Abc@123
+      - DB_DDL_AUTO=update
+      
+      # Redis Configuration
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      
+      # JWT Security
+      - JWT_SECRET=c2fdf3cb275a6c40b6795cdab2e92ee6aec56cb4ea65be2fbe1d8b8eaccdbe86
+      
+      # Email Configuration
+      - MAIL_HOST=smtp.gmail.com
+      - MAIL_PORT=587
+      - MAIL_USERNAME=tr1sc0ngs4n@gmail.com
+      - MAIL_PASSWORD=myya pqqa lfgn zvky
+      
+      # Google OAuth2
+      - GOOGLE_CLIENT_ID=380328350838-2almvvptg53vbqd9ogaldm5e6kguug5f.apps.googleusercontent.com
+      - GOOGLE_CLIENT_SECRET=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
+      
+      # CORS - Allow ngrok and localhost
+      - CORS_ALLOWED_ORIGINS=http://localhost:4200,http://localhost:3000,https://*.ngrok-free.app,https://*.ngrok.io
+      
+      # PayOS
+      - PAYOS_CLIENT_ID=34451ce8-01f4-4367-bfe4-f4cdf24d19a4
+      - PAYOS_API_KEY=cc2e7504-2c50-42c4-82ee-7c15610b0c67
+      - PAYOS_CHECKSUM_KEY=07c4e81b3a95e3c2a67e54f9d9e234ced87fd1ddc59f74232bacda861f96ae4c
+    ports:
+      - "8080:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ridehailing-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+networks:
+  ridehailing-network:
+    driver: bridge
+
+volumes:
+  sqlserver-data:
+  redis-data:

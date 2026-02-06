@@ -1,0 +1,9 @@
+target/
+.mvn/
+*.md
+!API_DOCUMENTATION.md
+.gitignore
+.gitattributes
+mvnw
+mvnw.cmd
+Img/

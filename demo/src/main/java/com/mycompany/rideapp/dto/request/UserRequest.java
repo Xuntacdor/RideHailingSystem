@@ -41,6 +41,6 @@ public class UserRequest {
     @Email(message = "EMAIL_NOT_VALID")
     String email;
 
-    String ImageUrl;
+    String imageUrl;
     String accountType;
 }

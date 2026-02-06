@@ -34,7 +34,7 @@ export class AuthService extends ApiService {
    * POST /api/auth/login
    */
   loginUser(credentials: LoginRequest): Observable<ApiResponse<AuthenticationResponse>> {
-    return this.post<ApiResponse<AuthenticationResponse>>('/auth/login', credentials).pipe(
+    return this.post<ApiResponse<AuthenticationResponse>>('/auth/login', credentials, true).pipe(
       tap((response) => {
         if (response.results.token) {
           this.setToken(response.results.token);
@@ -50,7 +50,7 @@ export class AuthService extends ApiService {
    * POST /api/auth/register
    */
   registerUser(userData: RegisterRequest): Observable<ApiResponse<UserResponse>> {
-    return this.post<ApiResponse<UserResponse>>('/auth/register', userData);
+    return this.post<ApiResponse<UserResponse>>('/auth/register', userData, true);
   }
 
   /**

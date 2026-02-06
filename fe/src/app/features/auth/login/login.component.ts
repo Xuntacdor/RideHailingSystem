@@ -58,15 +58,58 @@ export class Login {
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         switchMap((response) => {
+          console.log('✅ Login response:', response);
           const userId = this.authService.getUserId();
+          console.log('🔑 User ID from token:', userId);
+
+          // Verify token was saved
+          const savedToken = localStorage.getItem('auth_token');
+          console.log('💾 Token saved in localStorage:', savedToken ? 'Yes (' + savedToken.substring(0, 20) + '...)' : 'No');
+
           if (!userId) {
             return throwError(() => new Error('Token invalid: Cannot get user id'));
           }
+          console.log('📡 Fetching user data for ID:', userId);
           return this.userService.getUserById(userId);
         }),
 
         catchError((error) => {
+          console.error('❌ Error in login chain:', error);
+          console.error('Error details:', {
+            status: error.status,
+            statusText: error.statusText,
+            message: error.message,
+            error: error.error,
+            headers: error.headers,
+            url: error.url
+          });
+
+          // Log the raw response if available
+          if (error.error) {
+            console.error('Raw error body:', error.error);
+            console.error('Error body type:', typeof error.error);
+          }
+
           this.isSubmitting.set(false);
+
+          // Handle JSON parsing errors (when backend returns empty body or invalid JSON)
+          if (error.message && error.message.includes('parsing')) {
+            console.error('🔥 JSON Parsing Error - Backend returned invalid/empty response!');
+
+            // Check if it's an authentication error (401 with empty body)
+            if (error.status === 401) {
+              this.errorMessage.set('Session expired or invalid. Please login again.');
+              // Clear token and redirect to login
+              localStorage.removeItem('auth_token');
+              this.authService.isLoggedIn.set(false);
+            } else if (error.status === 200) {
+              // Status 200 but parsing failed - backend issue
+              this.errorMessage.set('Server response error. Please contact support.');
+            } else {
+              this.errorMessage.set('Server error. Please try again later.');
+            }
+            return EMPTY;
+          }
 
           if (error.message && error.message.includes('Token invalid')) {
             this.errorMessage.set(error.message);
@@ -83,9 +126,11 @@ export class Login {
       )
       .subscribe({
         next: (userResponse) => {
+          console.log('👤 User data received:', userResponse);
           this.isSubmitting.set(false);
 
           const role = userResponse.results.role;
+          console.log('🎭 User role:', role);
 
           if (role === 'DRIVER') {
             this.router.navigate(['/driver']);
