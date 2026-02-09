@@ -2,8 +2,7 @@
   <app-map class="map absolute inset-0 z-0" [origin]="mapOrigin" [destination]="mapDestination"
     [routeGeometry]="mapRouteGeometry"
     [userLocation]="activeRide ? {lat: activeRide.pickupLat, lng: activeRide.pickupLng} : null"
-    (userLocationDetected)="onMapLocationDetected($event)"
-    [showUserMarker]="!!activeRide">
+    (userLocationDetected)="onMapLocationDetected($event)" [showUserMarker]="!!activeRide">
   </app-map>
 
   <!-- Show active ride overlay when ride is active -->
@@ -33,6 +32,26 @@
   </button>
   <div class="status-bar relative z-10" *ngIf="!showActiveRide">
     {{ isOnline ? 'Bạn đang sẵn sàng nhận cuốc.' : 'Bạn đang không sẵn sàng nhận cuốc.' }}
+  </div>
+
+  <!-- GPS Debug Panel -->
+  <button class="debug-toggle-btn relative z-20" (click)="toggleDebugPanel()" [class.active]="showDebugPanel">
+    🛰️ GPS
+  </button>
+
+  <div class="debug-panel relative z-20" *ngIf="showDebugPanel">
+    <div class="debug-header">
+      <span>📡 GPS Debug Logs</span>
+      <button (click)="toggleDebugPanel()">✕</button>
+    </div>
+    <div class="debug-content">
+      <div *ngIf="debugLogs.length === 0" class="debug-empty">
+        Chưa có logs...
+      </div>
+      <div *ngFor="let log of debugLogs" class="debug-log-item">
+        {{ log }}
+      </div>
+    </div>
   </div>
 </div>
 

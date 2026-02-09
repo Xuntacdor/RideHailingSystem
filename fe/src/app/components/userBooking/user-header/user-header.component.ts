@@ -38,7 +38,9 @@ import { CommonModule } from '@angular/common';
   styles: [`
     :host {
       display: inline-block; /* Quan trọng: để component không chiếm hết chiều ngang */
-      margin: 16px; /* Khoảng cách với mép màn hình */
+      margin-top: max(50px, env(safe-area-inset-top)); /* Khoảng cách với mép màn hình */
+      margin-left: 16px;
+      margin-right: 16px;
     }
   `]
 })

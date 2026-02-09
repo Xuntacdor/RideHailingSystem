@@ -43,6 +43,11 @@ export class DriverComponent implements OnInit, OnDestroy {
   mapRouteGeometry: any = null;
   checkRide: any | null = null;
 
+  // GPS Debug logs for mobile
+  debugLogs: string[] = [];
+  showDebugPanel = false;
+  private gpsUpdateSubscription?: Subscription;
+
   constructor(
     private router: Router,
     private driverRideRequestService: DriverRideRequestService,
@@ -57,6 +62,11 @@ export class DriverComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const userInfo = this.authService.getUserInfo();
     this.driverId = userInfo?.driverId || userInfo?.userId || null;
+
+    // Subscribe to GPS updates for debug panel
+    this.subscribeToGPSUpdates();
+    this.addDebugLog('🚀 Driver component initialized');
+
     //check if driver has an active ride
     this.rideService.getActiveRide(this.driverId!).subscribe({
       next: (rideData) => {
@@ -78,8 +88,10 @@ export class DriverComponent implements OnInit, OnDestroy {
             this.driverPosUpdateService.setDriverStatus('Matching');
             this.isOnline = true;
             this.subscribeToRideRequests();
-            // ✅ Start auto location updates (map sẽ emit location)
+            // ✅ Start GPS tracking and auto location updates
+            this.driverPosUpdateService.startGPSTracking();
             this.driverPosUpdateService.startAutoLocationUpdate(this.driverId!);
+            this.addDebugLog('✅ GPS tracking started (active ride detected)');
           }
 
           this.showActiveRide = true;
@@ -91,6 +103,7 @@ export class DriverComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Error fetching active ride data:', err);
+        this.addDebugLog('❌ Error fetching active ride');
       }
     });
 
@@ -106,19 +119,54 @@ export class DriverComponent implements OnInit, OnDestroy {
 
       console.log(this.driverId);
 
-      // Start auto location updates (map sẽ emit location → service auto-send)
+      // Start GPS tracking and auto location updates
+      this.driverPosUpdateService.startGPSTracking();
       this.driverPosUpdateService.startAutoLocationUpdate(this.driverId!);
+      this.addDebugLog('✅ Driver online - GPS tracking started');
 
     } else {
       this.unsubscribeFromRideRequests();
 
       this.driverService.updateDriverStatus(this.driverId!, 'INACTIVE').subscribe({});
+      this.driverPosUpdateService.stopGPSTracking();
       this.driverPosUpdateService.stopAutoLocationUpdate();
+      this.addDebugLog('⏹️ Driver offline - GPS tracking stopped');
     }
   }
 
   onMapLocationDetected(location: { lng: number; lat: number }) {
     this.driverPosUpdateService.setCurrentLocation({ lat: location.lat, lng: location.lng });
+    this.addDebugLog(`📍 Map location: ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`);
+  }
+
+  private subscribeToGPSUpdates(): void {
+    // Subscribe to location updates
+    this.gpsUpdateSubscription = this.driverPosUpdateService.location$.subscribe((location) => {
+      if (location) {
+        const timestamp = new Date().toLocaleTimeString();
+        this.addDebugLog(`🛰️ GPS: ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`);
+      }
+    });
+
+    // Subscribe to debug logs from service
+    this.driverPosUpdateService.debugLog$.subscribe((log) => {
+      if (log) {
+        this.addDebugLog(log);
+      }
+    });
+  }
+
+  private addDebugLog(message: string): void {
+    const timestamp = new Date().toLocaleTimeString();
+    this.debugLogs.unshift(`[${timestamp}] ${message}`);
+    // Keep only last 20 logs
+    if (this.debugLogs.length > 20) {
+      this.debugLogs = this.debugLogs.slice(0, 20);
+    }
+  }
+
+  toggleDebugPanel(): void {
+    this.showDebugPanel = !this.showDebugPanel;
   }
 
   private subscribeToRideRequests(): void {
@@ -301,6 +349,8 @@ export class DriverComponent implements OnInit, OnDestroy {
     this.activeRide = null;
     this.driverStatus = 'Resting';
     this.driverPosUpdateService.setDriverStatus('Resting');
+    this.driverPosUpdateService.stopGPSTracking();
+    this.driverPosUpdateService.stopAutoLocationUpdate();
     this.resetMap();
 
     const timeout = setTimeout(() => {
@@ -361,6 +411,8 @@ export class DriverComponent implements OnInit, OnDestroy {
     this.activeRide = null;
     this.driverStatus = 'Resting';
     this.driverPosUpdateService.setDriverStatus('Resting');
+    this.driverPosUpdateService.stopGPSTracking();
+    this.driverPosUpdateService.stopAutoLocationUpdate();
     this.resetMap();
   }
 
@@ -373,6 +425,7 @@ export class DriverComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.unsubscribeFromRideRequests();
     this.driverRideRequestService.disconnect();
+    this.gpsUpdateSubscription?.unsubscribe();
     // Service tự clean up khi stopAutoLocationUpdate() được gọi
   }
 }

@@ -72,7 +72,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
   // Constants
   private readonly SEARCH_DEBOUNCE_MS = 300;
   private readonly DRIVER_ROUTE_DEBOUNCE_MS = 3000;
-  private readonly DRIVER_MOVEMENT_THRESHOLD_KM = 0.05; // 50 meters
+  private readonly DRIVER_MOVEMENT_THRESHOLD_KM = 0;
 
   // UI State
   isTokenValid = true;
@@ -145,9 +145,9 @@ export class UserBookingComponent implements OnInit, OnDestroy {
     this.rideService.getActiveRide(this.jwtPayload!.userId).subscribe({
       next: (rideData) => {
         if (rideData) {
-          
+
           this.currentRideId = rideData.id;
-          
+
           const statusToStateMap: Record<string, RideState> = {
             'PENDING': RideState.PENDING,
             'CONFIRMED': RideState.CONFIRMED,
@@ -155,7 +155,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
             'ONGOING': RideState.ONGOING
           };
           this.rideState = statusToStateMap[rideData.status] || RideState.IDLE;
-          
+
           if (rideData.startLatitude && rideData.startLongitude) {
             this.origin = {
               lat: rideData.startLatitude,
@@ -163,7 +163,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
               name: 'Điểm đón'
             };
           }
-          
+
           if (rideData.endLatitude && rideData.endLongitude) {
             this.destination = {
               lat: rideData.endLatitude,
@@ -171,25 +171,25 @@ export class UserBookingComponent implements OnInit, OnDestroy {
               name: 'Điểm đến'
             };
           }
-          
-          if (rideData.driver && (this.rideState === RideState.CONFIRMED || 
-              this.rideState === RideState.PICKINGUP || this.rideState === RideState.ONGOING)) {
-            
+
+          if (rideData.driver && (this.rideState === RideState.CONFIRMED ||
+            this.rideState === RideState.PICKINGUP || this.rideState === RideState.ONGOING)) {
+
             this.driverInfo = {
               name: rideData.driver.user?.name || 'Tài xế',
               avatarUrl: rideData.driver.avatarUrl || 'assets/images/default-avatar.png',
               rating: rideData.driver.rating || 4.5,
-              vehicleModel: rideData.driver.vehicleModel || 'Vehicle', 
-              vehiclePlate: rideData.driver.vehiclePlate || 'N/A', 
+              vehicleModel: rideData.driver.vehicleModel || 'Vehicle',
+              vehiclePlate: rideData.driver.vehiclePlate || 'N/A',
               phoneNumber: rideData.driver.user?.phoneNumber || 'N/A'
             };
-            
+
             if (rideData.driverLat && rideData.driverLng) {
               this.driverLocation = {
                 lat: rideData.driverLat,
                 lng: rideData.driverLng
               };
-              
+
               this.activeDriver = {
                 id: rideData.driver.id || '',
                 name: rideData.driver.user?.name || 'Tài xế',
@@ -200,14 +200,14 @@ export class UserBookingComponent implements OnInit, OnDestroy {
                 icon: rideData.vehicleType === 'CAR' ? '🚗' : '🏍️'
               };
             }
-            
+
             if (rideData.driver.id) {
               this.subscribeToDriverPosition(rideData.driver.id);
             }
           }
-          
+
           this.subscribeToRideUpdates();
-          
+
           if (this.origin && this.destination) {
             if (this.rideState === RideState.PICKINGUP || this.rideState === RideState.CONFIRMED) {
               if (this.driverLocation) {
@@ -217,7 +217,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
               this.calculateRouteToDestination();
             }
           }
-          
+
           this.cdr.detectChanges();
         }
       },
@@ -691,13 +691,13 @@ export class UserBookingComponent implements OnInit, OnDestroy {
         next: (message) => {
           const timestamp = new Date().toLocaleTimeString();
           const update: DriverPositionUpdate = JSON.parse(message.body);
-          
+
           console.log(`[${timestamp}] 📍 [USER] Received driver position update:`, {
             driverId: update.driverId,
             position: `${update.lat.toFixed(6)}, ${update.lng.toFixed(6)}`,
             timestamp: update.timestamp || 'N/A'
           });
-          
+
           this.updateDriverLocation(update);
           this.cdr.detectChanges();
         },
@@ -724,6 +724,8 @@ export class UserBookingComponent implements OnInit, OnDestroy {
       rating: this.notificationData?.driverData?.rating || 4.5,
       icon: this.selectedVehicle === VehicleType.CAR ? '🚗' : '🏍️',
     };
+
+    this.cdr.detectChanges();
 
     if (this.driverLocation) {
       this.calculateDriverRouteDebounced(this.driverLocation);
@@ -752,6 +754,7 @@ export class UserBookingComponent implements OnInit, OnDestroy {
       case 'ONGOING':
         this.rideState = RideState.ONGOING;
         this.driverRouteGeometry = null;
+        this.routeGeometry = null;
         if (this.origin && this.destination) {
           await this.calculateRouteToDestination();
         }

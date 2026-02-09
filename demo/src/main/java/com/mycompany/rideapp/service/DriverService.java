@@ -166,6 +166,7 @@ public class DriverService {
     public void updateDriverPosition(String id, Double lat, Double lng) {
         Driver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        
         driver.setLatitude(lat);
         driver.setLongitude(lng);
         driverRepository.save(driver);

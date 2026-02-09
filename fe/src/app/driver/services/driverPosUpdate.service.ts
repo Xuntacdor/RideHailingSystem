@@ -31,7 +31,14 @@ export class DriverPosUpdateService implements OnDestroy {
     private locationUpdateInterval: any = null;
     private lastSentLocation: { lat: number; lng: number } | null = null;
 
+    // GPS tracking
+    private gpsWatchId: number | null = null;
+
     private readonly MIN_DISTANCE_METERS = 10;
+
+    // Debug logs observable
+    private debugLogSubject = new BehaviorSubject<string>('');
+    public debugLog$ = this.debugLogSubject.asObservable();
 
     constructor() {
         this.stompClient = new RxStomp();
@@ -96,12 +103,70 @@ export class DriverPosUpdateService implements OnDestroy {
     }
 
 
-    async getApproximateLocation(): Promise<{ lat: number; lng: number }> {
-        if (!this.currentLocation) {
-            throw new Error('❌ No location available. Map must emit location first via setCurrentLocation()');
+    startGPSTracking(): void {
+        if (this.gpsWatchId !== null) {
+            console.log('⚠️ GPS tracking already started');
+            return;
         }
 
-        console.log('✅ Using location from map:', this.currentLocation);
+        if (!('geolocation' in navigator)) {
+            console.error('❌ Geolocation is not supported by this browser');
+            return;
+        }
+
+        console.log('🛰️ Starting continuous GPS tracking...');
+
+        this.gpsWatchId = navigator.geolocation.watchPosition(
+            (position) => {
+                const newLocation = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
+                    accuracy: position.coords.accuracy,
+                    timestamp: position.timestamp
+                };
+
+                this.currentLocation = newLocation;
+                this.locationSubject.next({
+                    lat: newLocation.lat,
+                    lng: newLocation.lng
+                });
+
+                console.log('📍 GPS position updated:', {
+                    lat: newLocation.lat.toFixed(6),
+                    lng: newLocation.lng.toFixed(6),
+                    accuracy: `${newLocation.accuracy.toFixed(0)}m`
+                });
+            },
+            (error) => {
+                console.error('❌ GPS tracking error:', error.message);
+            },
+            {
+                enableHighAccuracy: true,
+                maximumAge: 1000,
+                timeout: 5000
+            }
+        );
+    }
+
+    stopGPSTracking(): void {
+        if (this.gpsWatchId !== null) {
+            navigator.geolocation.clearWatch(this.gpsWatchId);
+            this.gpsWatchId = null;
+            console.log('🛑 GPS tracking stopped');
+        }
+    }
+
+    async getApproximateLocation(): Promise<{ lat: number; lng: number }> {
+        if (!this.currentLocation) {
+            throw new Error('❌ No location available. GPS tracking must be started first via startGPSTracking()');
+        }
+
+        console.log('✅ Using live GPS location:', {
+            lat: this.currentLocation.lat.toFixed(6),
+            lng: this.currentLocation.lng.toFixed(6),
+            age: `${Date.now() - this.currentLocation.timestamp}ms ago`
+        });
+
         return {
             lat: this.currentLocation.lat,
             lng: this.currentLocation.lng
@@ -109,6 +174,9 @@ export class DriverPosUpdateService implements OnDestroy {
     }
 
     startAutoLocationUpdate(driverId: string): void {
+        console.log('🚀 STARTING AUTO GPS UPDATE for driver:', driverId);
+        console.log('📡 Will send GPS to backend every 3 seconds');
+        this.emitDebugLog('🚀 Auto GPS update started');
 
         this.sendDriverLocation(driverId)
             .then(() => { })
@@ -144,9 +212,11 @@ export class DriverPosUpdateService implements OnDestroy {
 
         this.locationUpdateInterval = setInterval(async () => {
             const timestamp = new Date().toLocaleTimeString();
+            console.log(`⏰ [${timestamp}] Auto-update interval triggered (every 3s)`);
             try {
                 await this.sendDriverLocation(driverId);
             } catch (error) {
+                console.error(`❌ [${timestamp}] Auto-update failed:`, error);
             }
         }, 3000);
 
@@ -185,20 +255,40 @@ export class DriverPosUpdateService implements OnDestroy {
                 timestamp: new Date().toISOString()
             };
 
+            const logMsg = `📤 Sending: ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`;
+            console.log('📤 SENDING GPS TO BACKEND:', {
+                driverId,
+                lat: location.lat.toFixed(6),
+                lng: location.lng.toFixed(6),
+                time: new Date().toLocaleTimeString(),
+                destination: '/app/driver/updatePos'
+            });
+            this.emitDebugLog(logMsg);
+
             this.stompClient.publish({
                 destination: '/app/driver/updatePos',
                 body: JSON.stringify(payload)
             });
 
+            console.log('✅ GPS SENT SUCCESSFULLY to backend');
+            this.emitDebugLog('✅ GPS sent successfully');
+
         } catch (error) {
-            console.error('Error sending location:', error);
+            console.error('❌ FAILED TO SEND GPS TO BACKEND:', error);
+            this.emitDebugLog('❌ Failed to send GPS');
             throw error;
         }
     }
 
+    private emitDebugLog(message: string): void {
+        this.debugLogSubject.next(message);
+    }
+
     ngOnDestroy(): void {
+        this.stopGPSTracking();
         this.stopAutoLocationUpdate();
         this.stompClient.deactivate();
         this.locationSubject.complete();
+        this.debugLogSubject.complete();
     }
 }

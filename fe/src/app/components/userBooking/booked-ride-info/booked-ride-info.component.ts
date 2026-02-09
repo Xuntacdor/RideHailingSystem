@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectorRef, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export interface DriverData {
@@ -58,6 +58,12 @@ export interface DriverData {
         <p class="ride-status" [class]="getStatusColor()">
           {{ getStatusText() }}
         </p>
+
+        <!-- Debug: Driver Location -->
+        <div *ngIf="driverLocation" class="debug-location">
+          <span class="debug-label">📍 Driver:</span>
+          <span class="debug-coords">{{ driverLocation.lat.toFixed(6) }}, {{ driverLocation.lng.toFixed(6) }}</span>
+        </div>
       </div>
 
       <!-- Actions -->
@@ -229,6 +235,30 @@ export interface DriverData {
     .text-red-600 { color: #dc2626; }
     .text-gray-500 { color: #6b7280; }
 
+    /* Debug Location Info */
+    .debug-location {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      background: #f3f4f6;
+      border-radius: 6px;
+      margin-top: 4px;
+    }
+
+    .debug-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b7280;
+    }
+
+    .debug-coords {
+      font-size: 10px;
+      font-family: 'Courier New', monospace;
+      color: #374151;
+      font-weight: 500;
+    }
+
     /* Actions Section */
     .actions-container {
       display: flex;
@@ -351,13 +381,25 @@ export interface DriverData {
     }
   `]
 })
-export class BookedRideInfoComponent {
+export class BookedRideInfoComponent implements OnChanges {
   @Input() driverData: DriverData | null | undefined = null;
   @Input() rideStatus: string | null = null;
   @Input() driverLocation: { lat: number; lng: number } | null = null;
   @Input() destination: { lat: number; lng: number; name?: string } | null = null;
 
   @Output() cancelRide = new EventEmitter<void>();
+
+  constructor(private cdr: ChangeDetectorRef) { }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['driverLocation'] && this.driverLocation) {
+      const timestamp = new Date().toLocaleTimeString();
+      console.log(`[${timestamp}] 📍 [BOOKED-RIDE-INFO] Driver location updated:`, {
+        position: `${this.driverLocation.lat.toFixed(6)}, ${this.driverLocation.lng.toFixed(6)}`
+      });
+      this.cdr.detectChanges();
+    }
+  }
 
   getStatusText(): string {
     switch (this.rideStatus) {

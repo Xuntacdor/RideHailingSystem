@@ -5,7 +5,7 @@ import { RideService } from '../../../core/services/ride.service';
 import { TrackAsiaService } from '../../../core/services/trackasia.service';
 import { DriverPosUpdateService } from '../../services/driverPosUpdate.service';
 import { DriverRideRequestService } from '../../services/driver-ride-request.service';
-import { Subscription } from 'rxjs';
+import { Subscription, interval } from 'rxjs';
 
 export interface MapUpdate {
     origin: Coordinate | null;
@@ -40,6 +40,18 @@ export interface ActiveRide {
                     {{ getRideStatusText() }}
                 </span>
             </div>
+        </div>
+        
+        <div class="debug-inline-box">
+             <div class="debug-line">
+                <span class="icon">📍</span> 
+                <span class="coords">{{ currentLat | number:'1.5-5' }}, {{ currentLng | number:'1.5-5' }}</span>
+             </div>
+             <div class="debug-line secondary">
+                <span>⏱️ {{ lastUpdateTime || '--:--' }}</span>
+                <span class="separator">•</span>
+                <span>📡 #{{ updatesSentCount }}</span>
+             </div>
         </div>
         
         <div class="action-buttons">
@@ -117,7 +129,39 @@ export interface ActiveRide {
         }
 
         .ride-header {
-            margin-bottom: 20px;
+            margin-bottom: 12px;
+        }
+
+        .debug-inline-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 10px 12px;
+            margin-bottom: 16px;
+        }
+        
+        .debug-line {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+            color: #334155;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        
+        .debug-line:last-child {
+            margin-bottom: 0;
+        }
+        
+        .debug-line.secondary {
+            color: #64748b;
+            font-size: 12px;
+        }
+        
+        .separator {
+            margin: 0 4px;
+            color: #cbd5e1;
         }
 
         .header-content {
@@ -362,6 +406,73 @@ export interface ActiveRide {
             }
         }
 
+        /* Debug Modal Styles */
+        .debug-modal {
+            max-width: 500px;
+        }
+
+        .debug-info {
+            margin: 20px 0;
+        }
+
+        .debug-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .debug-row:last-child {
+            border-bottom: none;
+        }
+
+        .debug-label {
+            font-weight: 600;
+            color: #6b7280;
+            font-size: clamp(13px, 3.2vw, 14px);
+        }
+
+        .debug-value {
+            font-weight: 500;
+            color: #1a1a1a;
+            font-size: clamp(13px, 3.2vw, 14px);
+            font-family: monospace;
+        }
+
+        /* Debug Toggle Button */
+        .debug-toggle-btn {
+            position: fixed;
+            top: max(50px, env(safe-area-inset-top));
+            right: 20px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+            z-index: 1000;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .debug-toggle-btn:active {
+            transform: scale(0.95);
+        }
+
+        @media (min-width: 1024px) {
+            .debug-toggle-btn:hover {
+                transform: scale(1.05);
+                box-shadow: 0 6px 16px rgba(139, 92, 246, 0.5);
+            }
+        }
+
         /* Very Small Devices */
         @media (max-width: 360px) {
             .active-ride-panel {
@@ -380,6 +491,13 @@ export interface ActiveRide {
             .modal-content {
                 padding: 20px;
             }
+            
+            .debug-toggle-btn {
+                width: 44px;
+                height: 44px;
+                top: 16px;
+                right: 16px;
+            }
         }
     `]
 })
@@ -396,10 +514,18 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
     showCancelModal = false;
     isCompletingRide = false;
 
+    // Debug modal properties
+    showDebugModal = true;
+    currentLat: number | null = null;
+    currentLng: number | null = null;
+    lastUpdateTime: string | null = null;
+    updatesSentCount = 0;
+
     private pickupCoordinate: Coordinate | null = null;
     private destinationCoordinate: Coordinate | null = null;
     private locationSubscription?: Subscription;
     private notificationSubscription?: Subscription;
+    private positionUpdateSubscription?: Subscription;
 
     constructor(
         private rideService: RideService,
@@ -410,7 +536,12 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
     ) { }
 
     ngOnInit(): void {
+        console.log('🚀 [DriverActiveRide] Component initialized');
+        console.log('📍 [DriverActiveRide] Driver ID:', this.driverId);
+        console.log('🚗 [DriverActiveRide] Active Ride:', this.activeRide);
+
         this.subscribeToLocationUpdates();
+        this.startPositionUpdateInterval();
 
         if (this.activeRide) {
             // Wait for location to be available before calculating routes
@@ -420,7 +551,49 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['activeRide'] && changes['activeRide'].currentValue && !changes['activeRide'].firstChange) {
+            console.log('🔄 [DriverActiveRide] Active ride changed:', changes['activeRide'].currentValue);
             this.initializeRide();
+        }
+    }
+
+    private startPositionUpdateInterval(): void {
+        console.log('⏱️ [DriverActiveRide] Starting position update interval (every 3 seconds)');
+
+        // Send position update every 3 seconds
+        this.positionUpdateSubscription = interval(3000).subscribe(() => {
+            this.sendPositionUpdate();
+        });
+    }
+
+    private async sendPositionUpdate(): Promise<void> {
+        if (!this.activeRide || !this.driverId) {
+            console.log('⚠️ [DriverActiveRide] No active ride or driver ID, skipping position update');
+            return;
+        }
+
+        try {
+            const position = await this.driverPosUpdateService.getApproximateLocation();
+
+            // Update debug info
+            this.currentLat = position.lat;
+            this.currentLng = position.lng;
+            this.lastUpdateTime = new Date().toLocaleTimeString();
+            this.updatesSentCount++;
+            this.cdr.detectChanges();
+
+            console.log(`📡 [DriverActiveRide] Sending position update #${this.updatesSentCount}:`, {
+                lat: position.lat,
+                lng: position.lng,
+                rideId: this.activeRide.rideId,
+                driverId: this.driverId,
+                timestamp: this.lastUpdateTime
+            });
+
+            // TODO: Send position to backend
+            // Example: this.rideService.updateDriverPosition(this.driverId, position.lat, position.lng).subscribe();
+
+        } catch (error) {
+            console.error('❌ [DriverActiveRide] Error sending position update:', error);
         }
     }
 
@@ -444,13 +617,21 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     private subscribeToLocationUpdates(): void {
+        console.log('📍 [DriverActiveRide] Subscribing to location updates');
         let isFirstLocation = true;
         this.locationSubscription = this.driverPosUpdateService.location$.subscribe(location => {
             if (location) {
+                console.log('📍 [DriverActiveRide] Location update received:', location);
+
+                // Update debug info
+                this.currentLat = location.lat;
+                this.currentLng = location.lng;
+                this.cdr.detectChanges();
+
                 // On first location after reload, recalculate route if needed
                 if (isFirstLocation && this.activeRide) {
                     isFirstLocation = false;
-                    console.log('📍 First location received after reload, recalculating route');
+                    console.log('📍 [DriverActiveRide] First location received after reload, recalculating route');
                     if (this.navigationState === 'TO_DESTINATION') {
                         this.calculateRouteToDestination();
                     } else {
@@ -463,12 +644,13 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     private async waitForLocationThenInitialize(): Promise<void> {
+        console.log('⏳ [DriverActiveRide] Waiting for location before initializing...');
         try {
             const location = await this.waitForLocation(10000);
-            console.log('✅ Location available, initializing ride:', location);
+            console.log('✅ [DriverActiveRide] Location available, initializing ride:', location);
             this.initializeRide();
         } catch (error) {
-            console.warn('⚠️ Timeout waiting for location, will recalculate when available');
+            console.warn('⚠️ [DriverActiveRide] Timeout waiting for location, will recalculate when available');
             this.initializeRideWithoutRoutes();
         }
     }
@@ -770,7 +952,9 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     ngOnDestroy(): void {
+        console.log('🛑 [DriverActiveRide] Component destroying, cleaning up subscriptions');
         this.locationSubscription?.unsubscribe();
         this.notificationSubscription?.unsubscribe();
+        this.positionUpdateSubscription?.unsubscribe();
     }
 }

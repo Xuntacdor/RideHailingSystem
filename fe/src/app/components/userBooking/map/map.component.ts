@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, AfterViewInit, OnDestroy, Input, Output, EventEmitter, OnChanges, SimpleChanges, DoCheck, IterableDiffer, IterableDiffers } from '@angular/core';
+import { Component, ViewChild, ElementRef, AfterViewInit, OnDestroy, Input, Output, EventEmitter, OnChanges, SimpleChanges, DoCheck, IterableDiffer, IterableDiffers, ChangeDetectorRef } from '@angular/core';
 import { Map as TrackAsiaMap, Marker, NavigationControl, GeolocateControl, Popup, LngLatBounds } from 'trackasia-gl';
 import { TrackAsiaService } from '../../../core/services/trackasia.service';
 import { Coordinate, Driver } from '../../../models/models';
@@ -54,7 +54,14 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
     private animationDuration = 1000;
     private markerAnimations = new Map<Marker, number>();
 
-    constructor(private trackAsiaService: TrackAsiaService, private differs: IterableDiffers) { }
+    private userInteracted = false;
+    private interactionTimeout: any;
+
+    constructor(
+        private trackAsiaService: TrackAsiaService,
+        private differs: IterableDiffers,
+        private cdr: ChangeDetectorRef
+    ) { }
     // private userLocation: { lng: number; lat: number } | null = null; // Removed duplicate
 
     private animateMarkerTo(marker: Marker, targetLng: number, targetLat: number, duration: number = this.animationDuration): void {
@@ -182,7 +189,9 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
 
         if (changes['driverRoute'] && this.map) {
             if (this.driverRoute) {
-                this.displayDriverRoute(this.driverRoute);
+                const isFirstLoad = !changes['driverRoute'].previousValue;
+                const shouldFit = isFirstLoad && !this.userInteracted;
+                this.displayDriverRoute(this.driverRoute, shouldFit);
             } else {
                 this.clearDriverRoute();
             }
@@ -204,20 +213,20 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
 
 
 
+    private resetInteractionTimeout(): void {
+        if (this.interactionTimeout) {
+            clearTimeout(this.interactionTimeout);
+        }
+        // Auto-reset after 30 seconds of inactivity
+        this.interactionTimeout = setTimeout(() => {
+            this.userInteracted = false;
+        }, 30000);
+    }
+
     private getUserLocationThenInitMap(): void {
         if ('geolocation' in navigator) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    // Update the local userLocation property, 
-                    // BUT be careful not to conflict with the @Input userLocation
-                    //Ideally, we should rely on the input for the driver view, and this local logic for the user view.
-                    // For now, I'll store it locally if the input is null?
-                    // Actually, the input is for when the *driver* views the map.
-                    // When the *user* views the map, they use this geolocation logic.
-                    // To avoid type errors, let's treat the local one separately or reuse the input property if we can assign to it (inputs are mutable).
-                    // However, TS complained about duplicate identifier.
-                    // I removed the duplicate 'private userLocation' property in this rewrite.
-                    // So 'this.userLocation' refers to the @Input.
 
                     this.userLocation = {
                         lng: position.coords.longitude,
@@ -275,6 +284,22 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
 
             // this.map.addControl(new NavigationControl(), 'top-right');
             this.map.addControl(this.geolocateControl, 'top-right');
+
+            // Track user zoom
+            this.map.on('zoomstart', (e) => {
+                if (e.originalEvent) { // Only user-triggered events
+                    this.userInteracted = true;
+                    this.resetInteractionTimeout();
+                }
+            });
+
+            // Track user pan/move
+            this.map.on('movestart', (e) => {
+                if (e.originalEvent) {
+                    this.userInteracted = true;
+                    this.resetInteractionTimeout();
+                }
+            });
 
             this.map.on('load', () => {
                 console.log('Map loaded successfully at user location');
@@ -522,6 +547,7 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
                 icon: driver.icon
             });
             this.animateMarkerTo(this.activeDriverMarker, driver.lng, driver.lat);
+            this.cdr.detectChanges();
         } else {
             console.log(`[${timestamp}] 🆕 [MAP] Creating new driver marker at:`, {
                 position: `${driver.lat.toFixed(6)}, ${driver.lng.toFixed(6)}`,
@@ -547,6 +573,7 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
                 .addTo(this.map!);
 
             console.log('✅ [MAP] Active driver marker added to map');
+            this.cdr.detectChanges();
         }
     }
 
@@ -557,15 +584,17 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
         }
     }
 
-    displayDriverRoute(geometry: any): void {
+    displayDriverRoute(geometry: any, fitBounds: boolean = false): void {
         if (!this.map || !geometry) return;
 
         const sourceId = 'driver-route';
         const layerId = 'driver-route-layer';
 
         if (this.map.getSource(sourceId)) {
+            // Only update data, preserve viewport
             (this.map.getSource(sourceId) as any).setData(geometry);
         } else {
+            // Create new source and layer
             this.map.addSource(sourceId, {
                 type: 'geojson',
                 data: geometry
@@ -588,15 +617,18 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
         }
 
 
-        const coordinates = geometry.coordinates;
-        const bounds = new LngLatBounds();
-        coordinates.forEach((coord: number[]) => {
-            bounds.extend(coord as [number, number]);
-        });
-        this.map.fitBounds(bounds, {
-            padding: { top: 50, bottom: 50, left: 50, right: 50 },
-            maxZoom: 14
-        });
+        // Only fit on first load AND if user hasn't interacted
+        if (fitBounds && !this.userInteracted) {
+            const coordinates = geometry.coordinates;
+            const bounds = new LngLatBounds();
+            coordinates.forEach((coord: number[]) => {
+                bounds.extend(coord as [number, number]);
+            });
+            this.map.fitBounds(bounds, {
+                padding: { top: 50, bottom: 50, left: 50, right: 50 },
+                maxZoom: 14
+            });
+        }
     }
 
     clearDriverRoute(): void {
@@ -615,6 +647,9 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnChanges {
     }
 
     ngOnDestroy(): void {
+        if (this.interactionTimeout) {
+            clearTimeout(this.interactionTimeout);
+        }
         this.markerAnimations.forEach(id => cancelAnimationFrame(id));
         this.markerAnimations.clear();
         this.originMarker?.remove();
