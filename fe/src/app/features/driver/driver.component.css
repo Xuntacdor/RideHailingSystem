@@ -11,10 +11,14 @@ body {
 /* CONTAINER */
 .driver-container {
   height: 100vh;
+  height: 100dvh;
+  /* Dynamic viewport height for mobile */
   width: 100%;
   position: relative;
   background: #f2f2f2;
-  padding-bottom: 80px; /* safe area cho bottom menu */
+  padding-bottom: max(80px, env(safe-area-inset-bottom));
+  /* Safe area for notch/home indicator */
+  overflow: hidden;
 }
 
 /* MAP */
@@ -22,26 +26,30 @@ body {
   height: 100%;
   width: 100%;
   display: block;
+  touch-action: pan-x pan-y;
+  /* Allow map gestures */
 }
 
 /* TOP BAR */
 .top-bar {
   position: absolute;
-  top: 16px;
-  left: 16px;
-  right: 16px;
+  top: max(16px, env(safe-area-inset-top));
+  left: max(16px, env(safe-area-inset-left));
+  right: max(16px, env(safe-area-inset-right));
   display: flex;
   justify-content: space-between;
   z-index: 10;
+  gap: 12px;
 }
 
 .wallet,
 .rating {
   background: white;
-  padding: 8px 12px;
+  padding: 10px 14px;
   border-radius: 12px;
-  font-size: 14px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  font-size: clamp(13px, 3vw, 14px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  white-space: nowrap;
 }
 
 /* STATUS MESSAGE */
@@ -51,35 +59,44 @@ body {
   left: 50%;
   transform: translateX(-50%);
   background: white;
-  padding: 14px 18px;
-  border-radius: 14px;
+  padding: 16px 20px;
+  border-radius: 16px;
   text-align: center;
-  font-size: 14px;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  font-size: clamp(13px, 3.5vw, 15px);
+  line-height: 1.5;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
   z-index: 6;
+  max-width: calc(100% - 32px);
+  width: auto;
 }
 
-/* POWER BUTTON */
+/* POWER BUTTON - Mobile Optimized */
 .power-btn {
   position: absolute;
   bottom: 140px;
   left: 50%;
   transform: translateX(-50%);
-  width: 220px;
+  width: min(220px, calc(100% - 48px));
+  min-height: 56px;
   height: 56px;
   border-radius: 28px;
   border: none;
-  font-size: 18px;
+  font-size: clamp(16px, 4vw, 18px);
   font-weight: 600;
   background: black;
   color: white;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 
-  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
   transition: all 0.2s ease;
   z-index: 5;
 }
 
+.power-btn:active {
+  transform: translateX(-50%) scale(0.97);
+}
 
 .power-btn.online {
   background: #00b14f;
@@ -91,34 +108,37 @@ body {
   bottom: 180px;
   left: 50%;
   transform: translateX(-50%);
-  width: 150px;
-  height: 40px;
-  border-radius: 20px;
+  width: min(150px, calc(100% - 48px));
+  min-height: 44px;
+  height: 44px;
+  border-radius: 22px;
   border: 2px solid #667eea;
-  font-size: 14px;
+  font-size: clamp(13px, 3.5vw, 14px);
   font-weight: bold;
   background: white;
   color: #667eea;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.test-modal-btn:hover {
-  background: #667eea;
-  color: white;
+.test-modal-btn:active {
+  transform: translateX(-50%) scale(0.97);
 }
 
 /* STATUS BAR */
 .status-bar {
   position: absolute;
-  bottom: 84px;
-  left: 16px;
-  right: 16px;
+  bottom: max(84px, calc(env(safe-area-inset-bottom) + 20px));
+  left: max(16px, env(safe-area-inset-left));
+  right: max(16px, env(safe-area-inset-right));
   background: white;
-  padding: 12px;
+  padding: 14px 16px;
   border-radius: 12px;
   text-align: center;
-  font-size: 14px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  font-size: clamp(13px, 3.5vw, 14px);
+  line-height: 1.4;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 4;
 }
 
@@ -137,24 +157,121 @@ body {
 .menu-item {
   flex: 1;
   text-align: center;
-  font-size: 12px;
+  font-size: clamp(11px, 3vw, 12px);
   padding-top: 8px;
   color: #444;
+  min-height: 44px;
+  /* Touch target */
 }
 
-/* AVATAR */
+/* AVATAR - Touch Optimized */
 .driver-avatar {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 50%;
   overflow: hidden;
   background: white;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.driver-avatar:active {
+  transform: scale(0.95);
 }
 
 .driver-avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* Mobile Landscape Optimization */
+@media (max-height: 600px) and (orientation: landscape) {
+  .status-message {
+    bottom: 160px;
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+
+  .power-btn {
+    bottom: 100px;
+    height: 48px;
+    font-size: 16px;
+  }
+
+  .status-bar {
+    bottom: 60px;
+    padding: 10px 12px;
+  }
+}
+
+/* Tablet Optimization */
+@media (min-width: 768px) {
+  .driver-container {
+    padding-bottom: 80px;
+  }
+
+  .status-message {
+    max-width: 400px;
+    padding: 18px 24px;
+  }
+
+  .power-btn {
+    width: 240px;
+  }
+
+  .status-bar {
+    max-width: 500px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+}
+
+/* Desktop Optimization */
+@media (min-width: 1024px) {
+  .power-btn:hover {
+    transform: translateX(-50%) translateY(-2px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  .power-btn:active {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .test-modal-btn:hover {
+    background: #667eea;
+    color: white;
+  }
+
+  .driver-avatar:hover {
+    transform: scale(1.05);
+  }
+
+  .driver-avatar:active {
+    transform: scale(0.95);
+  }
+}
+
+/* Very Small Devices */
+@media (max-width: 360px) {
+  .status-message {
+    padding: 12px 16px;
+    font-size: 12px;
+    bottom: 200px;
+  }
+
+  .power-btn {
+    bottom: 130px;
+    height: 52px;
+  }
+
+  .status-bar {
+    padding: 12px;
+    font-size: 13px;
+  }
 }

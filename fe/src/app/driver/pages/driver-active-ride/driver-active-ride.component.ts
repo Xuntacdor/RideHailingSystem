@@ -30,34 +30,30 @@ export interface ActiveRide {
     standalone: true,
     imports: [CommonModule],
     template: `
-    <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 shadow-[0_-4px_24px_rgba(0,0,0,0.1)] z-10 pointer-events-auto">
-        <div class="mb-5">
-            <div class="flex items-center justify-between mb-3">
-                <h3 class="m-0 text-lg font-bold text-gray-900">
+    <div class="active-ride-panel">
+        <div class="ride-header">
+            <div class="header-content">
+                <h3 class="ride-title">
                     {{ navigationState === 'TO_PICKUP' ? 'Đang đến điểm đón' : 'Đang đi đến điểm trả' }}
                 </h3>
-                <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
+                <span class="status-badge">
                     {{ getRideStatusText() }}
                 </span>
             </div>
-            <p class="m-0 text-base text-gray-600">
-            </p>
-            <p class="m-0 text-sm text-gray-500 mt-1">
-            </p>
         </div>
         
-        <div class="flex flex-col gap-3">
+        <div class="action-buttons">
             <button 
                 *ngIf="navigationState === 'TO_PICKUP' && !arrivedAtPickupPoint" 
                 (click)="markArrived()"
-                class="w-full px-4 py-4 border-0 rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 bg-gradient-to-br from-yellow-500 to-yellow-600 text-white hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(234,179,8,0.3)]">
+                class="btn btn-arrived">
                 Đã đến điểm đón
             </button>
             
             <button 
                 *ngIf="navigationState === 'TO_PICKUP' && arrivedAtPickupPoint" 
                 (click)="markPickedUp()"
-                class="w-full px-4 py-4 border-0 rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 bg-gradient-to-br from-green-500 to-green-600 text-white hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(34,197,94,0.3)]">
+                class="btn btn-picked-up">
                 Đã đón khách
             </button>
             
@@ -65,13 +61,13 @@ export interface ActiveRide {
                 *ngIf="navigationState === 'TO_DESTINATION' && !arrivedAtDestinationPoint"
                 (click)="completeRide()"
                 [disabled]="isCompletingRide"
-                class="w-full px-4 py-4 border-0 rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(59,130,246,0.3)] disabled:opacity-70">
+                class="btn btn-complete">
                 {{ isCompletingRide ? 'Đang hoàn thành...' : 'Hoàn thành chuyến' }}
             </button>
             
             <button 
                 (click)="showCancelConfirm()" 
-                class="w-full px-4 py-4 border-0 rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 bg-gray-100 text-red-500 hover:bg-red-50">
+                class="btn btn-cancel">
                 Hủy chuyến
             </button>
         </div>
@@ -81,28 +77,311 @@ export interface ActiveRide {
     <div 
         *ngIf="showCancelModal" 
         (click)="showCancelModal = false"
-        class="fixed inset-0 bg-black/50 flex items-center justify-center z-[2000]">
+        class="modal-overlay">
         <div 
             (click)="$event.stopPropagation()"
-            class="bg-white rounded-2xl p-6 max-w-[400px] w-[90%]">
-            <h3 class="m-0 mb-3 text-xl text-gray-900">Xác nhận hủy chuyến?</h3>
-            <p class="m-0 mb-5 text-gray-500">Bạn có chắc chắn muốn hủy chuyến đi này?</p>
-            <div class="flex gap-3">
+            class="modal-content">
+            <h3 class="modal-title">Xác nhận hủy chuyến?</h3>
+            <p class="modal-text">Bạn có chắc chắn muốn hủy chuyến đi này?</p>
+            <div class="modal-actions">
                 <button 
                     (click)="showCancelModal = false" 
-                    class="flex-1 px-4 py-3 border-0 rounded-lg font-semibold cursor-pointer bg-gray-100 text-gray-900">
+                    class="modal-btn modal-btn-secondary">
                     Không
                 </button>
                 <button 
                     (click)="cancelRide()" 
-                    class="flex-1 px-4 py-3 border-0 rounded-lg font-semibold cursor-pointer bg-red-500 text-white">
+                    class="modal-btn modal-btn-danger">
                     Có, hủy chuyến
                 </button>
             </div>
         </div>
     </div>
     `,
-    styles: []
+    styles: [`
+        /* Active Ride Panel - Mobile First */
+        .active-ride-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 24px 24px 0 0;
+            padding: max(20px, env(safe-area-inset-bottom) + 20px) 20px 20px;
+            box-shadow: 0 -4px 24px rgba(0,0,0,0.1);
+            z-index: 10;
+            pointer-events: auto;
+            max-height: 50vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .ride-header {
+            margin-bottom: 20px;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .ride-title {
+            margin: 0;
+            font-size: clamp(16px, 4vw, 18px);
+            font-weight: 700;
+            color: #1a1a1a;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            background: #dbeafe;
+            color: #1e40af;
+            border-radius: 20px;
+            font-size: clamp(12px, 3vw, 14px);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Button Base Styles - Touch Optimized */
+        .btn {
+            width: 100%;
+            min-height: 52px;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: clamp(15px, 3.5vw, 16px);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-arrived {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-picked-up {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-complete {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-cancel {
+            background: #f3f4f6;
+            color: #ef4444;
+            box-shadow: none;
+        }
+
+        .btn-cancel:active {
+            background: #fee2e2;
+        }
+
+        /* Modal Styles - Mobile Optimized */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideUp 0.3s ease;
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-title {
+            margin: 0 0 12px 0;
+            font-size: clamp(18px, 4.5vw, 20px);
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .modal-text {
+            margin: 0 0 24px 0;
+            font-size: clamp(14px, 3.5vw, 15px);
+            color: #6b7280;
+            line-height: 1.5;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            min-height: 48px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: clamp(14px, 3.5vw, 15px);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .modal-btn:active {
+            transform: scale(0.97);
+        }
+
+        .modal-btn-secondary {
+            background: #f3f4f6;
+            color: #1a1a1a;
+        }
+
+        .modal-btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        /* Tablet Optimization */
+        @media (min-width: 768px) {
+            .active-ride-panel {
+                left: auto;
+                right: 24px;
+                bottom: 24px;
+                width: 400px;
+                border-radius: 20px;
+                max-height: 60vh;
+            }
+
+            .action-buttons {
+                gap: 14px;
+            }
+
+            .btn {
+                min-height: 56px;
+            }
+        }
+
+        /* Desktop Hover Effects */
+        @media (min-width: 1024px) {
+            .btn:not(:disabled):hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+            }
+
+            .btn:not(:disabled):active {
+                transform: translateY(0);
+            }
+
+            .btn-arrived:hover {
+                box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
+            }
+
+            .btn-picked-up:hover {
+                box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+            }
+
+            .btn-complete:hover {
+                box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+            }
+
+            .modal-btn:hover {
+                transform: translateY(-1px);
+            }
+
+            .modal-btn:active {
+                transform: translateY(0);
+            }
+        }
+
+        /* Landscape Mobile */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .active-ride-panel {
+                max-height: 70vh;
+                padding: 16px 20px;
+            }
+
+            .ride-header {
+                margin-bottom: 16px;
+            }
+
+            .action-buttons {
+                gap: 10px;
+            }
+
+            .btn {
+                min-height: 44px;
+                padding: 10px 16px;
+            }
+        }
+
+        /* Very Small Devices */
+        @media (max-width: 360px) {
+            .active-ride-panel {
+                padding: 16px;
+            }
+
+            .action-buttons {
+                gap: 10px;
+            }
+
+            .btn {
+                min-height: 48px;
+                padding: 12px 16px;
+            }
+
+            .modal-content {
+                padding: 20px;
+            }
+        }
+    `]
 })
 export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
     @Input() activeRide: ActiveRide | null = null;
@@ -132,7 +411,7 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
 
     ngOnInit(): void {
         this.subscribeToLocationUpdates();
-        
+
         if (this.activeRide) {
             // Wait for location to be available before calculating routes
             this.waitForLocationThenInitialize();
@@ -197,7 +476,7 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
     private waitForLocation(timeout: number = 10000): Promise<{ lat: number; lng: number }> {
         return new Promise((resolve, reject) => {
             let subscription: any;
-            
+
             const timeoutId = setTimeout(() => {
                 if (subscription) {
                     subscription.unsubscribe();
@@ -226,7 +505,7 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
                 );
 
 
-                if (distance < 0.05) { 
+                if (distance < 0.05) {
                     console.log('Arrived at destination (auto-detected)');
                     this.completeRide();
                 }
@@ -235,7 +514,7 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-        const R = 6371; 
+        const R = 6371;
         const dLat = this.deg2rad(lat2 - lat1);
         const dLon = this.deg2rad(lon2 - lon1);
         const a =
@@ -243,7 +522,7 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
             Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) *
             Math.sin(dLon / 2) * Math.sin(dLon / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        const d = R * c; 
+        const d = R * c;
         return d;
     }
 
@@ -266,7 +545,7 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
             this.arrivedAtPickupPoint = false;
         } else if (this.activeRide.status === 'PICKINGUP') {
             this.navigationState = 'TO_PICKUP';
-            this.arrivedAtPickupPoint = true; 
+            this.arrivedAtPickupPoint = true;
         } else {
             this.navigationState = 'TO_PICKUP';
             this.arrivedAtPickupPoint = false;
@@ -309,7 +588,7 @@ export class DriverActiveRideComponent implements OnInit, OnDestroy, OnChanges {
             this.arrivedAtPickupPoint = false;
         } else if (this.activeRide.status === 'PICKINGUP') {
             this.navigationState = 'TO_PICKUP';
-            this.arrivedAtPickupPoint = true; 
+            this.arrivedAtPickupPoint = true;
         } else {
             this.navigationState = 'TO_PICKUP';
             this.arrivedAtPickupPoint = false;

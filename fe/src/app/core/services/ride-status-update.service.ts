@@ -3,7 +3,7 @@ import { RxStomp } from '@stomp/rx-stomp';
 import SockJS from 'sockjs-client';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-
+import { environment } from '../../../environments/environment';
 export interface RideStatusUpdate {
     type: string;
     rideId: string;
@@ -20,7 +20,7 @@ export class RideStatusUpdateService {
     constructor() {
         this.stompClient = new RxStomp();
         this.stompClient.configure({
-            webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+            webSocketFactory: () => new SockJS(environment.wsUrl),
             heartbeatIncoming: 0,
             heartbeatOutgoing: 25000,
             reconnectDelay: 5000,
