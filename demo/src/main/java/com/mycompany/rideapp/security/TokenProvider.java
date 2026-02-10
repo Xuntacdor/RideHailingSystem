@@ -1,59 +1,59 @@
 package com.mycompany.rideapp.security;
 
-import io.jsonwebtoken.*;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
+import java.text.ParseException;
+import java.util.Date;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.crypto.MACVerifier;
+import com.nimbusds.jwt.SignedJWT;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class TokenProvider {
 
-    private final com.mycompany.rideapp.config.AppConfig appConfig;
-
-    public String createToken(Authentication authentication) {
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + appConfig.getTokenExpirationMsec());
-
-        return Jwts.builder()
-                .setSubject((userPrincipal.getId()))
-                .setIssuedAt(new Date())
-                .setExpiration(expiryDate)
-                .signWith(SignatureAlgorithm.HS512, appConfig.getTokenSecret())
-                .compact();
-    }
+    @Value("${spring.security.oauth2.resourceserver.jwt.secret}")
+    private String signalKey;
 
     public String getUserIdFromToken(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(appConfig.getTokenSecret())
-                .parseClaimsJws(token)
-                .getBody();
-
-        return claims.getSubject();
+        try {
+            SignedJWT signedJWT = SignedJWT.parse(token);
+            return signedJWT.getJWTClaimsSet().getSubject();
+        } catch (ParseException e) {
+            log.error("Invalid JWT token", e);
+            return null;
+        }
     }
 
     public boolean validateToken(String authToken) {
         try {
-            Jwts.parser().setSigningKey(appConfig.getTokenSecret()).parseClaimsJws(authToken);
-            return true;
-        } catch (SignatureException ex) {
-            log.error("Invalid JWT signature");
-        } catch (MalformedJwtException ex) {
-            log.error("Invalid JWT token");
-        } catch (ExpiredJwtException ex) {
-            log.error("Expired JWT token");
-        } catch (UnsupportedJwtException ex) {
-            log.error("Unsupported JWT token");
-        } catch (IllegalArgumentException ex) {
-            log.error("JWT claims string is empty.");
+            JWSVerifier verifier = new MACVerifier(hexStringToByteArray(signalKey));
+            SignedJWT signedJWT = SignedJWT.parse(authToken);
+            
+            Date expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+            boolean verified = signedJWT.verify(verifier);
+
+            if (verified && expiryTime.after(new Date())) {
+                return true;
+            }
+        } catch (JOSEException | ParseException e) {
+            log.error("Invalid JWT token", e);
         }
         return false;
     }
 
+    private static byte[] hexStringToByteArray(String s) {
+        int len = s.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+                    | Character.digit(s.charAt(i + 1), 16));
+        }
+        return data;
+    }
 }

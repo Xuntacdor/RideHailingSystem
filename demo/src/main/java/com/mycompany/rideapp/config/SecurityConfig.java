@@ -18,6 +18,7 @@ import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -28,6 +29,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.mycompany.rideapp.security.TokenAuthenticationFilter;
 import com.mycompany.rideapp.security.oauth2.OAuth2FailureHandler;
 import com.mycompany.rideapp.security.oauth2.OAuth2SuccessHandler;
 
@@ -39,13 +41,9 @@ import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 
 @Configuration
-
 @EnableWebSecurity
-
-@EnableMethodSecurity
-
-@FieldDefaults(level = AccessLevel.PRIVATE)
 @EnableMethodSecurity(prePostEnabled = true)
+@FieldDefaults(level = AccessLevel.PRIVATE)
 
 public class SecurityConfig {
 
@@ -65,6 +63,9 @@ public class SecurityConfig {
 
         OAuth2FailureHandler oAuth2FailureHandler;
 
+        @Autowired
+        TokenAuthenticationFilter tokenAuthenticationFilter;
+
         private static final String[] PUBLIC = {
 
                         "/api/v1/payos/**",
@@ -81,7 +82,9 @@ public class SecurityConfig {
 
                         "/ws/**",
 
-                        "/ws-raw/**"
+                        "/ws-raw/**",
+                        
+                        "/api/test/public"  // Allow public test endpoint
 
         };
 
@@ -94,11 +97,6 @@ public class SecurityConfig {
                         "/swagger-ui.html"
 
         };
-
-        @Bean
-        public TokenAuthenticationFilter tokenAuthenticationFilter() {
-            return new TokenAuthenticationFilter();
-        }
 
         @Bean
 
@@ -127,32 +125,31 @@ public class SecurityConfig {
 
                                                 .anyRequest().authenticated()
 
+
                                 )
-                                .addFilterBefore(tokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                                .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-                                // .oauth2Login(oauth2 -> oauth2
+                // Commented out OAuth2 login configuration
+                // .oauth2Login(oauth2 -> oauth2
+                // .successHandler(oAuth2SuccessHandler)
+                // .failureHandler(oAuth2FailureHandler)
+                // )
 
-                                // .successHandler(oAuth2SuccessHandler)
+                // .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+                // http.addFilterAfter(new OncePerRequestFilter(){
+                // @Override
+                // protected void doFilterInternal(HttpServletRequest
+                // request,HttpServletResponse response, FilterChain filterChain)
+                // throws ServletException, IOException{
+                // CsrfToken csrfToken = (CsrfToken)
+                // request.getAttribute(CsrfToken.class.getName());
+                // if (csrfToken != null) {
+                // csrfToken.getToken();
 
-                                // .failureHandler(oAuth2FailureHandler)
-
-                                // )
-
-                                // .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
-                                // http.addFilterAfter(new OncePerRequestFilter(){
-                                // @Override
-                                // protected void doFilterInternal(HttpServletRequest
-                                // request,HttpServletResponse response, FilterChain filterChain)
-                                // throws ServletException, IOException{
-                                // CsrfToken csrfToken = (CsrfToken)
-                                // request.getAttribute(CsrfToken.class.getName());
-                                // if (csrfToken != null) {
-                                // csrfToken.getToken();
-
-                                // }
-                                // filterChain.doFilter(request, response);
-                                // }
-                                // },CsrfFilter.class);
+                // }
+                // filterChain.doFilter(request, response);
+                // }
+                // },CsrfFilter.class);
 
                 return http.build();
 

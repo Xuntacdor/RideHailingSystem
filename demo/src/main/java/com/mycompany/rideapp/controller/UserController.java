@@ -2,6 +2,7 @@ package com.mycompany.rideapp.controller;
 
 import java.util.List;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 public class UserController {
         UserService userService;
 
+        @PreAuthorize("isAuthenticated()")
         @GetMapping("/{id}")
         public ApiResponse<UserResponse> getUserById(@PathVariable String id) {
                 return ApiResponse.<UserResponse>builder()
@@ -92,6 +94,7 @@ public class UserController {
                                 .build();
         }
 
+        @PreAuthorize("hasRole('ADMIN')")
         @PutMapping("/{id}/status")
         public ApiResponse<UserResponse> updateAccountStatus(
                         @PathVariable String id,
@@ -112,6 +115,7 @@ public class UserController {
                                 .build();
         }
 
+        @PreAuthorize("hasRole('ADMIN')")
         @DeleteMapping("/{id}")
         public ApiResponse<String> deleteUser(@PathVariable String id) {
                 userService.deleteUser(id);
@@ -120,6 +124,7 @@ public class UserController {
                                 .results("User deleted successfully")
                                 .build();
         }
+        @PreAuthorize("hasRole('ADMIN')")
         @GetMapping
         public Page<UserResponse> getUsers(
                         @RequestParam int page,
