@@ -11,29 +11,34 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import com.mycompany.rideapp.entity.User;
+import com.mycompany.rideapp.enums.Role;
 
 public class UserPrincipal implements OAuth2User, UserDetails {
     private String id;
     private String email;
     private String password;
+    private Role role;
     private Collection<? extends GrantedAuthority> authorities;
     private Map<String, Object> attributes;
 
-    public UserPrincipal(String id, String email, String password, Collection<? extends GrantedAuthority> authorities) {
+    public UserPrincipal(String id, String email, String password, Role role, Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.email = email;
         this.password = password;
+        this.role = role;
         this.authorities = authorities;
     }
 
     public static UserPrincipal create(User user) {
+        Role role = user.getRole() != null ? user.getRole() : Role.USER;
         List<GrantedAuthority> authorities = Collections.
-                singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+                singletonList(new SimpleGrantedAuthority("ROLE_" + role.name()));
 
         return new UserPrincipal(
                 user.getId(),
                 user.getEmail(),
                 user.getPassword(),
+                role,
                 authorities
         );
     }
@@ -50,6 +55,10 @@ public class UserPrincipal implements OAuth2User, UserDetails {
 
     public String getEmail() {
         return email;
+    }
+
+    public Role getRole() {
+        return role;
     }
 
     @Override

@@ -45,6 +45,7 @@ import lombok.experimental.FieldDefaults;
 @EnableMethodSecurity
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@EnableMethodSecurity(prePostEnabled = true)
 
 public class SecurityConfig {
 
@@ -95,6 +96,11 @@ public class SecurityConfig {
         };
 
         @Bean
+        public TokenAuthenticationFilter tokenAuthenticationFilter() {
+            return new TokenAuthenticationFilter();
+        }
+
+        @Bean
 
         public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
@@ -122,6 +128,7 @@ public class SecurityConfig {
                                                 .anyRequest().authenticated()
 
                                 )
+                                .addFilterBefore(tokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
 
                                 // .oauth2Login(oauth2 -> oauth2
 
@@ -131,21 +138,21 @@ public class SecurityConfig {
 
                                 // )
 
-                                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
-                // http.addFilterAfter(new OncePerRequestFilter(){
-                // @Override
-                // protected void doFilterInternal(HttpServletRequest
-                // request,HttpServletResponse response, FilterChain filterChain)
-                // throws ServletException, IOException{
-                // CsrfToken csrfToken = (CsrfToken)
-                // request.getAttribute(CsrfToken.class.getName());
-                // if (csrfToken != null) {
-                // csrfToken.getToken();
+                                // .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+                                // http.addFilterAfter(new OncePerRequestFilter(){
+                                // @Override
+                                // protected void doFilterInternal(HttpServletRequest
+                                // request,HttpServletResponse response, FilterChain filterChain)
+                                // throws ServletException, IOException{
+                                // CsrfToken csrfToken = (CsrfToken)
+                                // request.getAttribute(CsrfToken.class.getName());
+                                // if (csrfToken != null) {
+                                // csrfToken.getToken();
 
-                // }
-                // filterChain.doFilter(request, response);
-                // }
-                // },CsrfFilter.class);
+                                // }
+                                // filterChain.doFilter(request, response);
+                                // }
+                                // },CsrfFilter.class);
 
                 return http.build();
 
